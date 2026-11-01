@@ -65,6 +65,8 @@ def check(result: dict[str, Any]) -> list[str]:
         "key_lock_refused": "wrong_password",
         "key_lock_opened": "unlocked",
     }
+    if "STATLY_SMOKE_KEYRING" in os.environ:
+        expectations["secret_store_roundtrip"] = True
     for key, expected in expectations.items():
         if result.get(key) != expected:
             problems.append(f"{key}: expected {expected}, got {result.get(key)}")

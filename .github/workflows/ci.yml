@@ -91,11 +91,15 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
-      - run: sudo apt-get update && sudo apt-get install -y xvfb $QT_PACKAGES
+      - run: sudo apt-get update && sudo apt-get install -y xvfb dbus gnome-keyring libsecret-tools $QT_PACKAGES
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: uv sync --frozen
       - name: Run Statly inside real Anki
-        run: xvfb-run -a uv run python scripts/smoke_anki.py
+        run: |
+          dbus-run-session -- bash -c '
+            echo -n smoke | gnome-keyring-daemon --unlock --components=secrets
+            xvfb-run -a uv run python scripts/smoke_anki.py'
         env:
           QTWEBENGINE_CHROMIUM_FLAGS: --no-sandbox
+          STATLY_SMOKE_KEYRING: "1"

@@ -487,7 +487,14 @@ def ai_flow() -> None:
     """The chat through real worker threads, then the local API through the real bridge."""
     from statly.host.keychain import system_secrets
 
-    results["secret_store_persistent"] = system_secrets().persistent
+    store = system_secrets()
+    results["secret_store_persistent"] = store.persistent
+    # Only where CI provides a throwaway keyring, never in a person's own keychain.
+    if "STATLY_SMOKE_KEYRING" in os.environ:
+        store.set("smoke", "kept")
+        kept = store.get("smoke")
+        store.delete("smoke")
+        results["secret_store_roundtrip"] = kept == "kept" and store.get("smoke") is None
     placed = {
         "id": "own",
         "type": "custom:smoke",
