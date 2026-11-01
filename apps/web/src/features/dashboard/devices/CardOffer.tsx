@@ -6,6 +6,10 @@ import { Button } from "../../../components/Button.tsx";
 
 const STATUS_KEY = ["mobile.status"];
 
+function loadStatus() {
+  return bridge.call("mobile.status", {});
+}
+
 /**
  * Whoever arranges a phone or tablet wants to see it there, so the card is offered right where it
  * matters. It is asked once per editing session and never changes anything without a yes.
@@ -13,10 +17,7 @@ const STATUS_KEY = ["mobile.status"];
 export function useCardOffer() {
   const { t } = useTranslation();
   const client = useQueryClient();
-  const status = useQuery({
-    queryKey: STATUS_KEY,
-    queryFn: () => bridge.call("mobile.status", {}),
-  });
+  const status = useQuery({ queryKey: STATUS_KEY, queryFn: loadStatus });
   const asked = useRef(false);
   const [waiting, setWaiting] = useState<(() => void) | null>(null);
   const enable = useMutation({
@@ -32,12 +33,23 @@ export function useCardOffer() {
   return {
     /** Runs `go_on` at once, or after the person has answered. */
     offerBefore(goOn: () => void) {
-      if (status.data?.enabled === false && !asked.current) {
+      function decide(enabled: boolean) {
+        if (enabled || asked.current) {
+          goOn();
+          return;
+        }
         asked.current = true;
         setWaiting(() => goOn);
-      } else {
-        goOn();
       }
+      if (status.data) {
+        decide(status.data.enabled);
+        return;
+      }
+      // Someone quick can save before the first answer arrives, and must still get the offer.
+      client.ensureQueryData({ queryKey: STATUS_KEY, queryFn: loadStatus }).then(
+        (current) => decide(current.enabled),
+        () => goOn(),
+      );
     },
     resetOffer() {
       asked.current = false;
