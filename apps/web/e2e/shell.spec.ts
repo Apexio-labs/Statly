@@ -28,45 +28,45 @@ test.beforeEach(async ({ page }) => {
 
 test("the sidebar can be dragged to any width and stays there", async ({ page }) => {
   await dragHandle(page, -60);
-  expect(await width(page)).toBe(200);
+  await expect.poll(() => width(page)).toBe(200);
   await expect(page.getByRole("link", { name: "Home" })).toContainText("Home");
 });
 
 test("below 194 pixels only icons remain", async ({ page }) => {
   await dragHandle(page, -100);
-  expect(await width(page)).toBe(160);
+  await expect.poll(() => width(page)).toBe(160);
   await expect(page.getByRole("link", { name: "Home" })).not.toContainText("Home");
 });
 
 test("the sidebar snaps to its edges", async ({ page }) => {
   await dragHandle(page, -185);
-  expect(await width(page)).toBe(64);
+  await expect.poll(() => width(page)).toBe(64);
   await dragHandle(page, 190);
-  expect(await width(page)).toBe(260);
+  await expect.poll(() => width(page)).toBe(260);
 });
 
 test("the handle also works by keyboard", async ({ page }) => {
   await handle(page).focus();
   await page.keyboard.press("ArrowLeft");
-  expect(await width(page)).toBe(244);
+  await expect.poll(() => width(page)).toBe(244);
 });
 
 test("settings show their own panel and a small main menu", async ({ page }) => {
   await page.getByRole("link", { name: "Settings" }).click();
-  expect(await width(page)).toBe(64 + 236);
+  await expect.poll(() => width(page)).toBe(64 + 236);
   await page.getByRole("searchbox", { name: "Search settings" }).fill("wallpaper");
   await expect(page.getByRole("link", { name: "News" })).toHaveCount(0);
   await page.getByRole("link", { name: "Wallpaper" }).click();
   await expect(page.getByRole("heading", { name: "Enable custom background" })).toBeVisible();
   await page.getByRole("link", { name: "Back to dashboard" }).click();
-  expect(await width(page)).toBe(260);
+  await expect.poll(() => width(page)).toBe(260);
 });
 
 test("the widget panel can be resized while editing", async ({ page }) => {
   await page.getByRole("button", { name: "Edit dashboard", exact: true }).click();
-  expect(await width(page)).toBe(64 + 260);
+  await expect.poll(() => width(page)).toBe(64 + 260);
   await dragHandle(page, 40);
-  expect(await width(page)).toBe(64 + 300);
+  await expect.poll(() => width(page)).toBe(64 + 300);
 });
 
 test("theme and language can be changed", async ({ page }) => {
@@ -276,9 +276,13 @@ test("the AI opens as a third block and starts with its settings", async ({ page
   await expect
     .poll(async () => (await page.locator("main").boundingBox())?.width ?? 0)
     .toBeLessThan((before?.width ?? 0) - 300);
-  const after = await page.locator("main").boundingBox();
-  const panel = await aiPanel(page).boundingBox();
-  expect(panel?.x).toBeGreaterThan((after?.x ?? 0) + (after?.width ?? 0));
+  await expect
+    .poll(async () => {
+      const after = await page.locator("main").boundingBox();
+      const panel = await aiPanel(page).boundingBox();
+      return (panel?.x ?? 0) - ((after?.x ?? 0) + (after?.width ?? 0));
+    })
+    .toBeGreaterThan(0);
 
   await aiPanel(page).getByRole("button", { name: "Close the AI panel" }).click();
   await expect(aiPanel(page)).toHaveCount(0);
