@@ -1,0 +1,125 @@
+/* A theme is one block of these variables. Components only use the Tailwind names below. */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --statly-page: #f5f5f2;
+  --statly-card: #ffffff;
+  --statly-control: #ffffff;
+  --statly-text: #11182f;
+  --statly-muted: #727985;
+  --statly-border: #e2e5e9;
+  --statly-selected: #e6f4f3;
+  --statly-accent: #087f8c;
+  --statly-accent-strong: #087783;
+  --statly-primary: #087f8c;
+  --statly-primary-hover: #066a75;
+  --statly-on-primary: #ffffff;
+  --statly-hover: #f0f6f5;
+  --statly-success: #116b3d;
+  --statly-success-surface: #e8f7ed;
+  --statly-danger: #a52c24;
+  --statly-nav: #11182f;
+  --statly-nav-hover: #27344e;
+  --statly-nav-text: #e8edf5;
+  --statly-nav-muted: #b7c3d4;
+  --statly-sequence-1: #e6ebee;
+  --statly-sequence-2: #a7dcdf;
+  --statly-sequence-3: #5bb8c0;
+  --statly-sequence-4: #087f8c;
+  --statly-sequence-5: #05505a;
+  /* Categorical order, checked for color blindness with the dataviz validator. */
+  --statly-series-1: #008e9c;
+  --statly-series-2: #eb6834;
+  --statly-series-3: #6250d6;
+  --statly-series-4: #eda100;
+  --statly-series-5: #e87ba4;
+  --statly-series-6: #2a78d6;
+  --statly-series-7: #008300;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --statly-page: #171b24;
+  --statly-card: #222a36;
+  --statly-control: #252e3b;
+  --statly-text: #eef2f8;
+  --statly-muted: #aab4c3;
+  --statly-border: #394352;
+  --statly-selected: #293b44;
+  --statly-accent: #58d5dd;
+  --statly-accent-strong: #43c3cc;
+  --statly-primary: #087f8c;
+  --statly-primary-hover: #066a75;
+  --statly-hover: #252e3b;
+  --statly-success: #7ee2a5;
+  --statly-success-surface: #1d382b;
+  --statly-danger: #ff938b;
+  --statly-sequence-1: #2c3644;
+  --statly-sequence-2: #1d5a64;
+  --statly-sequence-3: #1f8a96;
+  --statly-sequence-4: #3fc3cc;
+  --statly-sequence-5: #a6eef0;
+  --statly-series-1: #199aa6;
+  --statly-series-2: #d9642f;
+  --statly-series-3: #7a68e0;
+  --statly-series-4: #b57e00;
+  --statly-series-5: #c7648e;
+  --statly-series-6: #3f8ae0;
+  --statly-series-7: #008300;
+}
+
+[data-theme="frutiger-aero"] {
+  color-scheme: light;
+  --statly-page: #dff7ff;
+  --statly-card: #ffffff;
+  --statly-control: #f2fdff;
+  --statly-text: #123b5d;
+  --statly-muted: #43718d;
+  --statly-border: #8bd7ed;
+  --statly-selected: #bcefff;
+  --statly-accent: #0a9bd6;
+  --statly-accent-strong: #098cc1;
+  --statly-primary: #0a9bd6;
+  --statly-primary-hover: #098cc1;
+  --statly-hover: rgb(132 224 250 / 28%);
+  --statly-success: #116b3d;
+  --statly-success-surface: #dff8e9;
+  --statly-danger: #a52c24;
+  --statly-sequence-1: #e3f3f9;
+  --statly-sequence-2: #a9def3;
+  --statly-sequence-3: #5cbce6;
+  --statly-sequence-4: #0a9bd6;
+  --statly-sequence-5: #05608a;
+}
+
+@theme inline {
+  --color-window: #000000;
+  --color-page: var(--statly-page);
+  --color-card: var(--statly-card);
+  --color-control: var(--statly-control);
+  --color-text: var(--statly-text);
+  --color-muted: var(--statly-muted);
+  --color-line: var(--statly-border);
+  --color-selected: var(--statly-selected);
+  --color-accent: var(--statly-accent);
+  --color-accent-strong: var(--statly-accent-strong);
+  --color-primary: var(--statly-primary);
+  --color-primary-hover: var(--statly-primary-hover);
+  --color-on-primary: var(--statly-on-primary);
+  --color-hover: var(--statly-hover);
+  --color-success: var(--statly-success);
+  --color-success-surface: var(--statly-success-surface);
+  --color-danger: var(--statly-danger);
+  --color-nav: var(--statly-nav);
+  --color-nav-hover: var(--statly-nav-hover);
+  --color-nav-text: var(--statly-nav-text);
+  --color-nav-muted: var(--statly-nav-muted);
+
+  --font-sans: "Inter", "SF Pro Text", "Segoe UI", sans-serif;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-popover: 14px;
+  --shadow-card: 0 2px 8px rgb(17 24 47 / 5%);
+  --ease-statly: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

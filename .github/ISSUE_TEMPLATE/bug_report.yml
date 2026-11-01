@@ -1,0 +1,31 @@
+name: Bug report
+description: Something does not work as it should
+body:
+  - type: markdown
+    attributes:
+      value: Never paste an API key, a connection code or private card content here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open the dashboard\n2. ..."
+    validations:
+      required: true
+  - type: input
+    id: statly
+    attributes:
+      label: Statly version
+    validations:
+      required: true
+  - type: input
+    id: anki
+    attributes:
+      label: Anki version and operating system
+    validations:
+      required: true

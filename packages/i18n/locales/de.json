@@ -1,0 +1,1058 @@
+{
+  "nav": {
+    "dashboard": "Start",
+    "library": "Widget Library",
+    "settings": "Einstellungen",
+    "ankiStatistics": "Anki-Statistiken",
+    "resize": "Seitenleiste in der Breite ändern",
+    "ai": "KI"
+  },
+  "time": {
+    "hoursMinutes": "{{hours}} Std. {{minutes}} Min.",
+    "minutes": "{{minutes}} Min.",
+    "seconds": "{{seconds}} Sek."
+  },
+  "dashboard": {
+    "edit": "Dashboard bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "reset": "Zurücksetzen",
+    "remove": "Vom Dashboard entfernen",
+    "range": "Zeitraum",
+    "deck": "Stapel",
+    "allDecks": "Alle Stapel",
+    "empty": "Für diese Auswahl gibt es nichts anzuzeigen.",
+    "error": "Diese Statistik konnte nicht geladen werden.",
+    "closed": "Statistiken sind wieder verfügbar, sobald Anki die Synchronisierung beendet hat.",
+    "ranges": {
+      "today": "Heute",
+      "7": "Letzte 7 Tage",
+      "30": "Letzte 30 Tage",
+      "90": "Letzte 90 Tage",
+      "365": "Letztes Jahr",
+      "yesterday": "Gestern",
+      "last7": "Letzte 7 Tage",
+      "last30": "Letzte 30 Tage",
+      "lastYear": "Letztes Jahr",
+      "all": "Maximal verfügbar",
+      "custom": "Benutzerdefinierter Zeitraum"
+    },
+    "intro": "Deine Lernaktivität auf einen Blick. Wähle oben Zeitraum und Stapel.",
+    "resize": "Größe ändern",
+    "quickRanges": "Schnellauswahl",
+    "start": "Startdatum",
+    "end": "Enddatum",
+    "invalidRange": "Wähle ein Startdatum vor dem Enddatum und kein Datum in der Zukunft.",
+    "apply": "Anwenden",
+    "widgets": "Widgets",
+    "searchWidgets": "Widgets suchen",
+    "addNamed": "{{title}} hinzufügen",
+    "share": "Dashboard teilen",
+    "shareNote": "Exportiere oder importiere dein Dashboard-Layout.",
+    "dropHere": "Statly-JSON-Datei hier ablegen",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "imported": "Layout geladen. Speichere es oder gehe mit Abbrechen zurück.",
+    "importFailed": "Das ist keine nutzbare Statly-Dashboard-Datei.",
+    "exported": "Dashboard exportiert.",
+    "groups": {
+      "progress": "Lernfortschritt",
+      "collection": "Stapel und Sammlung",
+      "habits": "Lerngewohnheiten",
+      "custom": "Eigene Widgets",
+      "favorites": "Favoriten",
+      "anki": "Anki-Statistiken"
+    }
+  },
+  "widgets": {
+    "review-summary": {
+      "title": "Wiederholungen",
+      "note": "Antworten im gewählten Zeitraum",
+      "description": "Anzahl der Karten, die du im ausgewählten Zeitraum wiederholt hast."
+    },
+    "study-time": {
+      "title": "Lernzeit",
+      "note": "Aufgewendete Zeit im gewählten Zeitraum",
+      "description": "Aufgewendete Zeit für Wiederholungen im gewählten Zeitraum."
+    },
+    "success-rate": {
+      "title": "Erfolgsquote",
+      "note": "Antworten mit Schwer oder besser",
+      "description": "Anteil der Antworten mit Schwer oder besser im gewählten Zeitraum."
+    },
+    "due-cards": {
+      "title": "Fällige Karten",
+      "note": "Jetzt lernbereit, unabhängig vom Zeitraum",
+      "description": "Jetzt lernbereite Karten im gewählten Stapel, unabhängig vom Zeitraum."
+    },
+    "review-breakdown": {
+      "title": "Wiederholungen nach Kategorie",
+      "note": "Eindeutige Karten. Kategorien können sich überschneiden.",
+      "description": "Sieh, wie sich neue Karten, Wiederholungen und weitere Kategorien im Zeitraum verteilen."
+    },
+    "deck-activity": {
+      "title": "Aktivität nach Stapel",
+      "note": "Wiederholungen nach aktuellem Stapel der Karte",
+      "description": "Vergleiche deine Wiederholungen nach aktueller Stapelzuordnung."
+    },
+    "review-timeline": {
+      "title": "Wiederholungen im Zeitverlauf",
+      "note": "Balken zeigen Wiederholungen, die Linie ihren laufenden Durchschnitt",
+      "average": "Durchschnitt",
+      "description": "Verfolge deine täglichen, wöchentlichen oder monatlichen Wiederholungen.",
+      "range": "Zeitraum des Verlaufs",
+      "ranges": {
+        "month": "1 Monat",
+        "threeMonths": "3 Monate",
+        "year": "1 Jahr",
+        "selected": "Ausgewählt"
+      }
+    },
+    "answer-buttons": {
+      "title": "Antwortknöpfe",
+      "note": "Wie oft du welche Antwort gewählt hast",
+      "description": "Sieh, wie häufig du Nochmal, Schwer, Gut und Einfach gewählt hast."
+    },
+    "due-forecast": {
+      "title": "Fällige Wiederholungen, nächste 7 Tage",
+      "note": "Überfällige Karten zählen zu heute",
+      "description": "Plane deine Wiederholungen für die kommenden Tage inklusive Rückstand."
+    },
+    "card-states": {
+      "title": "Karten nach Lernstatus",
+      "note": "Aktueller Bestand, unabhängig vom Zeitraum",
+      "description": "Vergleiche neue, lernende, fällige, ausgesetzte und weitere Karten."
+    },
+    "study-rhythm": {
+      "title": "Deine Lernzeiten",
+      "note": "Antworten nach Wochentag und Uhrzeit",
+      "weekdays": "Wiederholungen nach Wochentag",
+      "hours": "Wiederholungen nach Uhrzeit",
+      "description": "Erkenne, an welchen Wochentagen und zu welchen Uhrzeiten du lernst."
+    },
+    "review-heatmap": {
+      "title": "Lernaktivität im Jahresverlauf",
+      "summary": "Serie {{current}} Tage, längste {{longest}}, {{average}} Wiederholungen pro Tag",
+      "tooltip_one": "{{date}}: {{reviews}} Wiederholung",
+      "tooltip_other": "{{date}}: {{reviews}} Wiederholungen",
+      "previous": "Vorheriges Jahr",
+      "next": "Nächstes Jahr",
+      "description": "Sieh deine täglichen Wiederholungen im Jahresverlauf auf einen Blick."
+    },
+    "anki-today": {
+      "title": "Heute",
+      "note": "Was du heute gelernt hast, wie in Anki",
+      "description": "Ankis Zusammenfassung des Tages: Karten, Zeit, Fehler und wie es bei gut gelernten Karten lief."
+    },
+    "anki-future-due": {
+      "title": "Zukünftig fällig",
+      "note": "Wiederholungen, die schon eingeplant sind",
+      "description": "Wie viele Wiederholungen in den nächsten Tagen warten, mit oder ohne Rückstand."
+    },
+    "anki-calendar": {
+      "title": "Kalender",
+      "note": "Wiederholungen pro Tag",
+      "description": "Ankis Kalender mit jedem Lerntag, Jahr für Jahr."
+    },
+    "anki-reviews": {
+      "title": "Wiederholungen",
+      "note": "Wiederholungen aus der Vergangenheit",
+      "description": "Vergangene Wiederholungen nach Kartenart, als Anzahl oder als Zeitaufwand."
+    },
+    "anki-card-counts": {
+      "title": "Kartenverteilung",
+      "note": "Deine Karten nach Zustand",
+      "description": "Neue, lernende, junge, gut gelernte, ausgesetzte und zurückgestellte Karten auf einen Blick."
+    },
+    "anki-intervals": {
+      "title": "Wiederholungsintervalle",
+      "note": "Abstand, bis Karten wiederkommen",
+      "description": "Wie weit deine Karten auseinander eingeplant sind."
+    },
+    "anki-stability": {
+      "title": "Stabilität",
+      "note": "Abstand, bei dem die Abrufbarkeit auf 90 % sinkt",
+      "description": "Wie lange deine Karten laut FSRS im Gedächtnis bleiben."
+    },
+    "anki-difficulty": {
+      "title": "Schwierigkeit",
+      "note": "Je schwieriger eine Karte, desto langsamer wächst ihre Stabilität",
+      "description": "Wie schwer deine Karten sind. Ohne FSRS zeigt es ihre Leichtigkeit.",
+      "titleEase": "Leichtigkeit",
+      "noteEase": "Je geringer die Leichtigkeit, desto öfter kommt eine Karte"
+    },
+    "anki-retrievability": {
+      "title": "Abrufbarkeit",
+      "note": "Die Chance, dass du eine Karte heute weißt",
+      "description": "Wie wahrscheinlich du deine Karten heute laut FSRS noch weißt."
+    },
+    "anki-hours": {
+      "title": "Nach Uhrzeit",
+      "note": "Wiederholungen und Erfolg nach Tageszeit",
+      "description": "Wann du lernst und wann du dich am besten erinnerst."
+    },
+    "anki-buttons": {
+      "title": "Antwortknöpfe",
+      "note": "Wie oft welcher Knopf gedrückt wurde",
+      "description": "Nochmal, Schwer, Gut und Einfach für lernende, junge und gut gelernte Karten."
+    },
+    "anki-added": {
+      "title": "Hinzugefügt",
+      "note": "Neue Karten, die du angelegt hast",
+      "description": "Wie viele Karten du im Lauf der Zeit angelegt hast."
+    },
+    "anki-true-retention": {
+      "title": "Echte Erinnerungsquote",
+      "note": "Erfolgsquote bei Karten mit mindestens einem Tag Abstand",
+      "description": "Wie gut du dich wirklich erinnerst, von heute bis zum Gesamtverlauf."
+    }
+  },
+  "answers": {
+    "again": "Nochmal",
+    "hard": "Schwer",
+    "good": "Gut",
+    "easy": "Einfach"
+  },
+  "categories": {
+    "total": "Alle Karten",
+    "failed": "Fehlversuche",
+    "new": "Neu",
+    "reviewed": "Wiederholt",
+    "relearned": "Wiedererlernt",
+    "longInterval": "Langes Intervall"
+  },
+  "states": {
+    "new": "Neu",
+    "learning": "Lernen",
+    "review": "Wiederholung",
+    "suspended": "Ausgesetzt",
+    "buried": "Zurückgestellt",
+    "other": "Sonstige"
+  },
+  "settings": {
+    "appearance": "Darstellung",
+    "theme": "Design",
+    "language": "Sprache",
+    "about": "Über Statly",
+    "version": "Statly {{statly}}, Anki {{anki}}",
+    "sponsoredBy": "Gesponsert von",
+    "themes": {
+      "system": "Wie Anki",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "frutiger-aero": "Frutiger Aero"
+    },
+    "languages": {
+      "auto": "Wie Anki",
+      "en": "English",
+      "de": "Deutsch"
+    },
+    "back": "Zurück zum Dashboard",
+    "search": "Einstellungen suchen",
+    "languageNote": "Wähle die Sprache für das gesamte Statly-Interface.",
+    "themeNote": "Wähle, wie Statly dargestellt werden soll.",
+    "updates": "Statly-Updates",
+    "autoUpdate": "Statly automatisch aktualisieren",
+    "autoUpdateNote": "Erlaubt Ankis eingebautem Updater, Statly bei automatischen Prüfungen einzubeziehen.",
+    "uninstall": "Statly deinstallieren",
+    "uninstallNote": "Entfernt Statly über Ankis Add-on-Verwaltung. Karten, Notizen und Stapel bleiben unverändert.",
+    "newsTitle": "Das neue Statly",
+    "newsBody": "Statly wurde von Grund auf neu gebaut: ein schnelleres Dashboard, eine genauere Statistik-Engine und ein Fundament für viel mehr. Deine Sammlung bleibt lokal, und Statly liest nur die nötigen Lerndaten.",
+    "counterColors": "Eigene Zählerfarben",
+    "counterColorsNote": "Färbe Neu, Lernen und Fällig auf Ankis Stapelübersicht.",
+    "counterMode": {
+      "light": "Heller Modus",
+      "dark": "Dunkler Modus"
+    },
+    "counters": {
+      "new": "Neu",
+      "learning": "Lernen",
+      "due": "Fällig"
+    },
+    "restoreColors": "Standardfarben wiederherstellen",
+    "wallpaperEnable": "Eigenen Hintergrund aktivieren",
+    "wallpaperEnableNote": "Das Bild wird nur auf der Stapelübersicht dargestellt.",
+    "wallpaperPreview": "Wallpaper-Vorschau",
+    "wallpaperNone": "Kein Hintergrundbild ausgewählt.",
+    "wallpaperChoose": "Bild auswählen",
+    "wallpaperSample": "Beispiel-Wallpaper",
+    "wallpaperRemove": "Entfernen",
+    "wallpaperBlur": "Unschärfe",
+    "wallpaperOverlay": "Dunkles Overlay",
+    "wallpaperPosition": "Bildposition",
+    "wallpaperText": "Studiert-Text",
+    "wallpaperDefaults": "Standardeinstellungen wiederherstellen",
+    "wallpaperLimits": "PNG, JPEG oder WebP, maximal 20 MB und 40 Megapixel. Bilder werden lokal optimiert und gespeichert.",
+    "positions": {
+      "center": "Mitte",
+      "top": "Oben",
+      "bottom": "Unten"
+    },
+    "textColors": {
+      "dark": "Dunkel",
+      "light": "Hell"
+    },
+    "deckHeatmap": "Heatmap auf der Stapelübersicht",
+    "deckHeatmapNote": "Zeige deine Lernaktivität zusätzlich auf Ankis normaler Stapelübersicht.",
+    "brandAnimation": "Statly-Animation beim Öffnen von Anki",
+    "brandAnimationNote": "Zeige zehn Sekunden lang eine dezente Animation auf dem Statly-Link in Ankis Kopfzeile.",
+    "resetDashboard": "Dashboard zurücksetzen",
+    "resetDashboardNote": "Stelle die Standardansicht mit den wichtigsten Statistiken wieder her.",
+    "resetAction": "Standard wiederherstellen",
+    "resetDone": "Wiederhergestellt",
+    "aiTitle": "Statly KI",
+    "aiBody": "Dein KI-Assistent sitzt jetzt in einem eigenen Bereich neben der Seite. Auch seine Einstellungen findest du dort, damit alles an einem Ort bleibt.",
+    "shortcutActions": {
+      "dashboard": "Dashboard öffnen",
+      "settings": "Einstellungen öffnen",
+      "library": "Widget Library öffnen",
+      "ankiStatistics": "Anki-Statistiken öffnen"
+    },
+    "shortcutNone": "Keine",
+    "shortcutRecording": "Tasten drücken ...",
+    "shortcutPress": "Drücke eine Tastenkombination. Esc bricht ab, die Rücktaste löscht.",
+    "shortcutSaved": "Shortcut gespeichert.",
+    "shortcutConflict": "Bereits belegt durch {{name}}.",
+    "supportTitle": "Statly arbeitet lokal",
+    "supportBody": "Links zum Projekt und zur Feedback-Seite folgen mit der öffentlichen Version. Karten, Notizen und Lernverläufe werden nie übertragen.",
+    "sponsorTitle": "Schlicht im Design. Mit einer Story, die zu dir passt.",
+    "sponsorBody": "Oldschool Timeless verbindet minimalistische, zeitlose Designs mit kleinen Geschichten. Die Kleidung ist für den Alltag gemacht.",
+    "sponsorVisit": "Oldschool Timeless besuchen",
+    "sponsorCollections": "Kollektionen ansehen",
+    "sections": {
+      "general": {
+        "title": "Allgemein",
+        "note": "Sprache und Aktualisierungen."
+      },
+      "news": {
+        "title": "Neuigkeiten",
+        "note": "Was es Neues in Statly gibt."
+      },
+      "appearance": {
+        "title": "Erscheinungsbild",
+        "note": "Design und Zählerfarben für Statly und die Stapelübersicht."
+      },
+      "wallpaper": {
+        "title": "Wallpaper",
+        "note": "Ein eigenes Hintergrundbild für Ankis Stapelübersicht. Karten und Stapel bleiben unverändert."
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "note": "Statlys Startseite und die Anki-Stapelübersicht anpassen."
+      },
+      "ai": {
+        "title": "KI",
+        "note": "Dein eigener KI-Assistent, in einem Bereich neben der Seite."
+      },
+      "shortcuts": {
+        "title": "Shortcuts",
+        "note": "Wähle eine Aktion und drücke die gewünschte Tastenkombination."
+      },
+      "support": {
+        "title": "Statly-Support",
+        "note": "Projekt und Feedback an einem Ort."
+      },
+      "supporters": {
+        "title": "Unterstützer",
+        "note": "Danke an alle, die Statly möglich machen."
+      },
+      "sponsor": {
+        "title": "Oldschool Timeless",
+        "note": "Statly wird gesponsert von Oldschool Timeless."
+      },
+      "mobile": {
+        "title": "iPhone & iPad",
+        "note": "Sieh dein Dashboard in AnkiMobile und AnkiDroid."
+      }
+    },
+    "jojoRole": "Die Idee zum Design Frutiger Aero.",
+    "aiOpen": "KI-Bereich öffnen",
+    "fullscreen": "Im Vollbild öffnen",
+    "fullscreenNote": "Statly füllt beim Öffnen den ganzen Bildschirm.",
+    "sponsorBestsellers": "Bestseller ansehen",
+    "backgrounds": "Hintergrundbilder",
+    "backgroundsNote": "Ein Bild hinter deinem Dashboard, für jedes Gerät einzeln. Handy und Tablet bekommen es mit der Karte.",
+    "backgroundChoose": "Bild wählen",
+    "backgroundRemove": "Entfernen"
+  },
+  "error": {
+    "title": "Etwas ist schiefgelaufen",
+    "body": "Deine Karten sind davon nicht betroffen. Neu laden behebt das meistens.",
+    "reload": "Statly neu laden"
+  },
+  "pages": {
+    "dashboard": "Dashboard"
+  },
+  "library": {
+    "remove": "Entfernen ({{count}})",
+    "removeNamed": "{{title}} entfernen",
+    "preview": "Vorschau",
+    "kinds": {
+      "metric": "Kennzahl",
+      "chart": "Diagramm",
+      "forecast": "Prognose",
+      "collection": "Bestand",
+      "heatmap": "Heatmap"
+    },
+    "importWidget": "Widget importieren",
+    "createWidget": "Widget erstellen",
+    "customKind": "Eigenes Widget",
+    "addToDashboard": "Zum Dashboard hinzufügen",
+    "edit": "Widget bearbeiten",
+    "delete": "Widget löschen",
+    "confirmDelete": "Wirklich löschen?",
+    "search": "Widgets und Vorlagen suchen",
+    "filter": "Bibliothek filtern",
+    "noResults": "Dazu gibt es keinen Treffer.",
+    "showAll": "Alle {{count}} anzeigen",
+    "close": "Schließen",
+    "useTemplate": "Vorlage verwenden",
+    "templateKind": "Vorlage",
+    "standardSize": "{{w}} × {{h}} Kästchen",
+    "filters": {
+      "all": "Alle",
+      "progress": "Fortschritt",
+      "collection": "Bestand",
+      "habits": "Gewohnheiten",
+      "anki": "Anki-Statistiken",
+      "templates": "Vorlagen",
+      "custom": "Deine Widgets",
+      "favorites": "Favoriten"
+    },
+    "templateNotes": {
+      "dailyGoal": "Ein Ring, der sich bis zum Tagesziel füllt.",
+      "streak": "Deine aktuelle Serie auf einer farbigen Kachel.",
+      "weekly": "Deine Wiederholungen der letzten sieben Tage als Diagramm."
+    },
+    "addFavorite": "{{title}} zu Favoriten hinzufügen",
+    "removeFavorite": "{{title}} aus Favoriten entfernen",
+    "noFavorites": "Markiere Widgets mit dem Stern, um sie hier zu finden."
+  },
+  "welcome": {
+    "title": "Willkommen bei Statly",
+    "body": "Sieh deinen Fortschritt. Deine Sammlung bleibt deine: Statly liest nur Statistiken und verändert niemals deine Karten.",
+    "terms": "Ich akzeptiere die Lizenz. Statly wird ohne Gewähr bereitgestellt.",
+    "step": "Einrichtung, {{current}} von {{total}}",
+    "chooseLanguage": "Sprache auswählen",
+    "chooseTheme": "Welches Design möchtest du?",
+    "themeNote": "Du kannst das jederzeit in den Einstellungen ändern.",
+    "back": "Zurück",
+    "next": "Weiter",
+    "start": "Statly starten",
+    "role": "Über dich",
+    "discovery": "Wie hast du Statly gefunden?",
+    "roles": {
+      "student": "Student:in",
+      "educator": "Lehrkraft oder Dozent:in",
+      "medical_student": "Medizinstudent:in",
+      "law_student": "Jurastudent:in",
+      "programmer": "Programmierer:in",
+      "language_learner": "Sprachenlerner:in",
+      "other": "Sonstiges"
+    },
+    "discoverySources": {
+      "ankiweb": "AnkiWeb",
+      "recommendation": "Empfehlung",
+      "social_media": "Soziale Medien",
+      "web_search": "Websuche",
+      "website": "Website oder Blog",
+      "other": "Sonstiges"
+    }
+  },
+  "rating": {
+    "title": "Gefällt dir Statly?",
+    "body": "Eine Bewertung auf AnkiWeb hilft anderen Anki-Nutzern, das Add-on zu finden. Das dauert keine Minute.",
+    "rate": "Statly auf AnkiWeb bewerten",
+    "later": "Vielleicht später",
+    "never": "Nein, danke"
+  },
+  "calendar": {
+    "selectRange": "Zeitraum auswählen",
+    "previous": "Vorheriger Monat",
+    "next": "Nächster Monat",
+    "invalid": "Bitte gib ein gültiges Datum im Format TT.MM.JJJJ ein."
+  },
+  "editor": {
+    "blocks": "Bausteine",
+    "templates": "Vorlagen",
+    "newWidget": "Neues Widget",
+    "widget": "Widget",
+    "properties": "Eigenschaften",
+    "resize": "Größe ändern",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
+    "needsName": "Gib deinem Widget zuerst einen Namen.",
+    "name": "Name",
+    "description": "Beschreibung",
+    "width": "Breite in Kästchen",
+    "height": "Höhe in Kästchen",
+    "background": "Hintergrund",
+    "gradientStart": "Verlauf Anfang",
+    "gradientEnd": "Verlauf Ende",
+    "angle": "Winkel",
+    "shade": "Abdunkeln",
+    "chooseMedia": "Datei auswählen",
+    "text": "Text",
+    "textSize": "Textgröße",
+    "align": "Ausrichtung",
+    "weight": "Stärke",
+    "color": "Farbe",
+    "value": "Zeigt",
+    "range": "Zeitraum",
+    "chartKind": "Diagrammtyp",
+    "goal": "Ziel",
+    "progressKind": "Stil",
+    "fit": "Einpassen",
+    "corners": "Abgerundete Ecken",
+    "shape": "Form",
+    "opacity": "Deckkraft",
+    "bringForward": "Nach vorne",
+    "sendBackward": "Nach hinten",
+    "duplicate": "Duplizieren",
+    "delete": "Löschen",
+    "kinds": {
+      "text": "Text",
+      "metric": "Kennzahl",
+      "chart": "Diagramm",
+      "progress": "Fortschritt",
+      "heatmap": "Heatmap",
+      "media": "Bild oder Video",
+      "shape": "Form"
+    },
+    "templateNames": {
+      "dailyGoal": "Tagesziel",
+      "streak": "Serie",
+      "weekly": "Letzte 7 Tage"
+    },
+    "paints": {
+      "text": "Textfarbe",
+      "muted": "Sanfte Textfarbe",
+      "accent": "Akzentfarbe",
+      "card": "Kartenfarbe",
+      "custom": "Eigene Farbe"
+    },
+    "backgrounds": {
+      "card": "Wie andere Karten",
+      "color": "Farbe",
+      "gradient": "Verlauf",
+      "media": "Bild oder Video"
+    },
+    "alignments": {
+      "left": "Links",
+      "center": "Mitte",
+      "right": "Rechts"
+    },
+    "weights": {
+      "normal": "Normal",
+      "bold": "Fett"
+    },
+    "ranges": {
+      "dashboard": "Dashboard-Filter",
+      "today": "Heute",
+      "last7": "Letzte 7 Tage",
+      "last30": "Letzte 30 Tage",
+      "lastYear": "Letztes Jahr"
+    },
+    "metrics": {
+      "reviews": "Wiederholungen",
+      "studyTime": "Lernzeit",
+      "successRate": "Erfolgsquote",
+      "retention": "Behaltensrate",
+      "activeDays": "Lerntage",
+      "dueCards": "Fällige Karten",
+      "currentStreak": "Aktuelle Serie",
+      "longestStreak": "Längste Serie",
+      "dailyAverage": "Tagesdurchschnitt"
+    },
+    "series": {
+      "timeline": "Wiederholungen im Zeitverlauf",
+      "answerButtons": "Antwortknöpfe",
+      "deckActivity": "Aktivität nach Stapel",
+      "forecast": "Fälligkeitsprognose",
+      "cardStates": "Karten nach Status",
+      "weekdays": "Wiederholungen nach Wochentag",
+      "hours": "Wiederholungen nach Uhrzeit"
+    },
+    "chartKinds": {
+      "bar": "Balken",
+      "line": "Linie"
+    },
+    "progressKinds": {
+      "ring": "Ring",
+      "bar": "Balken"
+    },
+    "fits": {
+      "cover": "Rahmen füllen",
+      "contain": "Alles zeigen"
+    },
+    "shapes": {
+      "rectangle": "Rechteck",
+      "ellipse": "Kreis"
+    },
+    "resetHint": "Die Rücktaste setzt dieses Feld zurück",
+    "loop": "Wiederholen",
+    "preparing": "Dein Video wird vorbereitet ...",
+    "size": "Größe",
+    "currentStandard": "Gerade {{w}} × {{h}} Kästchen, die Standardgröße",
+    "currentOther": "Gerade {{w}} × {{h}} Kästchen",
+    "otherSizeNote": "Du bist bei {{w}} × {{h}} Kästchen. Elemente, die du hier verschiebst, behalten diese Anordnung nur für diese Größe.",
+    "setStandard": "Als Standardgröße festlegen",
+    "setMinimum": "Als Minimum",
+    "setMaximum": "Als Maximum",
+    "minWidth": "Min. Breite",
+    "maxWidth": "Max. Breite",
+    "minHeight": "Min. Höhe",
+    "maxHeight": "Max. Höhe",
+    "onlyFromSize": "Erst ab einer Größe zeigen",
+    "clearLayout": "Anordnung für diese Größe entfernen",
+    "roles": {
+      "minimum": "Min",
+      "standard": "Standard",
+      "maximum": "Max"
+    },
+    "show": {
+      "minimum": "Kleinste Größe zeigen",
+      "standard": "Standardgröße zeigen",
+      "maximum": "Größte Größe zeigen"
+    },
+    "resizeWidget": "Ziehen ändert die Größe. Mit Alt (⌥) wächst das Widget auf beiden Seiten.",
+    "rotate": "Element drehen. Mit Shift in 15-Grad-Schritten.",
+    "rotation": "Drehung",
+    "showTablet": "Tablet",
+    "showPhone": "Handy",
+    "guide": {
+      "label": "Geführte Tour",
+      "step": "Schritt {{step}} von {{count}}",
+      "next": "Weiter",
+      "skip": "Alles zeigen",
+      "start": {
+        "title": "Bauen wir dieses Widget",
+        "body": "Die KI hat ein Widget mit {{w}} mal {{h}} Kästchen vorbereitet. Wir setzen es Stück für Stück zusammen, damit du es beim nächsten Mal selbst kannst. An jeder Ecke kannst du die Größe ziehen."
+      },
+      "text": {
+        "title": "Ein Text",
+        "body": "Texte beschriften dein Widget. Du findest sie links unter Bausteine. Rechts änderst du Wortlaut, Größe und Farbe."
+      },
+      "metric": {
+        "title": "Eine Kennzahl",
+        "body": "Eine Kennzahl zeigt eine Live-Zahl aus Anki. Rechts wählst du, welche Zahl und für welchen Zeitraum."
+      },
+      "chart": {
+        "title": "Ein Diagramm",
+        "body": "Diagramme zeigen, wie sich etwas entwickelt. Rechts wählst du Daten, Zeitraum und ob Balken oder Linie."
+      },
+      "progress": {
+        "title": "Eine Fortschrittsanzeige",
+        "body": "Sie füllt sich bis zu einem Ziel. Rechts legst du das Ziel fest und wählst Ring oder Balken."
+      },
+      "heatmap": {
+        "title": "Eine Heatmap",
+        "body": "Sie zeigt dein Jahr auf einen Blick. Du kannst sie verschieben und an den Ecken in der Größe ändern."
+      },
+      "shape": {
+        "title": "Eine Form",
+        "body": "Formen gliedern ein Widget. Rechts änderst du Farbe und Ecken."
+      },
+      "media": {
+        "title": "Ein Bild",
+        "body": "Bilder und Videos machen ein Widget zu deinem. Videos bleiben am Desktop, Bilder kommen auch aufs Handy."
+      },
+      "finish": {
+        "title": "Fertig!",
+        "body": "Ändere, was du möchtest, und drücke oben auf Speichern. Dein Widget landet dann in der Widget Library."
+      }
+    }
+  },
+  "mobile": {
+    "howTitle": "So funktioniert es",
+    "step1": "Statly führt eine einzige Dashboard-Karte in einem eigenen Stapel, Statly Dashboard.",
+    "step2": "Die Karte kommt mit deinem normalen Anki-Sync aufs Handy.",
+    "step3": "Öffne auf dem Handy den Stapel und tippe auf Lernen. Das Dashboard erscheint, du musst nichts beantworten.",
+    "on": "Deine Dashboard-Karte ist aktiv",
+    "off": "Dashboard-Karte ist aus",
+    "offNote": "Deine Sammlung bleibt genau so, wie sie ist, bis du das einschaltest.",
+    "enable": "Dashboard-Karte einrichten",
+    "updated": "Zuletzt aktualisiert {{when}}",
+    "refresh": "Jetzt aktualisieren",
+    "remove": "Dashboard-Karte entfernen",
+    "removeNote": "Entfernt die Karte und ihren Stapel, falls sonst nichts darin liegt. Statly macht vorher ein Backup. Ein leerer Notiztyp namens Statly Dashboard bleibt, weil sein Löschen einen vollständigen Sync erzwingen würde.",
+    "confirmTitle": "Bevor es losgeht",
+    "confirm1": "Anki erstellt zuerst ein Backup deiner Sammlung.",
+    "confirm2": "Statly fügt einen Stapel, einen Notiztyp und eine Karte hinzu. Deine eigenen Karten bleiben unberührt.",
+    "confirm3": "Die Karte aktualisiert sich, wenn du zur Stapelübersicht zurückkehrst und vor einem Sync.",
+    "confirmAction": "Jetzt einrichten",
+    "limitsTitle": "Gut zu wissen",
+    "limits": "Die Karte zeigt den Stand deines letzten Desktop-Syncs. Auf dem Handy gelernte Karten erscheinen, nachdem dein Computer wieder synchronisiert hat. Eigene Widgets bleiben vorerst auf dem Desktop.",
+    "removeConfirm": "Endgültig entfernen"
+  },
+  "ai": {
+    "title": "Statly KI",
+    "resize": "KI-Bereich in der Breite ändern",
+    "close": "KI-Bereich schließen",
+    "views": {
+      "chat": "Chat",
+      "history": "Änderungen",
+      "setup": "KI-Einstellungen",
+      "chats": "Frühere Chats"
+    },
+    "intro": "Frag nach deinem Lernen oder lass Widgets und Dashboard anpassen. Ohne deine Zustimmung ändert sich nichts.",
+    "example1": "Wie viel habe ich vorgestern gelernt?",
+    "example2": "An welchem Stapel habe ich diesen Monat am meisten gearbeitet?",
+    "example3": "Erstelle ein Widget mit meiner Lernzeit von heute.",
+    "placeholder": "Frag nach deinem Lernen",
+    "send": "Senden",
+    "stop": "Stoppen",
+    "newChat": "Neuer Chat",
+    "openSetup": "KI-Einstellungen öffnen",
+    "toolsUsed_one": "{{count}} Statistik gelesen",
+    "toolsUsed_other": "{{count}} Statistiken gelesen",
+    "notices": {
+      "refused": "Das Modell hat diese Antwort abgelehnt.",
+      "length": "Die Antwort wurde abgeschnitten, weil sie zu lang wurde.",
+      "steps": "Das hat zu viele Schritte gebraucht und wurde gestoppt.",
+      "stopped": "Gestoppt."
+    },
+    "errors": {
+      "not_configured": "Wähle zuerst einen Dienst und ein Modell.",
+      "key_missing": "Dieser Dienst braucht einen API-Key.",
+      "consent_needed": "Bitte bestätige zuerst, was gesendet wird.",
+      "bad_url": "Diese Adresse ist nicht erlaubt. Nutze https, oder http auf diesem Computer.",
+      "key_invalid": "Der Dienst akzeptiert diesen API-Key nicht. Ein Chat-Abo enthält keinen API-Zugang.",
+      "no_access": "Dieser Key hat darauf keinen Zugriff.",
+      "model_missing": "Der Dienst kennt dieses Modell nicht.",
+      "rate_limited": "Der Dienst bekommt gerade zu viele Anfragen. Versuche es gleich noch einmal.",
+      "provider_down": "Der Dienst hat gerade Probleme. Bitte versuche es noch einmal.",
+      "unreachable": "Der Dienst ist nicht erreichbar. Läuft er, und bist du online?",
+      "no_tool_support": "Dieses Modell kann keine Tools nutzen und deine Statistiken deshalb nicht lesen. Bitte wähle ein anderes Modell.",
+      "bad_request": "Der Dienst hat die Anfrage abgelehnt.",
+      "bad_response": "Der Dienst hat eine Antwort geschickt, die Statly nicht lesen kann.",
+      "chat_too_long": "Dieser Chat ist sehr lang geworden. Bitte starte einen neuen.",
+      "context_too_small": "Diesem Modell fehlt der Platz. Lade es in LM Studio mit einer Kontextlänge von mindestens 8000 oder wähle ein größeres Modell.",
+      "no_credit": "Dein Guthaben bei diesem Dienst ist aufgebraucht. Lade es dort in deinem Konto auf.",
+      "keys_locked": "Deine Keys sind gesperrt. Gib zuerst dein Passwort ein."
+    },
+    "proposal": {
+      "widget": "Widget",
+      "dashboard": "Dashboard",
+      "settings": "Einstellungen",
+      "external": "aus einer anderen App",
+      "widgetCount_one": "{{count}} Widget",
+      "widgetCount_other": "{{count}} Widgets",
+      "apply": "Übernehmen",
+      "reject": "Ablehnen",
+      "applied": "Übernommen. Unter Änderungen kannst du das zurücknehmen.",
+      "rejected": "Abgelehnt.",
+      "pending": "Wartet auf dich.",
+      "openEditor": "Im Editor aufbauen"
+    },
+    "history": {
+      "note": "Alles, was eine KI geändert hat. Jeder Eintrag lässt sich zurücknehmen.",
+      "empty": "Noch keine Änderungen.",
+      "auto": "automatisch",
+      "undo": "Zurücknehmen",
+      "undone": "Zurückgenommen."
+    },
+    "setup": {
+      "provider": "Dienst",
+      "local": "Auf diesem Computer",
+      "address": "Adresse",
+      "key": "API-Key",
+      "keyPlaceholder": "Key einfügen",
+      "keySave": "Speichern",
+      "keySaved": "Verschlüsselt im Schlüsselbund deines Systems",
+      "keySession": "Nur im Arbeitsspeicher, bis Anki geschlossen wird",
+      "keyReplace": "Ersetzen",
+      "keyRemove": "Löschen",
+      "keyNote": "Der Schlüsselbund deines Systems verschlüsselt den Key. Statly zeigt ihn nie wieder an, schreibt ihn in keine Datei, hält ihn nur während einer Antwort im Arbeitsspeicher und schickt ihn nur an diesen Dienst. Beim Deinstallieren wird er gelöscht.",
+      "keyNoteSession": "Dein System hat keinen Schlüsselbund, den Statly nutzen kann. Der Key bleibt deshalb nur im Arbeitsspeicher, bis Anki geschlossen wird, und landet nie in einer Datei.",
+      "model": "Modell",
+      "modelPlaceholder": "Name des Modells",
+      "loadModels": "Verbindung testen und Modelle laden",
+      "noTools": "Dieses Modell kann keine Tools nutzen und deine Statistiken deshalb nicht lesen.",
+      "keyHelp": "Wie bekomme ich einen API-Key?",
+      "keyHelpOpen": "Key-Seite dieses Dienstes öffnen",
+      "keyHelpCreate": "Erstelle einen neuen Key und kopiere ihn.",
+      "keyHelpPaste": "Füge ihn hier ein und speichere.",
+      "keyHelpNote": "Ein Chat-Abo enthält keinen API-Zugang. Die API wird getrennt nach Nutzung bezahlt.",
+      "connected_one": "Verbunden. {{count}} Modell gefunden.",
+      "connected_other": "Verbunden. {{count}} Modelle gefunden.",
+      "beta": "Beta",
+      "betaNote": "Diese Anbindung konnte noch nicht mit einem echten Key getestet werden.",
+      "keyLimitNote": "Tipp: Erstelle einen eigenen Key nur für Statly und setze beim Dienst ein Ausgabenlimit. Das begrenzt, was ein verlorener Key je kosten könnte.",
+      "keySavedPassword": "Verschlüsselt im Schlüsselbund und mit deinem Passwort gesperrt"
+    },
+    "providers": {
+      "anthropic": {
+        "name": "Anthropic",
+        "note": "Claude, mit eigenem API-Key"
+      },
+      "openai": {
+        "name": "OpenAI",
+        "note": "Mit eigenem API-Key"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "note": "Viele Modelle, ein API-Key"
+      },
+      "custom": {
+        "name": "Anderer Dienst",
+        "note": "Jede OpenAI-kompatible Adresse"
+      },
+      "ollama": {
+        "name": "Ollama",
+        "note": "Läuft auf diesem Computer",
+        "help": "Starte Ollama und lade dann hier die Modelle."
+      },
+      "lmstudio": {
+        "name": "LM Studio",
+        "note": "Läuft auf diesem Computer",
+        "help": "Starte in LM Studio den lokalen Server und lade ein Modell."
+      }
+    },
+    "consent": {
+      "title": "Was an diesen Dienst gesendet wird",
+      "sent": "Deine Fragen und die Statistiken, die für die Antwort nötig sind, zum Beispiel Wiederholungen und Lernzeit.",
+      "names": "Namen deiner Widgets. Stapelnamen und Karteninhalte nur mit deiner Freigabe, nach der die KI fragt, wenn sie sie braucht.",
+      "never": "Sonst nichts aus deiner Sammlung, und Karten ändern kann sie nie.",
+      "terms": "Es gelten die Bedingungen des Dienstes, und du zahlst die Nutzung über dein eigenes Konto.",
+      "accept": "Verstanden"
+    },
+    "advanced": {
+      "title": "Erweitert",
+      "permissions": "Freigaben",
+      "keepChats": "Chats aufbewahren",
+      "keepChatsNote": "Bleiben nur auf diesem Computer, höchstens die letzten 40. Ausschalten löscht sie."
+    },
+    "external": {
+      "title": "Externe KI-Apps erlauben",
+      "note": "Apps auf diesem Computer, zum Beispiel Claude Desktop, dürfen deine Statistiken lesen und Änderungen vorschlagen.",
+      "step1": "Speichere die Verbindungsdatei und öffne sie in deiner KI-App.",
+      "step2": "Erstelle einen Verbindungscode und füge ihn dort ein.",
+      "step3": "Lass Anki währenddessen geöffnet.",
+      "saveBundle": "Verbindungsdatei speichern",
+      "newCode": "Verbindungscode erstellen",
+      "renewCode": "Neuen Code erstellen",
+      "code": "Verbindungscode",
+      "codeOnce": "Wird nur jetzt angezeigt. Ein neuer Code macht diesen ungültig.",
+      "portBusy": "Ein anderes Programm nutzt Statlys Port. Erstelle einen neuen Code, um einen anderen zu wählen.",
+      "limits": "Nur von diesem Computer aus erreichbar. Apps auf dem Handy können sich nicht verbinden.",
+      "permissions": "Freigaben mit externen Apps teilen",
+      "permissionsNote": "Externe Apps sehen dann, was auch der Chat sehen darf. Selbst nachfragen können sie nie."
+    },
+    "auto": {
+      "title": "Automodus",
+      "note": "Die KI ändert Widgets, Dashboard und Darstellung ohne Nachfrage.",
+      "externalTitle": "Automodus für externe Apps",
+      "externalNote": "Auch externe Apps dürfen Änderungen dann ohne Nachfrage übernehmen.",
+      "warningTitle": "Sicherheitswarnung",
+      "warning1": "Die KI ändert dann Widgets, dein Dashboard und die Darstellung, ohne dich zu fragen.",
+      "warning2": "Ein manipulierter Stapelname, Widget-Name oder eine geteilte Datei kann sie zu Änderungen bringen, die du nie wolltest.",
+      "warning3": "Karten, Notizen, API-Keys, die Handy-Karte und dieser Schalter bleiben gesperrt. Jede Änderung lässt sich unter Änderungen zurücknehmen.",
+      "understood": "Ich habe das Risiko verstanden",
+      "enable": "Trotzdem einschalten",
+      "active": "Automodus ist an: Änderungen gelten ohne Nachfrage."
+    },
+    "working": "Denkt nach|Grübelt|Tüftelt|Knobelt|Sinniert|Brütet|Kombiniert|Wägt ab|Überlegt|Rätselt|Puzzelt|Spinnt Gedanken|Geht in sich|Reimt es sich zusammen|Zählt eins und eins zusammen|Sortiert die Gedanken|Dreht und wendet es|Folgt dem roten Faden|Schlägt nach|Forscht|Bohrt tiefer|Sucht den Kern|Lässt es sacken|Kocht eine Idee aus|Feilt an den Worten|Hirnt|Legt die Stirn in Falten|Fischt nach Ideen|Entwirrt den Knoten|Schärft den Gedanken",
+    "permission": {
+      "always": "Immer erlauben",
+      "once": "Nur in diesem Chat",
+      "deny": "Ablehnen",
+      "cards": {
+        "title": "Karten lesen erlauben?",
+        "body": "Die KI möchte Karteninhalte lesen, um das zu beantworten. Sie gehen an den gewählten Dienst. Ändern kann sie Karten nie.",
+        "setting": "Karten lesen",
+        "settingNote": "Karten suchen und ihren Inhalt lesen. Ist das aus, fragt die KI vorher nach."
+      },
+      "decks": {
+        "title": "Stapelnamen zeigen?",
+        "body": "Die KI möchte die Namen deiner Stapel sehen. Ohne das sieht sie nur Stapel 1, Stapel 2 und so weiter.",
+        "setting": "Stapelnamen sehen",
+        "settingNote": "Ist das aus, fragt die KI vorher nach und sieht nur Nummern."
+      }
+    },
+    "review": {
+      "title": "Es funktioniert!",
+      "body": "Diese Anbindung ist noch in der Beta und konnte nicht mit jedem Dienst getestet werden. Wenn du zufrieden bist, hilft eine kurze positive Bewertung auf AnkiWeb sehr, gern mit dem Hinweis, welchen Dienst du nutzt.",
+      "rate": "Bewertung schreiben",
+      "later": "Nicht jetzt"
+    },
+    "chats": {
+      "empty": "Hier erscheinen deine früheren Chats.",
+      "delete": "{{title}} löschen"
+    },
+    "keyLock": {
+      "title": "Zusatzpasswort für deine Keys",
+      "note": "Andere Anki-Add-ons können deinen Key dann nicht mehr unbemerkt aus dem Schlüsselbund lesen. Du gibst das Passwort einmal nach jedem Anki-Start ein.",
+      "limit": "Nach dem Entsperren könnte ein bösartiges Add-on den Key trotzdem abfangen. Installiere nur Add-ons, denen du vertraust.",
+      "unavailable": "Dafür braucht Statly den Schlüsselbund deines Systems, der hier nicht erreichbar ist.",
+      "password": "Passwort",
+      "current": "Aktuelles Passwort",
+      "new": "Neues Passwort",
+      "repeat": "Neues Passwort wiederholen",
+      "tooShort_one": "Nutze mindestens {{count}} Zeichen.",
+      "tooShort_other": "Nutze mindestens {{count}} Zeichen.",
+      "mismatch": "Die Passwörter stimmen nicht überein.",
+      "wrongPassword": "Dieses Passwort stimmt nicht.",
+      "lockNow": "Jetzt sperren",
+      "unlock": "Entsperren",
+      "lockedTitle": "Deine Keys sind gesperrt",
+      "lockedNote": "Gib dein Passwort ein. Die Keys bleiben entsperrt, bis Anki geschlossen wird.",
+      "forgot": "Passwort vergessen?",
+      "forgotNote": "Niemand kann es wiederherstellen. Du kannst deine gespeicherten Keys und das Passwort löschen und die Keys danach neu eintragen.",
+      "forgotConfirm": "Keys und Passwort löschen",
+      "steps": {
+        "enable": "Passwort festlegen",
+        "disable": "Passwort entfernen",
+        "change": "Passwort ändern"
+      },
+      "notes": {
+        "enable": "Vergisst du dieses Passwort, kann niemand deine Keys zurückholen. Du müsstest sie löschen und neu eintragen.",
+        "disable": "Deine Keys bleiben im Schlüsselbund, nur ohne das Zusatzpasswort.",
+        "change": "Deine Keys bleiben, wie sie sind. Nur das Passwort ändert sich."
+      }
+    },
+    "workingLabel": "Arbeite an deiner Antwort"
+  },
+  "devices": {
+    "choose": "Gerät wählen",
+    "desktop": "Desktop",
+    "tablet": "Tablet",
+    "phone": "Handy",
+    "automatic": "Wird aus deinem Desktop-Dashboard berechnet. Sobald du hier etwas änderst, behält dieses Gerät seine eigene Anordnung.",
+    "arranged": "Du hast dieses Gerät selbst angeordnet. Neue Desktop-Widgets kommen unten dazu.",
+    "followDesktop": "Wieder dem Desktop folgen",
+    "period": "Zeitraum",
+    "remove": "Von diesem Gerät entfernen",
+    "help": "Das zeigt deine Karte. Verschiebe Kacheln per Ziehen, ändere die Größe an der Ecke oder klicke eine Kachel an.",
+    "showLight": "Hell anzeigen",
+    "showDark": "Dunkel anzeigen",
+    "settingsTitle": "Für Handy und Tablet anordnen",
+    "settingsNote": "Statly berechnet das aus deinem Dashboard. Anpassen kannst du es im Bearbeitungsmodus des Dashboards.",
+    "settingsAction": "Anordnung anpassen",
+    "videoNote": "Videos bleiben am Desktop. Auf Handy und Tablet steht an ihrer Stelle ein Hinweis.",
+    "offerTitle": "Das auch auf dem Handy zeigen?",
+    "offerBody": "Statly legt dafür eine Dashboard-Karte in einem eigenen Stapel an, die mit deinem normalen Anki-Sync reist. Anki macht vorher ein Backup, deine eigenen Karten bleiben unberührt.",
+    "offerAccept": "Karte einrichten",
+    "offerLater": "Nicht jetzt"
+  },
+  "decks": {
+    "search": "Stapel suchen",
+    "none": "Kein Stapel passt zu dieser Suche.",
+    "expand": "{{name}} aufklappen",
+    "collapse": "{{name}} zuklappen"
+  },
+  "unsaved": {
+    "title": "Änderungen speichern?",
+    "body": "Du hast Änderungen, die noch nicht gespeichert sind.",
+    "save": "Speichern",
+    "stay": "Weiter bearbeiten",
+    "discard": "Verwerfen",
+    "closeWindow": "Du hast ungespeicherte Änderungen. Statly trotzdem schließen?"
+  },
+  "ankiStats": {
+    "range": "Zeitraum",
+    "ranges": {
+      "month": "1 Monat",
+      "threeMonths": "3 Monate",
+      "year": "1 Jahr",
+      "all": "Alle",
+      "half": "50 %",
+      "most": "95 %"
+    },
+    "running": "Bis hierhin aufsummiert",
+    "runningShare": "Anteil der Karten bis hierhin",
+    "correctShare": "Richtig",
+    "hourSpan": "{{from}}:00 bis {{to}}:00 Uhr",
+    "correctOf": "{{percent}} richtig ({{amount}} von {{total}})",
+    "ofTotal": "{{amount}} von {{total}} ({{percent}})",
+    "perDay": "{{value}}/Tag",
+    "needsFsrs": "Dafür braucht es FSRS, das du in Ankis Stapeloptionen einschalten kannst.",
+    "showTime": "Zeit anzeigen",
+    "backlog": "Rückstand",
+    "separateInactive": "Ausgesetzte und Zurückgestellte getrennt",
+    "units": {
+      "reviews_one": "{{value}} Wiederholung",
+      "reviews_other": "{{value}} Wiederholungen",
+      "cards_one": "{{value}} Karte",
+      "cards_other": "{{value}} Karten",
+      "notes_one": "{{value}} Notiz",
+      "notes_other": "{{value}} Notizen",
+      "days_one": "{{value}} Tag",
+      "days_other": "{{value}} Tage",
+      "months": "{{value}} Monate",
+      "years": "{{value}} Jahre",
+      "seconds": "{{value}} Sek.",
+      "cardsPerMinute": "{{value}} Karten/Min."
+    },
+    "facts": {
+      "daysStudied": "Lerntage",
+      "total": "Gesamt",
+      "averageStudied": "Durchschnitt an Lerntagen",
+      "averagePeriod": "Wenn du jeden Tag lernen würdest",
+      "answerTime": "Antwortzeit im Schnitt",
+      "cardsPerMinute": "Tempo",
+      "dueTomorrow": "Morgen fällig",
+      "dailyLoad": "Tägliches Pensum",
+      "averageInterval": "Durchschnittliches Intervall",
+      "medianInterval": "Median der Intervalle",
+      "averageStability": "Durchschnittliche Stabilität",
+      "medianStability": "Median der Stabilität",
+      "averageDifficulty": "Durchschnittliche Schwierigkeit",
+      "medianDifficulty": "Median der Schwierigkeit",
+      "averageEase": "Durchschnittliche Leichtigkeit",
+      "medianEase": "Median der Leichtigkeit",
+      "averageRetrievability": "Durchschnittliche Abrufbarkeit",
+      "knownCards": "Geschätztes Wissen, Karten",
+      "knownNotes": "Geschätztes Wissen, Notizen"
+    },
+    "series": {
+      "mature": "Gut gelernt",
+      "young": "Jung",
+      "relearn": "Wiedererlernen",
+      "relearning": "Wiedererlernen",
+      "learn": "Lernen",
+      "learning": "Lernen",
+      "review": "Wiederholen",
+      "filtered": "Filterstapel",
+      "new": "Neu",
+      "suspended": "Ausgesetzt",
+      "buried": "Zurückgestellt",
+      "added": "Hinzugefügt",
+      "due": "Fällig",
+      "cards": "Karten",
+      "reviews": "Wiederholungen",
+      "total": "Gesamt"
+    },
+    "today": {
+      "time": "Zeit",
+      "perCard": "Pro Karte",
+      "again": "Nochmal",
+      "correct": "Richtig",
+      "mature": "Richtig bei gut gelernten Karten",
+      "nothing": "Heute wurden noch keine Karten gelernt."
+    },
+    "retention": {
+      "mode": "Was gezeigt wird",
+      "modes": {
+        "summary": "Übersicht",
+        "young": "Jung",
+        "mature": "Gut gelernt",
+        "all": "Alle"
+      },
+      "range": "Zeitraum",
+      "all": "Alle",
+      "count": "Anzahl",
+      "passed": "Erfolge",
+      "failed": "Fehlversuche",
+      "rate": "Quote",
+      "ranges": {
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "week": "Letzte Woche",
+        "month": "Letzter Monat",
+        "year": "Letztes Jahr",
+        "all": "Gesamt"
+      }
+    }
+  }
+}

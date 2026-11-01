@@ -1,0 +1,22 @@
+{
+  "name": "@statly/mcp-bridge",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build && node scripts/bundle.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@statly/contract": "workspace:*",
+    "@types/node": "26.6.6",
+    "fflate": "0.8.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,1058 @@
+{
+  "nav": {
+    "dashboard": "Home",
+    "library": "Widget Library",
+    "settings": "Settings",
+    "ankiStatistics": "Anki statistics",
+    "resize": "Resize the sidebar",
+    "ai": "AI"
+  },
+  "time": {
+    "hoursMinutes": "{{hours}} h {{minutes}} min",
+    "minutes": "{{minutes}} min",
+    "seconds": "{{seconds}} sec"
+  },
+  "dashboard": {
+    "edit": "Edit dashboard",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reset": "Reset",
+    "remove": "Remove from dashboard",
+    "range": "Time range",
+    "deck": "Deck",
+    "allDecks": "All decks",
+    "empty": "Nothing to show for this selection.",
+    "error": "This statistic could not be loaded.",
+    "closed": "Statistics are available again once Anki has finished syncing.",
+    "ranges": {
+      "today": "Today",
+      "7": "Last 7 days",
+      "30": "Last 30 days",
+      "90": "Last 90 days",
+      "365": "Last year",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "lastYear": "Last year",
+      "all": "Maximum available",
+      "custom": "Custom range"
+    },
+    "intro": "Your learning activity at a glance. Choose a range and deck above.",
+    "resize": "Change size",
+    "quickRanges": "Quick selection",
+    "start": "Start date",
+    "end": "End date",
+    "invalidRange": "Choose a start date before the end date, and no date in the future.",
+    "apply": "Apply",
+    "widgets": "Widgets",
+    "searchWidgets": "Search widgets",
+    "addNamed": "Add {{title}}",
+    "share": "Share dashboard",
+    "shareNote": "Export or import your dashboard layout.",
+    "dropHere": "Drop a Statly JSON file here",
+    "export": "Export",
+    "import": "Import",
+    "imported": "Layout loaded. Save to keep it, or Cancel to go back.",
+    "importFailed": "This is not a usable Statly dashboard file.",
+    "exported": "Dashboard exported.",
+    "groups": {
+      "progress": "Learning progress",
+      "collection": "Decks and collection",
+      "habits": "Study habits",
+      "custom": "Custom widgets",
+      "favorites": "Favorites",
+      "anki": "Anki statistics"
+    }
+  },
+  "widgets": {
+    "review-summary": {
+      "title": "Reviews",
+      "note": "Answers in the selected range",
+      "description": "Number of cards reviewed in the selected range."
+    },
+    "study-time": {
+      "title": "Study time",
+      "note": "Time spent in the selected range",
+      "description": "Time spent reviewing in the selected range."
+    },
+    "success-rate": {
+      "title": "Success rate",
+      "note": "Answers rated Hard or better",
+      "description": "Share of answers rated Hard or better in the selected range."
+    },
+    "due-cards": {
+      "title": "Due cards",
+      "note": "Ready to study now, independent of the range",
+      "description": "Cards ready to study now in the selected deck, independent of the range."
+    },
+    "review-breakdown": {
+      "title": "Reviews by category",
+      "note": "Unique cards. Categories can overlap.",
+      "description": "See how new cards, reviews and other categories are distributed across the range."
+    },
+    "deck-activity": {
+      "title": "Activity by deck",
+      "note": "Reviews by each card's current deck",
+      "description": "Compare your reviews by current deck assignment."
+    },
+    "review-timeline": {
+      "title": "Reviews over time",
+      "note": "Bars show reviews, the line their running average",
+      "average": "Average",
+      "description": "Track your daily, weekly or monthly reviews.",
+      "range": "Range of the timeline",
+      "ranges": {
+        "month": "1 month",
+        "threeMonths": "3 months",
+        "year": "1 year",
+        "selected": "Selected range"
+      }
+    },
+    "answer-buttons": {
+      "title": "Answer buttons",
+      "note": "How often you chose each answer",
+      "description": "See how often you chose Again, Hard, Good and Easy."
+    },
+    "due-forecast": {
+      "title": "Due reviews, next 7 days",
+      "note": "Overdue cards are included in today",
+      "description": "Plan your reviews for the coming days, including overdue cards."
+    },
+    "card-states": {
+      "title": "Cards by learning state",
+      "note": "Current cards, independent of the range",
+      "description": "Compare new, learning, due, suspended and other cards."
+    },
+    "study-rhythm": {
+      "title": "Your study times",
+      "note": "Answers by weekday and local hour",
+      "weekdays": "Reviews by weekday",
+      "hours": "Reviews by hour",
+      "description": "See which weekdays and times you study."
+    },
+    "review-heatmap": {
+      "title": "Learning activity over the year",
+      "summary": "Streak {{current}} days, longest {{longest}}, {{average}} reviews a day",
+      "tooltip_one": "{{date}}: {{reviews}} review",
+      "tooltip_other": "{{date}}: {{reviews}} reviews",
+      "previous": "Previous year",
+      "next": "Next year",
+      "description": "See your daily reviews over the year at a glance."
+    },
+    "anki-today": {
+      "title": "Today",
+      "note": "What you studied today, as in Anki",
+      "description": "Anki's summary of today: cards, time, mistakes and how mature cards went."
+    },
+    "anki-future-due": {
+      "title": "Future due",
+      "note": "Reviews already scheduled for coming days",
+      "description": "How many reviews are waiting in the coming days, with or without your backlog."
+    },
+    "anki-calendar": {
+      "title": "Calendar",
+      "note": "Reviews per day",
+      "description": "Anki's calendar of every day you studied, year by year."
+    },
+    "anki-reviews": {
+      "title": "Reviews",
+      "note": "Reviews you did in the past",
+      "description": "Past reviews by card type, as a count or as time spent."
+    },
+    "anki-card-counts": {
+      "title": "Card counts",
+      "note": "Your cards by state",
+      "description": "New, learning, young, mature, suspended and buried cards at a glance."
+    },
+    "anki-intervals": {
+      "title": "Review intervals",
+      "note": "Delays until review cards come back",
+      "description": "How far apart your cards are scheduled."
+    },
+    "anki-stability": {
+      "title": "Card stability",
+      "note": "The delay at which recall falls to 90 %",
+      "description": "How long your cards stay in memory according to FSRS."
+    },
+    "anki-difficulty": {
+      "title": "Card difficulty",
+      "note": "The higher the difficulty, the slower stability grows",
+      "description": "How hard your cards are. Without FSRS it shows their ease.",
+      "titleEase": "Card ease",
+      "noteEase": "The lower the ease, the more often a card comes back"
+    },
+    "anki-retrievability": {
+      "title": "Card retrievability",
+      "note": "The chance that you recall a card today",
+      "description": "How likely you are to remember your cards today, according to FSRS."
+    },
+    "anki-hours": {
+      "title": "Hourly breakdown",
+      "note": "Reviews and success by time of day",
+      "description": "When you study and when you remember best."
+    },
+    "anki-buttons": {
+      "title": "Answer buttons",
+      "note": "How often each button was pressed",
+      "description": "Again, Hard, Good and Easy for learning, young and mature cards."
+    },
+    "anki-added": {
+      "title": "Added",
+      "note": "New cards you added",
+      "description": "How many cards you added over time."
+    },
+    "anki-true-retention": {
+      "title": "True retention",
+      "note": "Pass rate of cards with an interval of a day or more",
+      "description": "How well you really remember, from today to all time."
+    }
+  },
+  "answers": {
+    "again": "Again",
+    "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy"
+  },
+  "categories": {
+    "total": "All cards",
+    "failed": "Failed",
+    "new": "New",
+    "reviewed": "Reviewed",
+    "relearned": "Relearned",
+    "longInterval": "Long interval"
+  },
+  "states": {
+    "new": "New",
+    "learning": "Learning",
+    "review": "Review",
+    "suspended": "Suspended",
+    "buried": "Buried",
+    "other": "Other"
+  },
+  "settings": {
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "language": "Language",
+    "about": "About Statly",
+    "version": "Statly {{statly}}, Anki {{anki}}",
+    "sponsoredBy": "Sponsored by",
+    "themes": {
+      "system": "Same as Anki",
+      "light": "Light",
+      "dark": "Dark",
+      "frutiger-aero": "Frutiger Aero"
+    },
+    "languages": {
+      "auto": "Same as Anki",
+      "en": "English",
+      "de": "Deutsch"
+    },
+    "back": "Back to dashboard",
+    "search": "Search settings",
+    "languageNote": "Choose the language for all of Statly.",
+    "themeNote": "Choose how Statly looks.",
+    "updates": "Statly updates",
+    "autoUpdate": "Update Statly automatically",
+    "autoUpdateNote": "Lets Anki's built-in updater include Statly in its automatic checks.",
+    "uninstall": "Uninstall Statly",
+    "uninstallNote": "Removes Statly through Anki's add-on manager. Your cards, notes and decks stay unchanged.",
+    "newsTitle": "The new Statly",
+    "newsBody": "Statly has been rebuilt from the ground up: a faster dashboard, a more exact statistics engine and a foundation for much more. Your collection stays local, and Statly reads only the review data it needs.",
+    "counterColors": "Custom counter colors",
+    "counterColorsNote": "Color New, Learning and Due on Anki's deck overview.",
+    "counterMode": {
+      "light": "Light mode",
+      "dark": "Dark mode"
+    },
+    "counters": {
+      "new": "New",
+      "learning": "Learning",
+      "due": "Due"
+    },
+    "restoreColors": "Restore default colors",
+    "wallpaperEnable": "Enable custom background",
+    "wallpaperEnableNote": "The image is shown only on the deck overview.",
+    "wallpaperPreview": "Wallpaper preview",
+    "wallpaperNone": "No background image selected.",
+    "wallpaperChoose": "Choose image",
+    "wallpaperSample": "Sample wallpaper",
+    "wallpaperRemove": "Remove",
+    "wallpaperBlur": "Blur",
+    "wallpaperOverlay": "Dark overlay",
+    "wallpaperPosition": "Image position",
+    "wallpaperText": "Study summary text",
+    "wallpaperDefaults": "Restore defaults",
+    "wallpaperLimits": "PNG, JPEG or WebP, up to 20 MB and 40 megapixels. Images are optimized and stored locally.",
+    "positions": {
+      "center": "Center",
+      "top": "Top",
+      "bottom": "Bottom"
+    },
+    "textColors": {
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "deckHeatmap": "Heatmap on the deck overview",
+    "deckHeatmapNote": "Also show your learning activity on Anki's normal deck overview.",
+    "brandAnimation": "Statly animation when Anki opens",
+    "brandAnimationNote": "Show a subtle ten-second animation on the Statly link in Anki's toolbar.",
+    "resetDashboard": "Reset dashboard",
+    "resetDashboardNote": "Restore the standard view with the most important statistics.",
+    "resetAction": "Restore default",
+    "resetDone": "Restored",
+    "aiTitle": "Statly AI",
+    "aiBody": "Your AI assistant now lives in a panel beside the page. Its settings are there too, so everything stays in one place.",
+    "shortcutActions": {
+      "dashboard": "Open dashboard",
+      "settings": "Open settings",
+      "library": "Open Widget Library",
+      "ankiStatistics": "Open Anki statistics"
+    },
+    "shortcutNone": "None",
+    "shortcutRecording": "Press keys ...",
+    "shortcutPress": "Press a key combination. Esc cancels, Backspace clears.",
+    "shortcutSaved": "Shortcut saved.",
+    "shortcutConflict": "Already used by {{name}}.",
+    "supportTitle": "Statly works locally",
+    "supportBody": "Links to the project and feedback page follow with the public release. Your cards, notes and review history are never transferred.",
+    "sponsorTitle": "Simple in design. With a story that fits you.",
+    "sponsorBody": "Oldschool Timeless combines minimal, timeless designs with small stories. The clothing is made for everyday life.",
+    "sponsorVisit": "Visit Oldschool Timeless",
+    "sponsorCollections": "View collections",
+    "sections": {
+      "general": {
+        "title": "General",
+        "note": "Language and updates."
+      },
+      "news": {
+        "title": "News",
+        "note": "What is new in Statly."
+      },
+      "appearance": {
+        "title": "Appearance",
+        "note": "Theme and counter colors for Statly and the deck overview."
+      },
+      "wallpaper": {
+        "title": "Wallpaper",
+        "note": "A custom background image for Anki's deck overview. Cards and decks remain unchanged."
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "note": "Adjust Statly's home page and Anki's deck overview."
+      },
+      "ai": {
+        "title": "AI",
+        "note": "Your own AI assistant, in a panel beside the page."
+      },
+      "shortcuts": {
+        "title": "Shortcuts",
+        "note": "Choose an action and press the key combination you want."
+      },
+      "support": {
+        "title": "Statly Support",
+        "note": "Project and feedback in one place."
+      },
+      "supporters": {
+        "title": "Supporters",
+        "note": "Thanks to everyone who makes Statly possible."
+      },
+      "sponsor": {
+        "title": "Oldschool Timeless",
+        "note": "Statly is sponsored by Oldschool Timeless."
+      },
+      "mobile": {
+        "title": "iPhone & iPad",
+        "note": "See your dashboard in AnkiMobile and AnkiDroid."
+      }
+    },
+    "jojoRole": "The idea for the Frutiger Aero theme.",
+    "aiOpen": "Open AI panel",
+    "fullscreen": "Open in full screen",
+    "fullscreenNote": "Statly fills the whole screen when it opens.",
+    "sponsorBestsellers": "View bestsellers",
+    "backgrounds": "Background pictures",
+    "backgroundsNote": "A picture behind your dashboard, chosen for each device. Phones and tablets get it with the card.",
+    "backgroundChoose": "Choose picture",
+    "backgroundRemove": "Remove"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "Your cards are not affected. Reloading usually fixes this.",
+    "reload": "Reload Statly"
+  },
+  "pages": {
+    "dashboard": "Dashboard"
+  },
+  "library": {
+    "remove": "Remove ({{count}})",
+    "removeNamed": "Remove {{title}}",
+    "preview": "Preview",
+    "kinds": {
+      "metric": "Metric",
+      "chart": "Chart",
+      "forecast": "Forecast",
+      "collection": "Collection",
+      "heatmap": "Heatmap"
+    },
+    "importWidget": "Import widget",
+    "createWidget": "Create widget",
+    "customKind": "Custom widget",
+    "addToDashboard": "Add to dashboard",
+    "edit": "Edit widget",
+    "delete": "Delete widget",
+    "confirmDelete": "Really delete?",
+    "search": "Search widgets and templates",
+    "filter": "Filter the library",
+    "noResults": "Nothing matches this search.",
+    "showAll": "Show all {{count}}",
+    "close": "Close",
+    "useTemplate": "Use template",
+    "templateKind": "Template",
+    "standardSize": "{{w}} × {{h}} cells",
+    "filters": {
+      "all": "All",
+      "progress": "Progress",
+      "collection": "Collection",
+      "habits": "Habits",
+      "anki": "Anki statistics",
+      "templates": "Templates",
+      "custom": "Your widgets",
+      "favorites": "Favorites"
+    },
+    "templateNotes": {
+      "dailyGoal": "A ring that fills up towards today's goal.",
+      "streak": "Your current streak on a colorful tile.",
+      "weekly": "Your reviews of the last seven days as a chart."
+    },
+    "addFavorite": "Add {{title}} to favorites",
+    "removeFavorite": "Remove {{title}} from favorites",
+    "noFavorites": "Mark widgets with the star to find them here."
+  },
+  "welcome": {
+    "title": "Welcome to Statly",
+    "body": "See your progress. Your collection stays yours: Statly only reads statistics and never changes your cards.",
+    "terms": "I accept the license. Statly is provided as is, without warranty.",
+    "step": "Setup, {{current}} of {{total}}",
+    "chooseLanguage": "Choose a language",
+    "chooseTheme": "Which theme would you like?",
+    "themeNote": "You can change this at any time in Settings.",
+    "back": "Back",
+    "next": "Next",
+    "start": "Start Statly",
+    "role": "About you",
+    "discovery": "How did you find Statly?",
+    "roles": {
+      "student": "Student",
+      "educator": "Teacher or lecturer",
+      "medical_student": "Medical student",
+      "law_student": "Law student",
+      "programmer": "Programmer",
+      "language_learner": "Language learner",
+      "other": "Other"
+    },
+    "discoverySources": {
+      "ankiweb": "AnkiWeb",
+      "recommendation": "Recommendation",
+      "social_media": "Social media",
+      "web_search": "Web search",
+      "website": "Website or blog",
+      "other": "Other"
+    }
+  },
+  "rating": {
+    "title": "Enjoying Statly?",
+    "body": "A rating on AnkiWeb helps other Anki users discover the add-on. It takes less than a minute.",
+    "rate": "Rate Statly on AnkiWeb",
+    "later": "Maybe later",
+    "never": "No, thanks"
+  },
+  "calendar": {
+    "selectRange": "Select range",
+    "previous": "Previous month",
+    "next": "Next month",
+    "invalid": "Please enter a valid date as dd.mm.yyyy."
+  },
+  "editor": {
+    "blocks": "Blocks",
+    "templates": "Templates",
+    "newWidget": "New widget",
+    "widget": "Widget",
+    "properties": "Properties",
+    "resize": "Change size",
+    "undo": "Undo",
+    "redo": "Redo",
+    "needsName": "Give your widget a name first.",
+    "name": "Name",
+    "description": "Description",
+    "width": "Width in cells",
+    "height": "Height in cells",
+    "background": "Background",
+    "gradientStart": "Gradient start",
+    "gradientEnd": "Gradient end",
+    "angle": "Angle",
+    "shade": "Darken",
+    "chooseMedia": "Choose file",
+    "text": "Text",
+    "textSize": "Text size",
+    "align": "Alignment",
+    "weight": "Weight",
+    "color": "Color",
+    "value": "Shows",
+    "range": "Time range",
+    "chartKind": "Chart type",
+    "goal": "Goal",
+    "progressKind": "Style",
+    "fit": "Fit",
+    "corners": "Rounded corners",
+    "shape": "Shape",
+    "opacity": "Opacity",
+    "bringForward": "Bring forward",
+    "sendBackward": "Send backward",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "kinds": {
+      "text": "Text",
+      "metric": "Metric",
+      "chart": "Chart",
+      "progress": "Progress",
+      "heatmap": "Heatmap",
+      "media": "Image or video",
+      "shape": "Shape"
+    },
+    "templateNames": {
+      "dailyGoal": "Daily goal",
+      "streak": "Streak",
+      "weekly": "Last 7 days"
+    },
+    "paints": {
+      "text": "Text color",
+      "muted": "Soft text color",
+      "accent": "Accent color",
+      "card": "Card color",
+      "custom": "Own color"
+    },
+    "backgrounds": {
+      "card": "Like other cards",
+      "color": "Color",
+      "gradient": "Gradient",
+      "media": "Image or video"
+    },
+    "alignments": {
+      "left": "Left",
+      "center": "Center",
+      "right": "Right"
+    },
+    "weights": {
+      "normal": "Normal",
+      "bold": "Bold"
+    },
+    "ranges": {
+      "dashboard": "Dashboard filter",
+      "today": "Today",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "lastYear": "Last year"
+    },
+    "metrics": {
+      "reviews": "Reviews",
+      "studyTime": "Study time",
+      "successRate": "Success rate",
+      "retention": "Retention",
+      "activeDays": "Study days",
+      "dueCards": "Due cards",
+      "currentStreak": "Current streak",
+      "longestStreak": "Longest streak",
+      "dailyAverage": "Daily average"
+    },
+    "series": {
+      "timeline": "Reviews over time",
+      "answerButtons": "Answer buttons",
+      "deckActivity": "Activity by deck",
+      "forecast": "Due forecast",
+      "cardStates": "Cards by state",
+      "weekdays": "Reviews by weekday",
+      "hours": "Reviews by hour"
+    },
+    "chartKinds": {
+      "bar": "Bars",
+      "line": "Line"
+    },
+    "progressKinds": {
+      "ring": "Ring",
+      "bar": "Bar"
+    },
+    "fits": {
+      "cover": "Fill the frame",
+      "contain": "Show everything"
+    },
+    "shapes": {
+      "rectangle": "Rectangle",
+      "ellipse": "Circle"
+    },
+    "resetHint": "Backspace resets this field",
+    "loop": "Loop",
+    "preparing": "Preparing your video ...",
+    "size": "Size",
+    "currentStandard": "Now {{w}} × {{h}} cells, the standard size",
+    "currentOther": "Now {{w}} × {{h}} cells",
+    "otherSizeNote": "You are at {{w}} × {{h}} cells. Elements you move here keep this arrangement for this size only.",
+    "setStandard": "Make this the standard size",
+    "setMinimum": "Make minimum",
+    "setMaximum": "Make maximum",
+    "minWidth": "Min. width",
+    "maxWidth": "Max. width",
+    "minHeight": "Min. height",
+    "maxHeight": "Max. height",
+    "onlyFromSize": "Show only from a size",
+    "clearLayout": "Remove arrangement for this size",
+    "roles": {
+      "minimum": "Min",
+      "standard": "Standard",
+      "maximum": "Max"
+    },
+    "show": {
+      "minimum": "Show smallest size",
+      "standard": "Show standard size",
+      "maximum": "Show largest size"
+    },
+    "resizeWidget": "Drag to resize. Hold Alt (⌥) to grow on both sides.",
+    "rotate": "Turn the element. Hold Shift for steps of 15 degrees.",
+    "rotation": "Rotation",
+    "showTablet": "Tablet",
+    "showPhone": "Phone",
+    "guide": {
+      "label": "Guided tour",
+      "step": "Step {{step}} of {{count}}",
+      "next": "Next",
+      "skip": "Show everything",
+      "start": {
+        "title": "Let's build this widget",
+        "body": "The AI prepared a widget of {{w}} by {{h}} cells. We add it piece by piece, so you can do it yourself next time. You can drag any corner to change its size."
+      },
+      "text": {
+        "title": "A text",
+        "body": "Texts label your widget. You find them on the left under Blocks. On the right you change the wording, size and color."
+      },
+      "metric": {
+        "title": "A metric",
+        "body": "A metric shows a live number from Anki. On the right you choose which number and for which time range."
+      },
+      "chart": {
+        "title": "A chart",
+        "body": "Charts show how something develops. On the right you choose the data, the time range and bars or a line."
+      },
+      "progress": {
+        "title": "A progress display",
+        "body": "It fills up towards a goal. On the right you set the goal and choose a ring or a bar."
+      },
+      "heatmap": {
+        "title": "A heatmap",
+        "body": "It shows your year at a glance. Drag it to move it, and pull a corner to resize it."
+      },
+      "shape": {
+        "title": "A shape",
+        "body": "Shapes structure a widget. On the right you change their color and corners."
+      },
+      "media": {
+        "title": "A picture",
+        "body": "Pictures and videos make a widget yours. Videos stay on the desktop, pictures also reach phones."
+      },
+      "finish": {
+        "title": "That's it!",
+        "body": "Change anything you like, then press Save at the top. Your widget lands in the Widget Library."
+      }
+    }
+  },
+  "mobile": {
+    "howTitle": "How it works",
+    "step1": "Statly keeps a single dashboard card in its own deck, Statly Dashboard.",
+    "step2": "The card reaches your phone with your normal Anki sync.",
+    "step3": "On your phone, open the deck and tap Study. The dashboard appears. There is nothing to answer.",
+    "on": "Your dashboard card is active",
+    "off": "Dashboard card is off",
+    "offNote": "Your collection stays exactly as it is until you switch this on.",
+    "enable": "Set up dashboard card",
+    "updated": "Last updated {{when}}",
+    "refresh": "Update now",
+    "remove": "Remove dashboard card",
+    "removeNote": "Removes the card, and its deck if nothing else is in there. Statly makes a backup first. An empty note type called Statly Dashboard stays, because deleting it would force a full sync.",
+    "confirmTitle": "Before you continue",
+    "confirm1": "Anki makes a backup of your collection first.",
+    "confirm2": "Statly adds one deck, one note type and one card. Your own cards stay untouched.",
+    "confirm3": "The card updates when you return to the deck overview and before a sync.",
+    "confirmAction": "Set up now",
+    "limitsTitle": "Good to know",
+    "limits": "The card shows the state of your last desktop sync. Cards you study on your phone appear after your computer has synced again. Custom widgets stay on the desktop for now.",
+    "removeConfirm": "Remove for good"
+  },
+  "ai": {
+    "title": "Statly AI",
+    "resize": "Resize the AI panel",
+    "close": "Close the AI panel",
+    "views": {
+      "chat": "Chat",
+      "history": "Changes",
+      "setup": "AI settings",
+      "chats": "Earlier chats"
+    },
+    "intro": "Ask about your learning, or have widgets and your dashboard adjusted. Nothing changes until you accept it.",
+    "example1": "How much did I study the day before yesterday?",
+    "example2": "Which deck did I work on most this month?",
+    "example3": "Create a widget showing my study time today.",
+    "placeholder": "Ask about your learning",
+    "send": "Send",
+    "stop": "Stop",
+    "newChat": "New chat",
+    "openSetup": "Open AI settings",
+    "toolsUsed_one": "Used {{count}} statistic",
+    "toolsUsed_other": "Used {{count}} statistics",
+    "notices": {
+      "refused": "The model declined to answer this.",
+      "length": "The answer was cut off because it became too long.",
+      "steps": "This took too many steps and was stopped.",
+      "stopped": "Stopped."
+    },
+    "errors": {
+      "not_configured": "Choose a service and a model first.",
+      "key_missing": "This service needs an API key.",
+      "consent_needed": "Please confirm what gets sent first.",
+      "bad_url": "This address is not allowed. Use https, or http on this computer.",
+      "key_invalid": "The service does not accept this API key. A chat subscription does not include API access.",
+      "no_access": "This key has no access to that.",
+      "model_missing": "The service does not know this model.",
+      "rate_limited": "The service has too many requests right now. Please try again in a moment.",
+      "provider_down": "The service is having trouble right now. Please try again.",
+      "unreachable": "The service cannot be reached. Is it running, and are you online?",
+      "no_tool_support": "This model cannot use tools, so it cannot read your statistics. Please choose another model.",
+      "bad_request": "The service rejected the request.",
+      "bad_response": "The service sent an answer Statly cannot read.",
+      "chat_too_long": "This chat has become very long. Please start a new one.",
+      "context_too_small": "This model has too little room. In LM Studio, load it with a context length of at least 8000, or choose a larger model.",
+      "no_credit": "Your credit with this service is used up. Top it up in your account there.",
+      "keys_locked": "Your keys are locked. Enter your password first."
+    },
+    "proposal": {
+      "widget": "Widget",
+      "dashboard": "Dashboard",
+      "settings": "Settings",
+      "external": "from another app",
+      "widgetCount_one": "{{count}} widget",
+      "widgetCount_other": "{{count}} widgets",
+      "apply": "Accept",
+      "reject": "Decline",
+      "applied": "Accepted. You can undo this under Changes.",
+      "rejected": "Declined.",
+      "pending": "Waiting for you.",
+      "openEditor": "Build it in the editor"
+    },
+    "history": {
+      "note": "Everything an AI changed. Each entry can be undone.",
+      "empty": "No changes yet.",
+      "auto": "automatic",
+      "undo": "Undo",
+      "undone": "Undone."
+    },
+    "setup": {
+      "provider": "Service",
+      "local": "On this computer",
+      "address": "Address",
+      "key": "API key",
+      "keyPlaceholder": "Paste your key",
+      "keySave": "Save",
+      "keySaved": "Encrypted in your system's keychain",
+      "keySession": "In memory only, until Anki closes",
+      "keyReplace": "Replace",
+      "keyRemove": "Delete",
+      "keyNote": "Your system's keychain encrypts the key. Statly never shows it again, writes it to no file, holds it in memory only during an answer and sends it only to this service. Deleting Statly deletes it too.",
+      "keyNoteSession": "Your system has no keychain Statly can use. The key therefore stays in memory until Anki closes and never goes into a file.",
+      "model": "Model",
+      "modelPlaceholder": "Model name",
+      "loadModels": "Test connection and load models",
+      "noTools": "This model cannot use tools, so it cannot read your statistics.",
+      "keyHelp": "How do I get an API key?",
+      "keyHelpOpen": "Open the key page of this service",
+      "keyHelpCreate": "Create a new key and copy it.",
+      "keyHelpPaste": "Paste it here and save.",
+      "keyHelpNote": "A chat subscription does not include API access. API use is paid separately, by what you use.",
+      "connected_one": "Connected. {{count}} model found.",
+      "connected_other": "Connected. {{count}} models found.",
+      "beta": "Beta",
+      "betaNote": "This connection could not be tested with a real key yet.",
+      "keyLimitNote": "Tip: create a separate key just for Statly and set a spending limit with the service. That limits what a lost key could ever cost.",
+      "keySavedPassword": "Encrypted in your keychain and locked with your password"
+    },
+    "providers": {
+      "anthropic": {
+        "name": "Anthropic",
+        "note": "Claude, with your own API key"
+      },
+      "openai": {
+        "name": "OpenAI",
+        "note": "With your own API key"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "note": "Many models, one API key"
+      },
+      "custom": {
+        "name": "Other service",
+        "note": "Any OpenAI-compatible address"
+      },
+      "ollama": {
+        "name": "Ollama",
+        "note": "Runs on this computer",
+        "help": "Start Ollama, then load the models here."
+      },
+      "lmstudio": {
+        "name": "LM Studio",
+        "note": "Runs on this computer",
+        "help": "In LM Studio, start the local server and load a model."
+      }
+    },
+    "consent": {
+      "title": "What gets sent to this service",
+      "sent": "Your questions and the statistics needed to answer them, such as review counts and study time.",
+      "names": "Names of your widgets. Deck names and card contents only with your permission, which the AI asks for when it needs them.",
+      "never": "Nothing else from your collection, and it can never change cards.",
+      "terms": "The service's own terms apply, and you pay for what you use through your own account.",
+      "accept": "Understood"
+    },
+    "advanced": {
+      "title": "Advanced",
+      "permissions": "Permissions",
+      "keepChats": "Keep chats",
+      "keepChatsNote": "Stored only on this computer, up to the last 40 chats. Turning this off deletes them."
+    },
+    "external": {
+      "title": "Allow external AI apps",
+      "note": "Lets apps on this computer, such as Claude Desktop, read your statistics and suggest changes.",
+      "step1": "Save the connection file and open it in your AI app.",
+      "step2": "Create a connection code and paste it there.",
+      "step3": "Leave Anki open while you use it.",
+      "saveBundle": "Save connection file",
+      "newCode": "Create connection code",
+      "renewCode": "Create new code",
+      "code": "Connection code",
+      "codeOnce": "Shown only now. A new code cancels this one.",
+      "portBusy": "Another program is using Statly's port. Create a new code to pick another one.",
+      "limits": "Reachable only from this computer. Apps on your phone cannot connect.",
+      "permissions": "Share permissions with external apps",
+      "permissionsNote": "External apps may then see what the chat is allowed to see. They can never ask for more by themselves."
+    },
+    "auto": {
+      "title": "Automatic mode",
+      "note": "The AI changes widgets, the dashboard and appearance without asking.",
+      "externalTitle": "Automatic mode for external apps",
+      "externalNote": "Lets external apps apply changes without asking, too.",
+      "warningTitle": "Security warning",
+      "warning1": "The AI then changes widgets, your dashboard and appearance settings without asking you.",
+      "warning2": "A manipulated deck name, widget name or shared file can steer it into changes you never wanted.",
+      "warning3": "Cards, notes, API keys, the phone card and this switch stay locked, and every change can be undone under Changes.",
+      "understood": "I understand the risk",
+      "enable": "Turn on anyway",
+      "active": "Automatic mode is on: changes apply without asking."
+    },
+    "working": "Thinking|Pondering|Mulling it over|Musing|Ruminating|Noodling|Puzzling|Tinkering|Contemplating|Cogitating|Brewing|Percolating|Connecting the dots|Weighing it up|Untangling|Deliberating|Reasoning|Reflecting|Sifting|Piecing it together|Chewing on it|Simmering|Marinating|Hatching a plan|Wondering|Sleuthing|Figuring it out|Digging deeper|Polishing the words|Following the thread",
+    "permission": {
+      "always": "Always allow",
+      "once": "Only in this chat",
+      "deny": "Decline",
+      "cards": {
+        "title": "Allow reading your cards?",
+        "body": "The AI wants to read card contents to answer this. They go to the chosen service. It can never change a card.",
+        "setting": "Read cards",
+        "settingNote": "Searching cards and reading their contents. Off means the AI asks first."
+      },
+      "decks": {
+        "title": "Allow seeing your deck names?",
+        "body": "The AI wants to see the names of your decks. Without this, it only sees Deck 1, Deck 2 and so on.",
+        "setting": "See deck names",
+        "settingNote": "Off means the AI asks first and sees numbers instead of names."
+      }
+    },
+    "review": {
+      "title": "It works!",
+      "body": "This connection is still in beta and could not be tested with every service. If you are happy, a short positive review on AnkiWeb helps a lot, and you can mention which service you use.",
+      "rate": "Leave a review",
+      "later": "Not now"
+    },
+    "chats": {
+      "empty": "Your earlier chats will show up here.",
+      "delete": "Delete {{title}}"
+    },
+    "keyLock": {
+      "title": "Extra password for your keys",
+      "note": "Other Anki add-ons can then no longer read your key from the keychain unnoticed. You enter the password once after each Anki start.",
+      "limit": "After you unlock, a hostile add-on could still catch the key. Only install add-ons you trust.",
+      "unavailable": "This needs your system's keychain, which Statly can't reach here.",
+      "password": "Password",
+      "current": "Current password",
+      "new": "New password",
+      "repeat": "Repeat new password",
+      "tooShort_one": "Use at least {{count}} character.",
+      "tooShort_other": "Use at least {{count}} characters.",
+      "mismatch": "The passwords don't match.",
+      "wrongPassword": "That password isn't right.",
+      "lockNow": "Lock now",
+      "unlock": "Unlock",
+      "lockedTitle": "Your keys are locked",
+      "lockedNote": "Enter your password. The keys stay unlocked until Anki closes.",
+      "forgot": "Forgot your password?",
+      "forgotNote": "Nobody can recover it. You can delete your saved keys and the password, then add your keys again.",
+      "forgotConfirm": "Delete keys and password",
+      "steps": {
+        "enable": "Set password",
+        "disable": "Remove password",
+        "change": "Change password"
+      },
+      "notes": {
+        "enable": "If you forget this password, nobody can get your keys back. You would have to delete them and add them again.",
+        "disable": "Your keys stay in the keychain, just without the extra password.",
+        "change": "Your keys stay as they are. Only the password changes."
+      }
+    },
+    "workingLabel": "Working on your answer"
+  },
+  "devices": {
+    "choose": "Choose a device",
+    "desktop": "Desktop",
+    "tablet": "Tablet",
+    "phone": "Phone",
+    "automatic": "Worked out from your desktop dashboard. Change anything here and this device keeps its own arrangement.",
+    "arranged": "You arranged this device yourself. New desktop widgets join at the bottom.",
+    "followDesktop": "Follow the desktop again",
+    "period": "Time range",
+    "remove": "Remove from this device",
+    "help": "This is what your card shows. Drag tiles to move them, pull a corner to resize, or click a tile to change it.",
+    "showLight": "Show light",
+    "showDark": "Show dark",
+    "settingsTitle": "Arrange for phones and tablets",
+    "settingsNote": "Statly works this out from your dashboard. You can adjust it in the dashboard's edit mode.",
+    "settingsAction": "Adjust layout",
+    "videoNote": "Videos stay on the desktop. On phones and tablets, a note takes their place.",
+    "offerTitle": "Show this on your phone too?",
+    "offerBody": "Statly adds one dashboard card that travels with your normal Anki sync, in its own deck. Anki makes a backup first, and your own cards stay untouched.",
+    "offerAccept": "Set up the card",
+    "offerLater": "Not now"
+  },
+  "decks": {
+    "search": "Search decks",
+    "none": "No deck matches this search.",
+    "expand": "Expand {{name}}",
+    "collapse": "Collapse {{name}}"
+  },
+  "unsaved": {
+    "title": "Save your changes?",
+    "body": "You have changes that are not saved yet.",
+    "save": "Save",
+    "stay": "Keep editing",
+    "discard": "Discard",
+    "closeWindow": "You have unsaved changes. Close Statly anyway?"
+  },
+  "ankiStats": {
+    "range": "Time range",
+    "ranges": {
+      "month": "1 month",
+      "threeMonths": "3 months",
+      "year": "1 year",
+      "all": "All",
+      "half": "50 %",
+      "most": "95 %"
+    },
+    "running": "Running total",
+    "runningShare": "Running share of cards",
+    "correctShare": "Correct",
+    "hourSpan": "{{from}}:00 to {{to}}:00",
+    "correctOf": "{{percent}} correct ({{amount}} of {{total}})",
+    "ofTotal": "{{amount}} of {{total}} ({{percent}})",
+    "perDay": "{{value}}/day",
+    "needsFsrs": "This needs FSRS, which you can turn on in Anki's deck options.",
+    "showTime": "Show time",
+    "backlog": "Backlog",
+    "separateInactive": "Suspended and buried apart",
+    "units": {
+      "reviews_one": "{{value}} review",
+      "reviews_other": "{{value}} reviews",
+      "cards_one": "{{value}} card",
+      "cards_other": "{{value}} cards",
+      "notes_one": "{{value}} note",
+      "notes_other": "{{value}} notes",
+      "days_one": "{{value}} day",
+      "days_other": "{{value}} days",
+      "months": "{{value}} months",
+      "years": "{{value}} years",
+      "seconds": "{{value}} s",
+      "cardsPerMinute": "{{value}} cards/min"
+    },
+    "facts": {
+      "daysStudied": "Days studied",
+      "total": "Total",
+      "averageStudied": "Average on days studied",
+      "averagePeriod": "If you studied every day",
+      "answerTime": "Average answer time",
+      "cardsPerMinute": "Pace",
+      "dueTomorrow": "Due tomorrow",
+      "dailyLoad": "Daily load",
+      "averageInterval": "Average interval",
+      "medianInterval": "Median interval",
+      "averageStability": "Average stability",
+      "medianStability": "Median stability",
+      "averageDifficulty": "Average difficulty",
+      "medianDifficulty": "Median difficulty",
+      "averageEase": "Average ease",
+      "medianEase": "Median ease",
+      "averageRetrievability": "Average retrievability",
+      "knownCards": "Estimated knowledge, cards",
+      "knownNotes": "Estimated knowledge, notes"
+    },
+    "series": {
+      "mature": "Mature",
+      "young": "Young",
+      "relearn": "Relearning",
+      "relearning": "Relearning",
+      "learn": "Learning",
+      "learning": "Learning",
+      "review": "Review",
+      "filtered": "Filtered",
+      "new": "New",
+      "suspended": "Suspended",
+      "buried": "Buried",
+      "added": "Added",
+      "due": "Due",
+      "cards": "Cards",
+      "reviews": "Reviews",
+      "total": "Total"
+    },
+    "today": {
+      "time": "Time",
+      "perCard": "Per card",
+      "again": "Again",
+      "correct": "Correct",
+      "mature": "Correct on mature cards",
+      "nothing": "No cards studied today yet."
+    },
+    "retention": {
+      "mode": "What to show",
+      "modes": {
+        "summary": "Summary",
+        "young": "Young",
+        "mature": "Mature",
+        "all": "All"
+      },
+      "range": "Range",
+      "all": "All",
+      "count": "Count",
+      "passed": "Passed",
+      "failed": "Failed",
+      "rate": "Retention",
+      "ranges": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "week": "Last week",
+        "month": "Last month",
+        "year": "Last year",
+        "all": "All time"
+      }
+    }
+  }
+}

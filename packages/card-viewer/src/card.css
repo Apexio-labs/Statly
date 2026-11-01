@@ -1,0 +1,354 @@
+.card {
+  --statly-page: #f5f5f2;
+  --statly-card: #ffffff;
+  --statly-text: #11182f;
+  --statly-muted: #727985;
+  --statly-border: #e2e5e9;
+  --statly-hover: #f0f6f5;
+  --statly-accent: #087f8c;
+
+  margin: 0;
+  padding: 0;
+  background: var(--statly-page);
+  color: var(--statly-text);
+  text-align: left;
+  font-family: -apple-system, "Inter", "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+}
+
+.nightMode.card,
+.night_mode.card {
+  --statly-page: #171b24;
+  --statly-card: #222a36;
+  --statly-text: #eef2f8;
+  --statly-muted: #aab4c3;
+  --statly-border: #394352;
+  --statly-hover: #2c3644;
+  --statly-accent: #58d5dd;
+}
+
+/* Fast taps would otherwise zoom the page instead of doing nothing. */
+#statly-card {
+  touch-action: manipulation;
+  min-height: 100vh;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+#statly-root {
+  margin: 0 auto;
+}
+
+/* Whatever someone picks as a background, the header stays readable on it. */
+.statly-has-background {
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.statly-has-background .statly-header,
+.statly-has-background .statly-hint {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--statly-card);
+}
+
+.statly-has-background .statly-hint {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.statly-title {
+  margin: 0;
+  font-size: 22px;
+}
+
+.statly-header {
+  margin-bottom: 12px;
+}
+
+.statly-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--statly-columns), minmax(0, 1fr));
+  grid-auto-rows: 31px;
+  gap: 10px;
+}
+
+.statly-cell {
+  min-width: 0;
+  min-height: 0;
+}
+
+.statly-block,
+.statly-custom {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--statly-border);
+  border-radius: 12px;
+  background: var(--statly-card);
+}
+
+.statly-block {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+}
+
+/* Elements size their text from this box, exactly as on the desktop. */
+.statly-custom {
+  position: relative;
+  container-type: size;
+}
+
+.statly-fit {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.statly-fit span {
+  width: 100%;
+  white-space: pre-wrap;
+}
+
+.statly-fill,
+.statly-media,
+.statly-ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.statly-custom svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.statly-progress {
+  height: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--statly-hover);
+}
+
+.statly-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.statly-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.statly-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* A note without room moves past the edge as a whole instead of being cut in half. */
+.statly-tile {
+  display: flex;
+  flex: 1;
+  flex-flow: column wrap;
+  min-height: 0;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.statly-tile .statly-value {
+  width: 100%;
+  overflow: hidden;
+  font-size: clamp(15px, 22cqw, 24px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statly-tile .statly-note {
+  width: 100%;
+}
+
+.statly-note,
+.statly-axis,
+.statly-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--statly-muted);
+}
+
+.statly-hint {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.statly-chart {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.statly-chart svg {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.statly-axis {
+  display: flex;
+  justify-content: space-between;
+}
+
+.statly-period {
+  margin: -4px 0 8px;
+}
+
+.statly-readout {
+  min-height: 1.3em;
+  font-weight: 600;
+}
+
+.statly-bar {
+  fill: var(--statly-accent);
+}
+
+.statly-row-fill {
+  background: var(--statly-accent);
+}
+
+.statly-rows {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.statly-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.statly-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statly-row-track {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(127, 127, 127, 0.18);
+}
+
+.statly-row-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.statly-heat-0 { fill: #e2e5e9; }
+.statly-heat-1 { fill: #a7dcdf; }
+.statly-heat-2 { fill: #5bb8c0; }
+.statly-heat-3 { fill: #087f8c; }
+.statly-heat-4 { fill: #05505a; }
+
+.nightMode .statly-heat-0, .night_mode .statly-heat-0 { fill: #2c3644; }
+.nightMode .statly-heat-1, .night_mode .statly-heat-1 { fill: #1d5a64; }
+.nightMode .statly-heat-2, .night_mode .statly-heat-2 { fill: #1f8a96; }
+.nightMode .statly-heat-3, .night_mode .statly-heat-3 { fill: #3fc3cc; }
+.nightMode .statly-heat-4, .night_mode .statly-heat-4 { fill: #a6eef0; }
+
+.statly-block {
+  cursor: pointer;
+}
+
+.statly-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow-y: auto;
+  padding: 14px;
+  background: var(--statly-page);
+  box-sizing: border-box;
+}
+
+.statly-back {
+  margin: 0 0 10px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--statly-accent);
+  font: inherit;
+  font-weight: 600;
+}
+
+.statly-sheet-value {
+  margin: 10px 0;
+  font-size: 40px;
+}
+
+.statly-sheet-chart {
+  height: 180px;
+  margin: 12px 0;
+}
+
+.statly-sheet-chart .statly-chart {
+  height: 100%;
+}
+
+.statly-selected {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.statly-facts {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--statly-border);
+  border-radius: 12px;
+  background: var(--statly-card);
+}
+
+.statly-facts:empty {
+  display: none;
+}
+
+.statly-fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.statly-bar-dim {
+  opacity: 0.35;
+}
+
+.statly-video-note {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.18);
+  color: var(--statly-muted);
+  font-size: 11px;
+  text-align: center;
+}

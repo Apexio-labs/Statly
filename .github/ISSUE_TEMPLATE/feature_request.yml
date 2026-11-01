@@ -1,0 +1,14 @@
+name: Idea
+description: Suggest a new widget or feature
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the need first. There may be more than one way to meet it.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could Statly help?

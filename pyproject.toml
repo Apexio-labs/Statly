@@ -1,0 +1,43 @@
+[project]
+name = "statly-dev"
+version = "0.0.0"
+description = "Development environment for the Statly Anki add-on"
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "anki==26.9.3",
+  "aqt[qt68,audio]==26.9.3",
+  "pyright==1.1.414",
+  "pytest==9.2.0",
+  "ruff==0.17.3",
+  "types-requests",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["addon/tests"]
+pythonpath = ["addon/src"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["addon/src", "addon/tests", "scripts"]
+extend-exclude = ["addon/src/statly/contract/types.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "BLE"]
+
+[tool.pyright]
+include = ["addon/src", "addon/tests", "scripts"]
+exclude = ["addon/src/statly/web", "addon/tests/smoke/driver"]
+extraPaths = ["addon/src"]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportPrivateUsage = false

@@ -1,0 +1,22 @@
+.DS_Store
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+coverage/
+test-results/
+playwright-report/
+dist/
+*.tsbuildinfo
+
+# Produced by `pnpm build`
+addon/src/statly/web/
+addon/src/statly/modules/ai/statly.mcpb
+
+# Media of custom widgets in the development Anki
+addon/src/statly/user_files/
+
+# Local Anki data used for development
+.dev/
