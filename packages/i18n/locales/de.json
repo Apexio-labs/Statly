@@ -5,6 +5,7 @@
     "settings": "Einstellungen",
     "ankiStatistics": "Anki-Statistiken",
     "resize": "Seitenleiste in der Breite ändern",
+    "goals": "Lernziele",
     "ai": "KI"
   },
   "time": {
@@ -16,7 +17,7 @@
     "edit": "Dashboard bearbeiten",
     "save": "Speichern",
     "cancel": "Abbrechen",
-    "reset": "Zurücksetzen",
+    "reset": "Dashboard zurücksetzen",
     "remove": "Vom Dashboard entfernen",
     "range": "Zeitraum",
     "deck": "Stapel",
@@ -56,29 +57,293 @@
     "importFailed": "Das ist keine nutzbare Statly-Dashboard-Datei.",
     "exported": "Dashboard exportiert.",
     "groups": {
+      "goals": "Lernziele",
       "progress": "Lernfortschritt",
       "collection": "Stapel und Sammlung",
       "habits": "Lerngewohnheiten",
       "custom": "Eigene Widgets",
       "favorites": "Favoriten",
       "anki": "Anki-Statistiken"
+    },
+    "resetDraftBody": "Alle Widgets und ihre Anordnung auf Computer, Tablet und Handy werden durch die Standardansicht ersetzt. Übernommen wird es erst mit Speichern, Abbrechen macht es rückgängig."
+  },
+  "goals": {
+    "title": "Lernziele",
+    "new": "Neues Lernziel",
+    "newInRail": "Neues Lernziel …",
+    "empty": "Setze dir ein Ziel, und Statly rechnet jeden Tag aus, wie viel noch zu tun ist, auch wenn du am Handy lernst.",
+    "archived_one": "{{count}} archiviertes Ziel",
+    "archived_other": "{{count}} archivierte Ziele",
+    "gallery": {
+      "title": "Was möchtest du erreichen?",
+      "more": "Weitere Lernziele folgen."
+    },
+    "kinds": {
+      "exam": {
+        "title": "Klausur schaffen",
+        "description": "Lerne alle Karten deiner Decks bis zur Klausur, gleichmäßig verteilt auf die Tage bis dahin."
+      }
+    },
+    "actions": {
+      "edit": "Bearbeiten",
+      "archive": "Archivieren",
+      "restore": "Wiederherstellen",
+      "delete": "Löschen",
+      "addToDashboard": "Zum Dashboard hinzufügen",
+      "onDashboard": "Auf dem Dashboard"
+    },
+    "deleteConfirm": {
+      "title": "Dieses Ziel löschen?",
+      "body": "Sein Verlauf und seine Widgets gehen mit. Deine Karten und die von Statly gemessene Lernzeit bleiben.",
+      "confirm": "Löschen"
+    },
+    "setup": {
+      "newTitle": "Neues Klausurziel",
+      "editTitle": "Ziel bearbeiten",
+      "cancel": "Abbrechen",
+      "name": "Name",
+      "namePlaceholder": "Wie das erste Deck",
+      "decks": "Decks",
+      "decksNote": "Ein angehaktes Deck schließt seine Unterdecks ein, auch spätere.",
+      "chooseDecks": "Decks wählen",
+      "decksChosen_one": "{{count}} Deck",
+      "decksChosen_other": "{{count}} Decks",
+      "deckCounts": "{{cards}} Karten, davon {{open}} noch zu lernen",
+      "exam": "Klausurtermin, Puffer und freie Tage",
+      "examNote": "Der Puffer vor der Klausur bleibt frei zum Wiederholen.",
+      "mode": "Ziel",
+      "modes": {
+        "learned": {
+          "title": "Jede Karte einmal gelernt",
+          "note": "Eine Karte zählt, sobald sie ihre Lernschritte durchlaufen hat."
+        },
+        "reviewed": {
+          "title": "… und einmal wiederholt",
+          "note": "So früh lernen, dass Anki jede Karte vor dem Stichtag noch einmal zeigt."
+        }
+      },
+      "counts": "Was jeden Tag zählt",
+      "countsOptions": {
+        "newAndDue": {
+          "title": "Neue Karten und fällige Wiederholungen",
+          "note": "Beides zählt, so stapeln sich keine Wiederholungen auf."
+        },
+        "newOnly": {
+          "title": "Nur neue Karten",
+          "note": "Wiederholungen werden gezeigt, zählen aber nicht."
+        }
+      },
+      "recommended": "Empfohlen",
+      "view": "Darstellung auf dem Dashboard",
+      "viewNote": "Die andere Darstellung kannst du später zusätzlich hinzufügen.",
+      "views": {
+        "ring": {
+          "title": "Ring",
+          "note": "Der heutige Fortschritt auf einen Blick."
+        },
+        "timeline": {
+          "title": "Zeitstrahl",
+          "note": "Der heutige Balken und der Weg zur Klausur."
+        }
+      },
+      "soon": "Kommt bald",
+      "preview": "Vorschau",
+      "previewEmpty": "Wähle Decks, um deine Zahlen zu sehen.",
+      "save": "Speichern",
+      "saveAndAdd": "Speichern und aufs Dashboard",
+      "suggested": "Die KI hat dieses Ziel vorgeschlagen. Prüfe jede Einstellung; es wird erst zum Ziel, wenn du es speicherst."
+    },
+    "calendar": {
+      "trigger_one": "{{date}} · {{count}} Tag Puffer",
+      "trigger_other": "{{date}} · {{count}} Tage Puffer",
+      "pick": "Auswählen",
+      "pickExam": "Klausurtag",
+      "pickFree": "Freie Tage",
+      "examHint": "Klicke auf den Tag deiner Klausur",
+      "freeHint": "Klicke einzelne Tage an, an denen du nicht lernst",
+      "examField": "Klausurdatum",
+      "future": "Die Klausur muss in der Zukunft liegen.",
+      "buffer": "Puffer vor der Klausur",
+      "bufferDays_one": "{{count}} Tag",
+      "bufferDays_other": "{{count}} Tage",
+      "less": "Einen Tag weniger",
+      "more": "Einen Tag mehr",
+      "studyDays": "Lerntage",
+      "legendExam": "Klausur",
+      "legendBuffer": "Puffer",
+      "legendFree": "Frei"
+    },
+    "widget": {
+      "newCards": "neue Karten heute",
+      "cards": "Karten heute",
+      "left_one": "Noch {{count}}",
+      "left_other": "Noch {{count}}",
+      "states": {
+        "done": "Für heute geschafft",
+        "rest": "Heute frei"
+      },
+      "ringLabel": "{{done}} von {{target}} heute geschafft",
+      "streak_one": "{{count}} Tag am Stück",
+      "streak_other": "{{count}} Tage am Stück",
+      "tomorrow": "Morgen etwa {{count}}",
+      "daysLeft_one": "Noch {{count}} Lerntag",
+      "daysLeft_other": "Noch {{count}} Lerntage",
+      "examOn": "Klausur am {{date}}",
+      "noDecks": "Die Decks dieses Ziels gibt es nicht mehr.",
+      "chooseDecks": "Decks wählen",
+      "over": "Die Klausur ist vorbei.",
+      "finished": "Alle Karten sind gelernt.",
+      "gone": "Dieses Ziel gibt es nicht mehr.",
+      "reviews": "Wiederholungen",
+      "openDeck": "{{name}} öffnen: {{done}} von {{target}}",
+      "back": "Zurück",
+      "warnings_one": "{{count}} Hinweis",
+      "warnings_other": "{{count}} Hinweise",
+      "inProgress_one": "{{count}} in Arbeit",
+      "inProgress_other": "{{count}} in Arbeit",
+      "openInGoals": "In Lernziele öffnen",
+      "menu": "Lernziel"
+    },
+    "motivation": {
+      "start": "Los geht's: {{count}} für heute",
+      "going": "Jede Karte zählt: noch {{count}}",
+      "halfway": "Gut dabei: noch {{count}}",
+      "almost": "Fast geschafft: nur noch {{count}}",
+      "done": "Für heute geschafft!",
+      "doneStreak": "Geschafft, {{count}} Tage am Stück!",
+      "keepStreak": "Halte deine Serie von {{count}} Tagen: noch {{left}}",
+      "rest": "Heute frei, genieß es",
+      "finished": "Alle Karten sind gelernt",
+      "waiting_one": "Alles gelernt. {{count}} Karte kommt noch wieder",
+      "waiting_other": "Alles gelernt. {{count}} Karten kommen noch wieder"
+    },
+    "streak": {
+      "atRisk": "Lerne heute, um deine Serie zu halten",
+      "alive": "Deine Serie"
+    },
+    "celebration": {
+      "done": "Ziel erreicht!",
+      "milestone": "Neues Abzeichen: {{count}} Tage am Stück"
+    },
+    "timeline": {
+      "label": "Tage bis zur Klausur",
+      "exam": "Klausur {{date}}",
+      "day_one": "{{date}}: {{count}} Karte, {{kind}}",
+      "day_other": "{{date}}: {{count}} Karten, {{kind}}",
+      "kinds": {
+        "met": "geschafft",
+        "missed": "verpasst",
+        "rest": "frei",
+        "today": "heute",
+        "study": "geplant",
+        "free": "frei",
+        "buffer": "Puffer",
+        "exam": "Klausur",
+        "review": "wiederholen"
+      },
+      "dayWithReviews_one": "{{date}}: {{count}} neue Karte + {{reviews}} Wiederholungen, {{kind}}",
+      "dayWithReviews_other": "{{date}}: {{count}} neue Karten + {{reviews}} Wiederholungen, {{kind}}",
+      "dayOnlyReviews": "{{date}}: {{reviews}} Wiederholungen, {{kind}}"
+    },
+    "detail": {
+      "today": "Heute",
+      "way": "Weg zur Klausur",
+      "numbers": "Heute in Zahlen",
+      "newCards": "Neue Karten gelernt",
+      "reviewsCounted": "Wiederholungen, Teil des Ziels",
+      "reviewsNotCounted": "Wiederholungen, nicht Teil des Ziels",
+      "inProgress": "In den Lernschritten",
+      "ifMet": "Morgen, wenn du heute dein Ziel schaffst",
+      "ifStopped": "Morgen, wenn du jetzt aufhörst",
+      "learned": "Bisher gelernt",
+      "deadline": "Letzter Tag für neue Karten",
+      "exam": "Klausur",
+      "daysLeft": "Lerntage übrig",
+      "decks": "Decks",
+      "deck": "Deck",
+      "todayColumn": "Heute",
+      "learningColumn": "In Arbeit",
+      "openColumn": "Noch offen",
+      "streak": "Serie",
+      "best": "Bestwert: {{count}}",
+      "badges": "Abzeichen",
+      "badge_one": "{{count}} Tag",
+      "badge_other": "{{count}} Tage",
+      "calendar": "Letzte Wochen",
+      "notices": "Hinweise",
+      "noNotices": "Nichts steht im Weg.",
+      "add": {
+        "ring": "Ring aufs Dashboard",
+        "timeline": "Zeitstrahl aufs Dashboard"
+      },
+      "placed": {
+        "ring": "Ring auf dem Dashboard",
+        "timeline": "Zeitstrahl auf dem Dashboard"
+      },
+      "timeDay": "Zeit für heute",
+      "timeLeft": "Noch übrig",
+      "timeSplit": "Aufteilung",
+      "timeSplitValue": "{{newCards}} neue ({{newTime}}) + {{reviews}} Wiederholungen ({{reviewTime}})",
+      "timeNote": "Geschätzt aus deinem eigenen Lerntempo der letzten Wochen, auch mit abgeschnittenen und zurückgenommenen Antworten. Die Spanne zeigt, wie weit die Schätzung an den meisten Tagen danebenlag.",
+      "finished": "Gelernt und wiederholt",
+      "waiting": "Warten auf ihre Wiederholung",
+      "reviewUntil": "Wiederholen bis",
+      "reviewUntilValue_one": "{{date}} (zurück nach etwa {{count}} Tag)",
+      "reviewUntilValue_other": "{{date}} (zurück nach etwa {{count}} Tagen)"
+    },
+    "warnings": {
+      "deckMissing": "Das Deck {{name}} gibt es nicht mehr. Das Ziel rechnet ohne es weiter.",
+      "suspended_one": "{{count}} ausgesetzte Karte zählt nicht mit.",
+      "suspended_other": "{{count}} ausgesetzte Karten zählen nicht mit.",
+      "newLimit": "{{name}} zeigt nur {{limit}} neue Karten am Tag, das heutige Ziel braucht aber {{target}}.",
+      "lateCards_one": "{{count}} gelernte Karte käme erst nach dem Stichtag wieder dran.",
+      "lateCards_other": "{{count}} gelernte Karten kämen erst nach dem Stichtag wieder dran.",
+      "noTimeToReview_one": "Karten kommen nach etwa {{count}} Tag wieder, und das reicht nicht mehr bis zum Stichtag. Statly plant so, als müssten sie nur gelernt werden.",
+      "noTimeToReview_other": "Karten kommen nach etwa {{count}} Tagen wieder, und das reicht nicht mehr bis zum Stichtag. Statly plant so, als müssten sie nur gelernt werden."
+    },
+    "time": {
+      "left": "≈ {{time}} übrig",
+      "range": "≈ {{time}} ({{low}}–{{high}} Min.)"
+    },
+    "limits": {
+      "raise": "Für heute anheben",
+      "raiseNote": "Statly fragt vorher und zeigt genau, was es ändert: nur das heutige Limit für neue Karten dieser Decks. Ankis Bearbeiten → Rückgängig nimmt es zurück.",
+      "options": "Deck-Optionen",
+      "postponed": "Gerade nicht: Während du lernst oder Anki ein Wiederherstellen bereithält, ändert Statly nichts.",
+      "notNeeded": "Die Limits reichen für heute schon."
+    },
+    "sync": {
+      "on": "Deine Ziele werden über AnkiWeb mit deinen anderen Computern abgeglichen.",
+      "off": "Deine Ziele bleiben auf diesem Computer.",
+      "change": "Ändern",
+      "switchOn": "Über AnkiWeb abgleichen"
     }
   },
   "widgets": {
     "review-summary": {
       "title": "Wiederholungen",
-      "note": "Antworten im gewählten Zeitraum",
-      "description": "Anzahl der Karten, die du im ausgewählten Zeitraum wiederholt hast."
+      "note": "Karten, die auf später verschoben wurden",
+      "description": "Wie viele Karten du im gewählten Zeitraum fertig wiederholt hast. Eine Karte zählt einmal pro Tag, sobald sie auf einen späteren Tag verschoben ist. Jeden einzelnen Klick zählen die Bewertungen."
+    },
+    "rating-summary": {
+      "title": "Bewertungen",
+      "note": "Jeder Klick auf Nochmal, Schwer, Gut oder Einfach",
+      "description": "Wie oft du im gewählten Zeitraum eine Karte bewertet hast. Jeder Klick zählt, auch mehrere bei derselben Karte."
+    },
+    "learned-cards": {
+      "title": "Gelernte Karten",
+      "note": "Verschiedene Karten, davon {{new}} neu",
+      "description": "Wie viele verschiedene Karten du im gewählten Zeitraum gelernt hast. Eine Karte zählt einmal, egal wie oft sie drankam."
     },
     "study-time": {
       "title": "Lernzeit",
       "note": "Aufgewendete Zeit im gewählten Zeitraum",
-      "description": "Aufgewendete Zeit für Wiederholungen im gewählten Zeitraum."
+      "description": "Wie lange du im gewählten Zeitraum gelernt hast."
     },
     "success-rate": {
       "title": "Erfolgsquote",
-      "note": "Antworten mit Schwer oder besser",
-      "description": "Anteil der Antworten mit Schwer oder besser im gewählten Zeitraum."
+      "note": "Bewertungen mit Schwer oder besser",
+      "description": "Anteil der Bewertungen mit Schwer oder besser im gewählten Zeitraum."
     },
     "due-cards": {
       "title": "Fällige Karten",
@@ -95,6 +360,11 @@
       "note": "Wiederholungen nach aktuellem Stapel der Karte",
       "description": "Vergleiche deine Wiederholungen nach aktueller Stapelzuordnung."
     },
+    "deck-ratings": {
+      "title": "Bewertungen nach Stapel",
+      "note": "Bewertungen nach aktuellem Stapel der Karte",
+      "description": "Vergleiche, wie oft du in jedem Stapel bewertet hast, nach aktueller Stapelzuordnung."
+    },
     "review-timeline": {
       "title": "Wiederholungen im Zeitverlauf",
       "note": "Balken zeigen Wiederholungen, die Linie ihren laufenden Durchschnitt",
@@ -107,6 +377,11 @@
         "year": "1 Jahr",
         "selected": "Ausgewählt"
       }
+    },
+    "rating-timeline": {
+      "title": "Bewertungen im Zeitverlauf",
+      "note": "Balken zeigen Bewertungen, die Linie ihren laufenden Durchschnitt",
+      "description": "Verfolge, wie oft du täglich, wöchentlich oder monatlich bewertest."
     },
     "answer-buttons": {
       "title": "Antwortknöpfe",
@@ -125,10 +400,17 @@
     },
     "study-rhythm": {
       "title": "Deine Lernzeiten",
-      "note": "Antworten nach Wochentag und Uhrzeit",
+      "note": "Wiederholungen nach Wochentag und Uhrzeit",
       "weekdays": "Wiederholungen nach Wochentag",
       "hours": "Wiederholungen nach Uhrzeit",
       "description": "Erkenne, an welchen Wochentagen und zu welchen Uhrzeiten du lernst."
+    },
+    "rating-rhythm": {
+      "title": "Lernzeiten nach Bewertungen",
+      "note": "Bewertungen nach Wochentag und Uhrzeit",
+      "weekdays": "Bewertungen nach Wochentag",
+      "hours": "Bewertungen nach Uhrzeit",
+      "description": "Erkenne, an welchen Wochentagen und zu welchen Uhrzeiten du am meisten bewertest."
     },
     "review-heatmap": {
       "title": "Lernaktivität im Jahresverlauf",
@@ -138,6 +420,13 @@
       "previous": "Vorheriges Jahr",
       "next": "Nächstes Jahr",
       "description": "Sieh deine täglichen Wiederholungen im Jahresverlauf auf einen Blick."
+    },
+    "rating-heatmap": {
+      "title": "Bewertungen im Jahresverlauf",
+      "summary": "Serie {{current}} Tage, längste {{longest}}, {{average}} Bewertungen pro Tag",
+      "tooltip_one": "{{date}}: {{reviews}} Bewertung",
+      "tooltip_other": "{{date}}: {{reviews}} Bewertungen",
+      "description": "Sieh im Jahresverlauf, wie oft du an jedem Tag bewertet hast."
     },
     "anki-today": {
       "title": "Heute",
@@ -270,19 +559,16 @@
       "due": "Fällig"
     },
     "restoreColors": "Standardfarben wiederherstellen",
-    "wallpaperEnable": "Eigenen Hintergrund aktivieren",
-    "wallpaperEnableNote": "Das Bild wird nur auf der Stapelübersicht dargestellt.",
-    "wallpaperPreview": "Wallpaper-Vorschau",
-    "wallpaperNone": "Kein Hintergrundbild ausgewählt.",
-    "wallpaperChoose": "Bild auswählen",
-    "wallpaperSample": "Beispiel-Wallpaper",
+    "wallpaperPreview": "Wallpaper auswählen",
+    "wallpaperNone": "Kein Wallpaper ausgewählt",
+    "wallpaperSample": "Frutiger-Aero-Himmel",
     "wallpaperRemove": "Entfernen",
     "wallpaperBlur": "Unschärfe",
     "wallpaperOverlay": "Dunkles Overlay",
     "wallpaperPosition": "Bildposition",
-    "wallpaperText": "Studiert-Text",
+    "wallpaperText": "Studiert-Text in Anki",
     "wallpaperDefaults": "Standardeinstellungen wiederherstellen",
-    "wallpaperLimits": "PNG, JPEG oder WebP, maximal 20 MB und 40 Megapixel. Bilder werden lokal optimiert und gespeichert.",
+    "wallpaperLimits": "Passend sind Bilder (PNG, JPEG, GIF, WebP) und Videos (MP4, MOV, WebM). Videos werden einmal in ein Format umgewandelt, das Anki abspielen kann.",
     "positions": {
       "center": "Mitte",
       "top": "Oben",
@@ -304,15 +590,23 @@
     "aiBody": "Dein KI-Assistent sitzt jetzt in einem eigenen Bereich neben der Seite. Auch seine Einstellungen findest du dort, damit alles an einem Ort bleibt.",
     "shortcutActions": {
       "dashboard": "Dashboard öffnen",
-      "settings": "Einstellungen öffnen",
       "library": "Widget Library öffnen",
-      "ankiStatistics": "Anki-Statistiken öffnen"
+      "settings": "Einstellungen öffnen",
+      "ankiStatistics": "Anki-Statistiken öffnen",
+      "appearance": "Erscheinungsbild öffnen",
+      "wallpaper": "Wallpaper-Einstellungen öffnen",
+      "editDashboard": "Dashboard bearbeiten",
+      "createWidget": "Neues Widget erstellen",
+      "importDashboard": "Dashboard importieren",
+      "assistant": "KI-Assistent öffnen und schließen",
+      "nextTheme": "Zum nächsten Theme wechseln",
+      "fullscreen": "Vollbild ein- und ausschalten"
     },
     "shortcutNone": "Keine",
     "shortcutRecording": "Tasten drücken ...",
     "shortcutPress": "Drücke eine Tastenkombination. Esc bricht ab, die Rücktaste löscht.",
     "shortcutSaved": "Shortcut gespeichert.",
-    "shortcutConflict": "Bereits belegt durch {{name}}.",
+    "shortcutConflict": "Diese Tasten gehören schon zu „{{name}}“. Bitte wähle eine andere Kombination.",
     "supportTitle": "Statly arbeitet lokal",
     "supportBody": "Links zum Projekt und zur Feedback-Seite folgen mit der öffentlichen Version. Karten, Notizen und Lernverläufe werden nie übertragen.",
     "sponsorTitle": "Schlicht im Design. Mit einer Story, die zu dir passt.",
@@ -334,7 +628,7 @@
       },
       "wallpaper": {
         "title": "Wallpaper",
-        "note": "Ein eigenes Hintergrundbild für Ankis Stapelübersicht. Karten und Stapel bleiben unverändert."
+        "note": "Ein Bild oder Video hinter ganz Statly, in jedem Theme. Auf Wunsch auch auf Ankis Stapelübersicht, der Startseite mit deinen Stapeln. Karten und Stapel bleiben unverändert."
       },
       "dashboard": {
         "title": "Dashboard",
@@ -343,6 +637,10 @@
       "ai": {
         "title": "KI",
         "note": "Dein eigener KI-Assistent, in einem Bereich neben der Seite."
+      },
+      "privacy": {
+        "title": "Datenschutz & Sicherheit",
+        "note": "Was Statly darf und was es in Anki geändert hat"
       },
       "shortcuts": {
         "title": "Shortcuts",
@@ -365,15 +663,114 @@
         "note": "Sieh dein Dashboard in AnkiMobile und AnkiDroid."
       }
     },
-    "jojoRole": "Die Idee zum Design Frutiger Aero.",
+    "jojoRole": "Die Idee zum Design Frutiger Aero und die Wünsche, die es geprägt haben: Glas, große Symbole und die Spiegelung.",
     "aiOpen": "KI-Bereich öffnen",
     "fullscreen": "Im Vollbild öffnen",
     "fullscreenNote": "Statly füllt beim Öffnen den ganzen Bildschirm.",
     "sponsorBestsellers": "Bestseller ansehen",
     "backgrounds": "Hintergrundbilder",
-    "backgroundsNote": "Ein Bild hinter deinem Dashboard, für jedes Gerät einzeln. Handy und Tablet bekommen es mit der Karte.",
+    "backgroundsNote": "Ein Bild nur hinter dem Dashboard, für jedes Gerät einzeln. Handy und Tablet bekommen es mit der Karte. Einen Hintergrund für ganz Statly und Ankis Stapelübersicht stellst du unter Wallpaper ein.",
     "backgroundChoose": "Bild wählen",
-    "backgroundRemove": "Entfernen"
+    "backgroundRemove": "Entfernen",
+    "wallpaperDeckOverview": "Auch in der Anki-Stapelübersicht",
+    "wallpaperDeckOverviewNote": "Zeigt das Wallpaper zusätzlich auf Ankis Startseite mit deinen Stapeln.",
+    "wallpaperLoop": "Video wiederholen",
+    "wallpaperLoopNote": "Spielt das Video oder GIF in Dauerschleife.",
+    "wallpaperDrop": "Bild oder Video hierher ziehen oder klicken",
+    "wallpaperReplace": "Klicken oder eine andere Datei hierher ziehen",
+    "wallpaperWorking": "Wird vorbereitet ... Videos brauchen etwas länger.",
+    "wallpaperThemeDefault": "Standard von Frutiger Aero",
+    "resetConfirmTitle": "Dashboard zurücksetzen?",
+    "resetConfirmBody": "Alle Widgets und ihre Anordnung auf Computer, Tablet und Handy werden durch die Standardansicht ersetzt. Das lässt sich nicht rückgängig machen.",
+    "resetConfirm": "Zurücksetzen",
+    "shortcutGroups": {
+      "pages": "Seiten öffnen",
+      "actions": "Aktionen"
+    },
+    "wallpaperHistory": "Zuletzt verwendet",
+    "wallpaperHistoryNote": "Statly behält deine letzten {{count}} Wallpaper. Ältere werden gelöscht.",
+    "wallpaperNumbered": "Wallpaper {{number}}",
+    "wallpaperForget": "{{name}} löschen",
+    "wallpaperEarlier": "Zurückblättern",
+    "wallpaperLater": "Weiterblättern",
+    "wallpaperUnsupported": "Diese Datei kann Statly nicht als Wallpaper nutzen.",
+    "accent": "Eigene Akzentfarbe",
+    "accentNote": "Ersetzt die Akzentfarbe des Themes überall in Statly, auch in Diagrammen und Widgets.",
+    "accentColor": "Akzentfarbe",
+    "colorResetHint": "Zeigen und Entf drücken stellt die Standardfarbe wieder her",
+    "shortcutGroupNotes": {
+      "pages": "Springt aus Anki heraus direkt zu einer Seite von Statly.",
+      "actions": "Startet etwas sofort, auch wenn Statly noch geschlossen ist."
+    },
+    "shortcutConflictTitle": "{{keys}} ist schon vergeben",
+    "goalToast": "Meldung bei geschafftem Ziel",
+    "goalToastNote": "Ankis Lernfenster zeigt kurz an, sobald du das Tagesziel eines Lernziels geschafft hast."
+  },
+  "privacy": {
+    "principlesTitle": "So geht Statly damit um",
+    "principle1": "Statly macht nichts Neues, bis du es in einem eigenen Fenster erlaubst. Eine Seite oder die KI kann nie etwas erlauben.",
+    "principle2": "Die KI muss jedes Mal fragen, wenn sie etwas in Anki ändern will, auch wenn du es dauerhaft erlaubt hast.",
+    "principle3": "Jede Änderung in Anki ist ein Schritt in Ankis Rückgängig-Verlauf und steht unten in der Liste, damit du sie zurücknehmen kannst.",
+    "permissionsTitle": "Freigaben",
+    "allowedSince": "Erlaubt seit {{when}}",
+    "migrated": "In einer früheren Version erlaubt",
+    "notAllowed": "Nicht erlaubt",
+    "lastUsed": "zuletzt genutzt {{when}}",
+    "revoke": "Entfernen",
+    "changesTitle": "Änderungen in Anki",
+    "changesNote": "Jede Änderung ist auch ein eigener Schritt unter Ankis Bearbeiten → Rückgängig.",
+    "noChanges": "Statly hat in Anki noch nichts geändert.",
+    "undo": "Rückgängig",
+    "undone": "rückgängig gemacht",
+    "sources": {
+      "user": "von dir",
+      "automatic": "automatisch",
+      "ai": "Vorschlag der KI"
+    },
+    "kinds": {
+      "deckLimit": "{{deck}}: neue Karten heute {{before}} → {{after}}"
+    },
+    "permissions": {
+      "ai": {
+        "decks": {
+          "title": "KI: Decknamen",
+          "note": "Die KI darf die Namen deiner Decks sehen."
+        },
+        "cards": {
+          "title": "KI: Karten",
+          "note": "Die KI darf deine Karten durchsuchen und lesen. Ändern kann sie sie nie."
+        },
+        "external": {
+          "title": "Externe KI-Apps",
+          "note": "Apps, die über Statlys lokalen Zugang verbunden sind, dürfen die Rechte der KI nutzen."
+        }
+      },
+      "mobile": {
+        "card": {
+          "title": "Handy-Karte",
+          "note": "Statly darf seine Handy-Karte in deine Sammlung schreiben und aktuell halten.",
+          "revokeTitle": "Handy-Karte entfernen?",
+          "revokeBody": "Statly legt eine Sicherung an und entfernt dann seine Karte und sein Deck. Deine eigenen Karten bleiben, wie sie sind."
+        }
+      },
+      "goals": {
+        "sync": {
+          "title": "Lernziele über AnkiWeb abgleichen",
+          "note": "Statly darf deine Ziele in den Einstellungen deiner Sammlung ablegen, damit sie auf deine anderen Computer kommen."
+        }
+      },
+      "anki": {
+        "deckLimits": {
+          "title": "Limit für neue Karten",
+          "note": "Statly darf das Limit eines Decks für heute anheben, wenn ein Ziel mehr neue Karten braucht."
+        }
+      }
+    },
+    "groups": {
+      "ai": "KI",
+      "mobile": "Handy/Tablet",
+      "goals": "Lernziele"
+    }
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -381,7 +778,9 @@
     "reload": "Statly neu laden"
   },
   "pages": {
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "path": "Übergeordnete Seiten",
+    "backTo": "Zurück zu {{name}}"
   },
   "library": {
     "remove": "Entfernen ({{count}})",
@@ -466,11 +865,22 @@
     "later": "Vielleicht später",
     "never": "Nein, danke"
   },
+  "share": {
+    "title": "Kennst du jemanden, dem Statly helfen würde?",
+    "body": "Du lernst schon eine ganze Weile mit Statly. Wenn es dir gefällt, empfiehl es gern weiter, zum Beispiel an deine Lerngruppe.",
+    "share": "Statly teilen",
+    "later": "Vielleicht später",
+    "never": "Nein, danke",
+    "message": "Ich nutze Statly für meine Anki-Statistiken. Schau es dir mal an:",
+    "copied": "Der Link ist in deiner Zwischenablage. Füge ihn einfach in einen Chat oder eine Nachricht ein.",
+    "done": "Fertig"
+  },
   "calendar": {
     "selectRange": "Zeitraum auswählen",
     "previous": "Vorheriger Monat",
     "next": "Nächster Monat",
-    "invalid": "Bitte gib ein gültiges Datum im Format TT.MM.JJJJ ein."
+    "invalid": "Bitte gib ein gültiges Datum im Format TT.MM.JJJJ ein.",
+    "placeholder": "tt.mm.jjjj"
   },
   "editor": {
     "blocks": "Bausteine",
@@ -555,6 +965,7 @@
     },
     "metrics": {
       "reviews": "Wiederholungen",
+      "ratings": "Bewertungen",
       "studyTime": "Lernzeit",
       "successRate": "Erfolgsquote",
       "retention": "Behaltensrate",
@@ -566,6 +977,7 @@
     },
     "series": {
       "timeline": "Wiederholungen im Zeitverlauf",
+      "ratingTimeline": "Bewertungen im Zeitverlauf",
       "answerButtons": "Antwortknöpfe",
       "deckActivity": "Aktivität nach Stapel",
       "forecast": "Fälligkeitsprognose",
@@ -743,7 +1155,10 @@
       "applied": "Übernommen. Unter Änderungen kannst du das zurücknehmen.",
       "rejected": "Abgelehnt.",
       "pending": "Wartet auf dich.",
-      "openEditor": "Im Editor aufbauen"
+      "openEditor": "Im Editor aufbauen",
+      "goal": "Lernziel",
+      "checkGoal": "Prüfen und speichern",
+      "goalExam": "Klausur am {{date}}"
     },
     "history": {
       "note": "Alles, was eine KI geändert hat. Jeder Eintrag lässt sich zurücknehmen.",
@@ -854,9 +1269,10 @@
     },
     "working": "Denkt nach|Grübelt|Tüftelt|Knobelt|Sinniert|Brütet|Kombiniert|Wägt ab|Überlegt|Rätselt|Puzzelt|Spinnt Gedanken|Geht in sich|Reimt es sich zusammen|Zählt eins und eins zusammen|Sortiert die Gedanken|Dreht und wendet es|Folgt dem roten Faden|Schlägt nach|Forscht|Bohrt tiefer|Sucht den Kern|Lässt es sacken|Kocht eine Idee aus|Feilt an den Worten|Hirnt|Legt die Stirn in Falten|Fischt nach Ideen|Entwirrt den Knoten|Schärft den Gedanken",
     "permission": {
-      "always": "Immer erlauben",
       "once": "Nur in diesem Chat",
+      "always": "Immer erlauben …",
       "deny": "Ablehnen",
+      "alwaysNote": "„Immer erlauben“ öffnet die Einstellungen, wo du es dauerhaft einschaltest. Der Chat wartet so lange.",
       "cards": {
         "title": "Karten lesen erlauben?",
         "body": "Die KI möchte Karteninhalte lesen, um das zu beantworten. Sie gehen an den gewählten Dienst. Ändern kann sie Karten nie.",
@@ -911,7 +1327,14 @@
         "change": "Deine Keys bleiben, wie sie sind. Nur das Passwort ändert sich."
       }
     },
-    "workingLabel": "Arbeite an deiner Antwort"
+    "workingLabel": "Arbeite an deiner Antwort",
+    "settings": {
+      "service": "Dienst und Modell",
+      "permissionsNote": "Beim Einschalten fragt Statly in seinem eigenen Popup. In einem Chat kannst du es auch nur für diesen Chat erlauben.",
+      "startTitle": "KI einrichten",
+      "startBody": "Wähle unter Einstellungen → KI einen Dienst oder ein lokales Modell. Deine Chats bleiben hier.",
+      "start": "Einrichten"
+    }
   },
   "devices": {
     "choose": "Gerät wählen",
@@ -1054,5 +1477,11 @@
         "all": "Gesamt"
       }
     }
+  },
+  "changes": {
+    "noticeTitle": "Statly hat das in Anki geändert",
+    "noticeUndone": "Zurückgenommen",
+    "noticeNote": "Nur für heute. Alles, was Statly geändert hat, steht unter Datenschutz & Sicherheit.",
+    "close": "Schließen"
   }
 }

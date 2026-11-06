@@ -43,6 +43,16 @@ class Contract:
         return self._document["defaultSettings"]
 
     @property
+    def permissions(self) -> dict[str, Any]:
+        """Every permission, how it can be given, and how many changes the log keeps."""
+        return self._document["permissions"]
+
+    @property
+    def goals(self) -> dict[str, Any]:
+        """The widget prefix, views and sizes of goals, and how many goals Statly keeps."""
+        return self._document["goals"]
+
+    @property
     def ai(self) -> dict[str, Any]:
         """Providers, the settings an AI may touch and the tools it can use."""
         return self._document["ai"]

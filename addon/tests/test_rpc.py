@@ -1,24 +1,28 @@
 from __future__ import annotations
 
 import json
+import time
+import zlib
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from anki.collection import Collection
 from anki.scheduler.v3 import CardAnswer
 
 from statly.core.contract import Contract
-from statly.core.module import Context
-from statly.core.reader import STATLY_NOTE_GUID, ReadableCollection
+from statly.core.module import Context, PermissionPrompt, ShownCard
+from statly.core.reader import STATLY_NOTE_GUID, CollectionReader, ReadableCollection
 from statly.core.rpc import Router, is_same_page
 from statly.core.settings import SettingsService
 from statly.core.storage import JsonStore
 from statly.host.keychain import SessionSecrets
 from statly.modules import MODULES
+from statly.modules.mobile import MobileSync
 from statly.modules.mobile.card import front_template
+from statly.modules.wallpaper import HISTORY_LIMIT
 
 
 class FakeRuntime:
@@ -30,10 +34,34 @@ class FakeRuntime:
         self.auto_sync = False
         self.clock = 0.0
         self.deck_refreshes = 0
+        self.picked: Path | None = None
+        self.dropped: Path | None = None
+        self.has_share_sheet = False
+        self.shared: tuple[str, str] | None = None
         self.folder = Path(mkdtemp(prefix="statly-test-"))
         self.emitted: list[tuple[str, Any]] = []
         self.secret_store = SessionSecrets()
         self.backups = 0
+        # What the person clicks in Statly's own dialog. Tests that do not care allow everything.
+        self.permission_answers: list[str | None] = []
+        self.default_answer: str | None = "always"
+        self.prompts: list[PermissionPrompt] = []
+        self.during_prompt: Callable[[], None] | None = None
+        self.reviewing = False
+        self._deck_overviews: list[Callable[[], None]] = []
+        self._syncs: list[tuple[Callable[[], None], Callable[[], None]]] = []
+        self._replaced: list[Callable[[], None]] = []
+        self._closing: list[Callable[[], None]] = []
+        self._before_sync: list[Callable[[Any], Any]] = []
+        # Real time: goals compare it with Anki's day, which follows the real clock.
+        self.wall = time.time()
+        self.tooltips: list[str] = []
+        self.waiting_later: list[Callable[[], None]] = []
+        self._states: list[Callable[[str, str], None]] = []
+        self._questions: list[Callable[[ShownCard], None]] = []
+        self._answers: list[Callable[[int, int], None]] = []
+        self._undos: list[Callable[[], None]] = []
+        self._activity: list[Callable[[bool], None]] = []
 
     def collection_is_open(self) -> bool:
         return self.collection is not None
@@ -79,6 +107,33 @@ class FakeRuntime:
     def create_backup(self) -> None:
         self.backups += 1
 
+    def ask_permission(
+        self, prompt: PermissionPrompt, answered: Callable[[str | None], None]
+    ) -> None:
+        self.prompts.append(prompt)
+        if self.during_prompt is not None:
+            self.during_prompt()
+        answer = self.permission_answers.pop(0) if self.permission_answers else self.default_answer
+        offered = {choice for choice, _label in prompt.choices}
+        answered(answer if answer in offered else None)
+
+    def is_reviewing(self) -> bool:
+        return self.reviewing
+
+    def run_collection_op(
+        self,
+        work: Callable[[Any], Any],
+        done: Callable[[Any], None],
+        failed: Callable[[Exception], None],
+    ) -> None:
+        assert self.collection is not None
+        try:
+            result = work(self.collection)
+        except Exception as error:  # noqa: BLE001
+            failed(error)
+        else:
+            done(result)
+
     def run_collection_write(
         self,
         work: Callable[[Any], Any],
@@ -89,7 +144,15 @@ class FakeRuntime:
         done(work(self.collection))
 
     def write_before_sync(self, work: Callable[[Any], Any]) -> None:
-        self.before_sync = work
+        self._before_sync.append(work)
+
+    def before_sync(self, collection: Any) -> Any:
+        """Run what waits for the next sync, in order, as Anki's worker would."""
+        found: Any = None
+        waiting, self._before_sync = self._before_sync, []
+        for work in waiting:
+            found = work(collection)
+        return found
 
     def syncs_on_start(self) -> bool:
         return self.auto_sync
@@ -99,13 +162,26 @@ class FakeRuntime:
         return self.clock
 
     def on_deck_overview(self, callback: Callable[[], None]) -> None:
-        self.deck_overview = callback
+        self._deck_overviews.append(callback)
+
+    def deck_overview(self) -> None:
+        """Anki shows its deck list: every module that listens hears it, as in Anki."""
+        for callback in self._deck_overviews:
+            callback()
 
     def on_sync(self, starting: Callable[[], None], finished: Callable[[], None]) -> None:
-        self.sync_starting, self.sync_finished = starting, finished
+        self._syncs.append((starting, finished))
+
+    def sync_starting(self) -> None:
+        for starting, _finished in self._syncs:
+            starting()
+
+    def sync_finished(self) -> None:
+        for _starting, finished in self._syncs:
+            finished()
 
     def pick_path(self, file_filter: str) -> Path | None:
-        return None
+        return self.picked
 
     def run_task(
         self,
@@ -122,6 +198,68 @@ class FakeRuntime:
 
     def run_on_main(self, work: Callable[[], None]) -> None:
         work()
+
+    def wall_clock(self) -> float:
+        return self.wall
+
+    def on_state_changed(self, callback: Callable[[str, str], None]) -> None:
+        self._states.append(callback)
+
+    def change_state(self, new_state: str, old_state: str) -> None:
+        self.reviewing = new_state == "review"
+        for callback in self._states:
+            callback(new_state, old_state)
+
+    def on_question_shown(self, callback: Callable[[ShownCard], None]) -> None:
+        self._questions.append(callback)
+
+    def show_question(self, card: ShownCard) -> None:
+        for callback in self._questions:
+            callback(card)
+
+    def on_will_answer(self, callback: Callable[[int, int], None]) -> None:
+        self._answers.append(callback)
+
+    def press(self, card_id: int, ease: int) -> None:
+        for callback in self._answers:
+            callback(card_id, ease)
+
+    def on_answer_undone(self, callback: Callable[[], None]) -> None:
+        self._undos.append(callback)
+
+    def undo_answer(self) -> None:
+        for callback in self._undos:
+            callback()
+
+    def on_app_active(self, callback: Callable[[bool], None]) -> None:
+        self._activity.append(callback)
+
+    def set_active(self, active: bool) -> None:
+        for callback in self._activity:
+            callback(active)
+
+    def later(self, work: Callable[[], None]) -> None:
+        self.waiting_later.append(work)
+
+    def run_later(self) -> None:
+        while self.waiting_later:
+            self.waiting_later.pop(0)()
+
+    def card_state(self, card_id: int) -> tuple[int, int] | None:
+        if self.collection is None:
+            return None
+        return CollectionReader(cast(ReadableCollection, self.collection)).card_state(card_id)
+
+    def show_tooltip(self, text: str) -> None:
+        self.tooltips.append(text)
+
+    def current_deck_id(self) -> int | None:
+        if self.collection is None:
+            return None
+        return int(self.collection.decks.get_current_id())
+
+    def open_deck_options(self, deck_id: int) -> None:
+        self.opened_options = deck_id
 
     def thumbnail(self, image: bytes, side: int) -> str | None:
         return "data:image/jpeg;base64,AAAA" if image else None
@@ -143,7 +281,11 @@ class FakeRuntime:
         self.profile_opened = callback
 
     def on_profile_closing(self, callback: Callable[[], None]) -> None:
-        self.profile_closing = callback
+        self._closing.append(callback)
+
+    def profile_closing(self) -> None:
+        for callback in self._closing:
+            callback()
 
     def set_unsaved(self, message: str | None) -> None:
         self.unsaved = message
@@ -156,6 +298,9 @@ class FakeRuntime:
 
     def media_folder(self) -> Path:
         return self.folder / "media"
+
+    def shared_media_url(self, file_name: str) -> str:
+        return f"/_addons/statly/{file_name}"
 
     def media_url(self, file_name: str) -> str:
         return file_name
@@ -175,11 +320,16 @@ class FakeRuntime:
     def set_auto_update(self, enabled: bool) -> None:
         self.updating = enabled
 
-    def uninstall(self) -> bool:
-        return False
+    def uninstall(self, done: Callable[[bool], None]) -> None:
+        done(False)
 
-    def choose_wallpaper(self, destination: Path) -> bool:
-        return False
+    def take_dropped_file(self) -> Path | None:
+        dropped, self.dropped = self.dropped, None
+        return dropped
+
+    def share(self, text: str, url: str, anchor: Mapping[str, float]) -> bool:
+        self.shared = (text, url)
+        return self.has_share_sheet
 
     def shortcut_conflict(self, action: str, keys: str) -> str | None:
         return "Quit" if keys == "Ctrl+Q" else None
@@ -197,16 +347,30 @@ class FakeRuntime:
         self.deck_element = (element_id, html)
 
     def on_data_replaced(self, callback: Callable[[], None]) -> None:
-        self.replaced = callback
+        self._replaced.append(callback)
+
+    def replaced(self) -> None:
+        for callback in self._replaced:
+            callback()
 
 
-def make_router(runtime: FakeRuntime) -> Router:
+def make_context(runtime: FakeRuntime) -> Context:
     router = Router(Contract(), runtime, check_results=True)
     settings = SettingsService(JsonStore(runtime.data_folder), router.contract)
     context = Context(router=router, host=runtime, contract=router.contract, settings=settings)
     for module in MODULES:
         module.register(context)
-    return router
+    return context
+
+
+def make_router(runtime: FakeRuntime) -> Router:
+    return make_context(runtime).router
+
+
+def drain(runtime: FakeRuntime) -> None:
+    """Run every query that waits for Anki's worker, including the ones they start."""
+    while runtime.pending:
+        runtime.pending.pop(0)()
 
 
 def call(router: Router, method: str, params: Any, request_id: int = 1) -> list[dict[str, Any]]:
@@ -356,15 +520,173 @@ def test_a_conflict_also_ends_recording() -> None:
     assert runtime.recording is False
 
 
+def tiny_png(folder: Path) -> Path:
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        checksum = zlib.crc32(kind + data).to_bytes(4, "big")
+        return len(data).to_bytes(4, "big") + kind + data + checksum
+
+    header = (1).to_bytes(4, "big") * 2 + bytes([8, 0, 0, 0, 0])
+    content = (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(b"\x00\x7f"))
+        + chunk(b"IEND", b"")
+    )
+    path = folder / "picture.png"
+    path.write_bytes(content)
+    return path
+
+
 def test_a_new_wallpaper_redraws_the_deck_overview_even_if_settings_match() -> None:
     """Reported bug: replacing an image changed nothing until the switch was toggled."""
     runtime = FakeRuntime()
-    runtime.choose_wallpaper = lambda destination: True  # type: ignore[method-assign]
+    runtime.picked = tiny_png(runtime.folder)
     router = make_router(runtime)
     call(router, "wallpaper.choose", {})
     first = runtime.deck_refreshes
     call(router, "wallpaper.choose", {})
     assert runtime.deck_refreshes > first
+
+
+def test_a_chosen_file_is_stored_kept_and_shown_on_the_deck_overview() -> None:
+    runtime = FakeRuntime()
+    runtime.picked = tiny_png(runtime.folder)
+    router = make_router(runtime)
+    result = call(router, "wallpaper.choose", {})[0]["result"]["wallpaper"]
+    assert result["source"] == "image"
+    assert result["enabled"] is True
+    assert result["deckOverview"] is True
+    assert result["asset"]["type"] == "image/png"
+    assert any(path.stem == result["asset"]["id"] for path in runtime.media_folder().iterdir())
+    assert f"/_addons/statly/{result['asset']['id']}.png" in runtime.deck_html()
+
+
+def tiny_pngs(folder: Path, count: int) -> list[Path]:
+    """Pictures that differ, because files are stored under the hash of their content."""
+    paths: list[Path] = []
+    for index in range(count):
+        path = folder / f"picture-{index}.png"
+        content = bytearray(tiny_png(folder).read_bytes())
+        # The pixel row holds the gray value, so each file gets its own IDAT chunk and CRC.
+        compressed = zlib.compress(bytes([0, index]))
+        start = content.index(b"IDAT") - 4
+        end = start + 12 + int.from_bytes(content[start : start + 4], "big")
+        chunk = len(compressed).to_bytes(4, "big") + b"IDAT" + compressed
+        chunk += zlib.crc32(b"IDAT" + compressed).to_bytes(4, "big")
+        path.write_bytes(bytes(content[:start]) + chunk + bytes(content[end:]))
+        paths.append(path)
+    return paths
+
+
+def test_removing_a_wallpaper_keeps_it_in_the_history() -> None:
+    runtime = FakeRuntime()
+    runtime.picked = tiny_png(runtime.folder)
+    router = make_router(runtime)
+    chosen = call(router, "wallpaper.choose", {})[0]["result"]["wallpaper"]["asset"]
+    result = call(router, "wallpaper.remove", {})[0]["result"]["wallpaper"]
+    assert (result["source"], result["asset"], result["enabled"]) == ("none", None, False)
+    assert result["history"] == [chosen]
+    assert len(list(runtime.media_folder().iterdir())) == 1
+    back = call(router, "wallpaper.use", {"id": chosen["id"]})[0]["result"]["wallpaper"]
+    assert (back["source"], back["asset"], back["enabled"]) == ("image", chosen, True)
+
+
+def test_the_history_keeps_the_newest_and_deletes_the_rest() -> None:
+    runtime = FakeRuntime()
+    router = make_router(runtime)
+    result: dict[str, Any] = {}
+    for path in tiny_pngs(runtime.folder, HISTORY_LIMIT + 2):
+        runtime.picked = path
+        result = call(router, "wallpaper.choose", {})[0]["result"]["wallpaper"]
+    assert len(result["history"]) == HISTORY_LIMIT
+    assert result["history"][0] == result["asset"]
+    assert len(list(runtime.media_folder().iterdir())) == HISTORY_LIMIT
+
+
+def test_forgetting_deletes_the_file_and_the_current_choice() -> None:
+    runtime = FakeRuntime()
+    router = make_router(runtime)
+    first, second = tiny_pngs(runtime.folder, 2)
+    runtime.picked = first
+    old = call(router, "wallpaper.choose", {})[0]["result"]["wallpaper"]["asset"]
+    runtime.picked = second
+    new = call(router, "wallpaper.choose", {})[0]["result"]["wallpaper"]["asset"]
+
+    result = call(router, "wallpaper.forget", {"id": old["id"]})[0]["result"]["wallpaper"]
+    assert result["history"] == [new]
+    assert result["asset"] == new
+    result = call(router, "wallpaper.forget", {"id": new["id"]})[0]["result"]["wallpaper"]
+    assert (result["source"], result["asset"], result["history"]) == ("none", None, [])
+    assert list(runtime.media_folder().iterdir()) == []
+
+
+def test_a_dropped_file_is_used_once() -> None:
+    runtime = FakeRuntime()
+    runtime.dropped = tiny_png(runtime.folder)
+    router = make_router(runtime)
+    assert call(router, "wallpaper.dropped", {})[0]["result"]["wallpaper"]["source"] == "image"
+    assert runtime.dropped is None
+
+
+def test_nothing_dropped_changes_nothing() -> None:
+    router = make_router(FakeRuntime())
+    assert call(router, "wallpaper.dropped", {})[0]["result"]["wallpaper"]["source"] == "none"
+
+
+def test_an_image_from_an_older_version_moves_over_once() -> None:
+    runtime = FakeRuntime()
+    router = Router(Contract(), runtime, check_results=True)
+    settings = SettingsService(JsonStore(runtime.data_folder), router.contract)
+    context = Context(router=router, host=runtime, contract=router.contract, settings=settings)
+    for module in MODULES:
+        module.register(context)
+    old = runtime.data_folder() / "wallpaper.jpg"
+    old.parent.mkdir(parents=True, exist_ok=True)
+    old.write_bytes(tiny_png(runtime.folder).read_bytes())
+    wallpaper = {**settings.get()["wallpaper"], "source": "image", "enabled": True}
+    settings.update(cast(Any, {"wallpaper": wallpaper}))
+    context.services["wallpaper"].adopt_old_image()
+    adopted = settings.get()["wallpaper"]
+    assert adopted["asset"] is not None
+    assert adopted["history"] == [adopted["asset"]]
+    assert not old.exists()
+
+
+def test_a_wallpaper_stays_when_unused_media_is_cleaned_up() -> None:
+    runtime = FakeRuntime()
+    runtime.picked = tiny_png(runtime.folder)
+    router = Router(Contract(), runtime, check_results=True)
+    settings = SettingsService(JsonStore(runtime.data_folder), router.contract)
+    context = Context(router=router, host=runtime, contract=router.contract, settings=settings)
+    for module in MODULES:
+        module.register(context)
+    call(router, "wallpaper.choose", {})
+    context.services["widgets"].remove_unused_media()
+    assert len(list(runtime.media_folder().iterdir())) == 1
+
+
+def test_sharing_uses_the_sheet_or_says_it_used_the_clipboard() -> None:
+    runtime = FakeRuntime()
+    router = make_router(runtime)
+    params = {
+        "text": "Statly",
+        "url": "https://ankiweb.net/shared/info/215470814",
+        "anchor": {"x": 1, "y": 2, "width": 3, "height": 4},
+    }
+    assert call(router, "system.share", params)[0]["result"] == {"method": "clipboard"}
+    runtime.has_share_sheet = True
+    assert call(router, "system.share", params)[0]["result"] == {"method": "sheet"}
+    assert runtime.shared == ("Statly", params["url"])
+
+
+def test_only_web_links_can_be_shared() -> None:
+    router = make_router(FakeRuntime())
+    params = {
+        "text": "Statly",
+        "url": "file:///etc/passwd",
+        "anchor": {"x": 1, "y": 2, "width": 3, "height": 4},
+    }
+    assert call(router, "system.share", params)[0]["ok"] is False
 
 
 def test_free_shortcuts_are_saved_and_applied() -> None:
@@ -397,7 +719,7 @@ def test_nothing_is_written_while_the_phone_card_is_off(collection: Collection) 
     runtime.deck_overview()
     runtime.sync_starting()
     assert collection.mod == before
-    assert not hasattr(runtime, "before_sync")
+    assert runtime._before_sync == []  # pyright: ignore[reportPrivateUsage]
 
 
 def test_the_bridge_recognizes_only_the_apps_own_page() -> None:
@@ -437,12 +759,16 @@ def test_writes_wait_for_the_first_sync_of_a_session(collection: Collection) -> 
     runtime = FakeRuntime(collection)
     router = make_router(runtime)
     call(router, "mobile.enable", {})
-    sync = runtime.sync_starting.__self__  # type: ignore[attr-defined]
+    sync = next(
+        starting.__self__  # type: ignore[attr-defined]
+        for starting, _finished in runtime._syncs  # pyright: ignore[reportPrivateUsage]
+        if isinstance(getattr(starting, "__self__", None), MobileSync)
+    )
     sync._saw_first_sync = False
     runtime.auto_sync = True
 
     runtime.sync_starting()
-    assert not hasattr(runtime, "before_sync")
+    assert runtime._before_sync == []  # pyright: ignore[reportPrivateUsage]
 
     runtime.sync_finished()
     runtime.sync_starting()

@@ -1,4 +1,11 @@
-import type { AnkiView, AnkiViewResult, MethodName, Params, Result } from "@statly/contract";
+import type {
+  AnkiView,
+  AnkiViewResult,
+  Measure,
+  MethodName,
+  Params,
+  Result,
+} from "@statly/contract";
 
 const DAY_MS = 86_400_000;
 
@@ -118,6 +125,11 @@ function mockAnkiView(view: AnkiView, option: boolean): AnkiViewResult {
   }
 }
 
+/** Most cards take more than one answer: ratings run about a third above reviews. */
+function scaled(value: number, measure: Measure | undefined): number {
+  return measure === "ratings" ? Math.round(value * 1.35) : value;
+}
+
 export const statisticsMocks: { [M in StatisticsMethod]: (params: Params<M>) => Result<M> } = {
   "statistics.ankiView": ({ view, option }) => mockAnkiView(view, option),
   "statistics.today": () => ({ date: isoDate(0), firstReview: isoDate(-900) }),
@@ -128,6 +140,7 @@ export const statisticsMocks: { [M in StatisticsMethod]: (params: Params<M>) => 
   ],
   "statistics.summary": () => ({
     reviews: 412,
+    ratings: scaled(412, "ratings"),
     studyTimeMs: 3_912_000,
     successRate: 0.91,
     retention: 0.88,
@@ -143,26 +156,28 @@ export const statisticsMocks: { [M in StatisticsMethod]: (params: Params<M>) => 
     suspended: 3,
     buried: 5,
   }),
-  "statistics.deckActivity": () => [
-    { deckId: 2, name: "Sprachen::Spanisch", reviews: 240 },
-    { deckId: 3, name: "Medizin", reviews: 172 },
+  "statistics.deckActivity": ({ measure }) => [
+    { deckId: 2, name: "Sprachen::Spanisch", count: scaled(240, measure) },
+    { deckId: 3, name: "Medizin", count: scaled(172, measure) },
   ],
-  "statistics.timeline": () => {
+  "statistics.timeline": ({ measure }) => {
     const items = Array.from({ length: 30 }, (_, index) => {
       const date = isoDate(index - 29);
-      return { date, reviews: reviewsOn(date), runningAverage: 90 };
+      return { date, count: scaled(reviewsOn(date), measure), runningAverage: scaled(90, measure) };
     });
     return { granularity: "day", items };
   },
   "statistics.answerButtons": () => ({ again: 41, hard: 58, good: 271, easy: 42 }),
-  "statistics.rhythm": () => ({
-    weekdays: [80, 75, 90, 62, 44, 30, 31],
-    hours: Array.from({ length: 24 }, (_, hour) => (hour > 7 && hour < 23 ? hour * 4 : 0)),
+  "statistics.rhythm": ({ measure }) => ({
+    weekdays: [80, 75, 90, 62, 44, 30, 31].map((value) => scaled(value, measure)),
+    hours: Array.from({ length: 24 }, (_, hour) =>
+      hour > 7 && hour < 23 ? scaled(hour * 4, measure) : 0,
+    ),
   }),
-  "statistics.heatmap": ({ year }) => {
+  "statistics.heatmap": ({ year, measure }) => {
     const days = Array.from({ length: 365 }, (_, index) => {
       const date = isoDate(index - 364);
-      return { date, reviews: reviewsOn(date) };
+      return { date, count: scaled(reviewsOn(date), measure) };
     });
     return {
       year: year ?? new Date().getFullYear(),
@@ -170,8 +185,8 @@ export const statisticsMocks: { [M in StatisticsMethod]: (params: Params<M>) => 
       lastYear: new Date().getFullYear(),
       today: isoDate(0),
       days,
-      totalReviews: days.reduce((sum, day) => sum + day.reviews, 0),
-      dailyAverage: 90,
+      total: days.reduce((sum, day) => sum + day.count, 0),
+      dailyAverage: scaled(90, measure),
       daysLearned: 0.97,
       longestStreak: 41,
       currentStreak: 12,

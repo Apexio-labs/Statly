@@ -19,6 +19,7 @@
   --statly-success: #116b3d;
   --statly-success-surface: #e8f7ed;
   --statly-danger: #a52c24;
+  --statly-warning: #9a6700;
   --statly-nav: #11182f;
   --statly-nav-hover: #27344e;
   --statly-nav-text: #e8edf5;
@@ -55,6 +56,7 @@
   --statly-success: #7ee2a5;
   --statly-success-surface: #1d382b;
   --statly-danger: #ff938b;
+  --statly-warning: #f2c94c;
   --statly-sequence-1: #2c3644;
   --statly-sequence-2: #1d5a64;
   --statly-sequence-3: #1f8a96;
@@ -69,28 +71,36 @@
   --statly-series-7: #008300;
 }
 
+/* Only the colors. What makes this theme glass lives in the web app's aero.css. */
 [data-theme="frutiger-aero"] {
   color-scheme: light;
-  --statly-page: #dff7ff;
+  --statly-page: #dff4fc;
   --statly-card: #ffffff;
+  --statly-widget: rgb(255 255 255 / 50%);
   --statly-control: #f2fdff;
-  --statly-text: #123b5d;
-  --statly-muted: #43718d;
-  --statly-border: #8bd7ed;
-  --statly-selected: #bcefff;
-  --statly-accent: #0a9bd6;
-  --statly-accent-strong: #098cc1;
-  --statly-primary: #0a9bd6;
-  --statly-primary-hover: #098cc1;
-  --statly-hover: rgb(132 224 250 / 28%);
+  --statly-text: #0e3454;
+  --statly-muted: #2b5877;
+  --statly-border: #9ccfe6;
+  --statly-selected: #c9e8fb;
+  --statly-accent: #0a8fd0;
+  --statly-accent-strong: #0872ab;
+  --statly-primary: #0a85c2;
+  --statly-primary-hover: #0a78b4;
+  --statly-hover: rgb(132 214 250 / 30%);
   --statly-success: #116b3d;
   --statly-success-surface: #dff8e9;
-  --statly-danger: #a52c24;
+  --statly-danger: #b3241a;
+  --statly-warning: #b07800;
+  --statly-nav: #0b6aa8;
+  --statly-nav-hover: #2a9bd6;
+  --statly-nav-text: #f5fcff;
+  --statly-nav-muted: #d6f1fc;
   --statly-sequence-1: #e3f3f9;
   --statly-sequence-2: #a9def3;
   --statly-sequence-3: #5cbce6;
-  --statly-sequence-4: #0a9bd6;
+  --statly-sequence-4: #0a8fd0;
   --statly-sequence-5: #05608a;
+  --statly-chart-gloss: 1;
 }
 
 @theme inline {
@@ -111,6 +121,7 @@
   --color-success: var(--statly-success);
   --color-success-surface: var(--statly-success-surface);
   --color-danger: var(--statly-danger);
+  --color-warning: var(--statly-warning);
   --color-nav: var(--statly-nav);
   --color-nav-hover: var(--statly-nav-hover);
   --color-nav-text: var(--statly-nav-text);

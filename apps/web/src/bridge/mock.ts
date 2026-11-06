@@ -4,6 +4,7 @@ import {
   type AiProposal,
   type AiStatus,
   aiProviderDefaults,
+  type ChangeEntry,
   type CustomWidget,
   type DashboardLayout,
   type DeviceLayout,
@@ -14,17 +15,22 @@ import {
   defaultSettings,
   deviceColumns,
   type MethodName,
+  type PermissionId,
+  type PermissionState,
   type ResolvedDevice,
   type Result,
   type Settings,
   type ShortcutAction,
 } from "@statly/contract";
 import type { BridgeResponse, Transport } from "./client.ts";
+import { goalMocks, mockRaise } from "./mockGoals.ts";
 import { statisticsMocks } from "./mockStatistics.ts";
 
 declare global {
   /** Lets browser tests answer the file dialog that Anki would show. */
   var __mockOpenFile: string | undefined;
+  /** Lets browser tests click "Don't Allow" in the permission dialog Python would show. */
+  var __mockDenyPermissions: boolean | undefined;
 }
 
 const RESPONSE_DELAY_MS = 30;
@@ -37,6 +43,89 @@ let mockWidgets: CustomWidget[] = [];
 let mockMobile: { enabled: boolean; updated: string | null } = { enabled: false, updated: null };
 
 let mockKeyPassword: string | null = null;
+
+/** What the parts of Statly offer in the mock, and what was allowed. */
+const MOCK_OFFERED: { id: PermissionId; requestable: boolean }[] = [
+  { id: "ai.decks", requestable: true },
+  { id: "ai.cards", requestable: true },
+  { id: "ai.external", requestable: true },
+  { id: "mobile.card", requestable: false },
+  { id: "goals.sync", requestable: true },
+  { id: "anki.deckLimits", requestable: false },
+];
+let mockGrants: Partial<Record<PermissionId, string>> = {};
+
+function mockPermissions(): PermissionState[] {
+  return MOCK_OFFERED.map(({ id, requestable }) => ({
+    id,
+    granted: id in mockGrants,
+    grantedAt: mockGrants[id] ?? null,
+    source: id in mockGrants ? ("dialog" as const) : null,
+    lastUsedAt: null,
+    requestable,
+  }));
+}
+
+/** Python's dialog, answered right away: yes, unless a test says no. */
+function mockDialog(id: PermissionId): boolean {
+  if (globalThis.__mockDenyPermissions) {
+    return false;
+  }
+  mockGrants = { ...mockGrants, [id]: "2026-11-04T09:30" };
+  syncMockPermissions();
+  return true;
+}
+
+function revokeMock(id: PermissionId): void {
+  const { [id]: _gone, ...rest } = mockGrants;
+  mockGrants = rest;
+  if (id === "mobile.card") {
+    mockMobile = { enabled: false, updated: null };
+  }
+  syncMockPermissions();
+}
+
+function syncMockPermissions(): void {
+  mockAi = {
+    ...mockAi,
+    permissions: { decks: "ai.decks" in mockGrants, cards: "ai.cards" in mockGrants },
+    externalPermissions: "ai.external" in mockGrants,
+  };
+  // Allowed for good in the settings while the chat waited for it: the chat goes on.
+  const waiting = mockChat.waiting;
+  if (waiting?.kind === "permission" && mockAi.permissions[waiting.scope]) {
+    mockChat = { ...mockChat, waiting: null };
+    mockResume?.();
+    mockResume = null;
+  }
+}
+
+let mockAnkiChanges: ChangeEntry[] = [
+  {
+    id: "c0ffee0000000002",
+    at: "2026-11-04T08:15",
+    source: "automatic",
+    permission: "anki.deckLimits",
+    undone: false,
+    canUndo: true,
+    details: {
+      kind: "deckLimit",
+      decks: [{ deckId: 3, deckName: "Medizin", before: 20, after: 34 }],
+    },
+  },
+  {
+    id: "c0ffee0000000001",
+    at: "2026-11-03T19:02",
+    source: "user",
+    permission: "anki.deckLimits",
+    undone: true,
+    canUndo: false,
+    details: {
+      kind: "deckLimit",
+      decks: [{ deckId: 2, deckName: "Sprachen::Spanisch", before: 20, after: 40 }],
+    },
+  },
+];
 
 function checkMockPassword(password: string) {
   if (password !== mockKeyPassword) {
@@ -71,13 +160,31 @@ const NEW_CHAT: AiConversation = {
 };
 let mockChat = NEW_CHAT;
 let mockChats: Record<string, AiConversation> = {};
-let mockResume: (() => void) | null = null;
+let mockResume: ((allowed?: boolean) => void) | null = null;
 let mockChanges: AiChange[] = [];
 let mockUndo: Record<string, () => void> = {};
 
 function emit(event: string, payload: unknown): void {
   globalThis.__statlyBridge?.emit(event, payload as never);
 }
+
+mockRaise.record = (decks) => {
+  const id = Math.random().toString(16).slice(2, 18).padEnd(16, "0");
+  mockAnkiChanges = [
+    {
+      id,
+      at: new Date().toISOString().slice(0, 16),
+      source: "user",
+      permission: "anki.deckLimits",
+      undone: false,
+      canUndo: true,
+      details: { kind: "deckLimit", decks },
+    },
+    ...mockAnkiChanges.map((entry) => ({ ...entry, canUndo: false })),
+  ];
+  setTimeout(() => emit("changes.applied", { id }), 0);
+  return id;
+};
 
 const MOCK_WIDGET: CustomWidget = {
   id: "ai-streak",
@@ -142,6 +249,31 @@ function mockAnswer(text: string): void {
   const answerId = `a${number}`;
   const lower = text.toLowerCase();
   const proposals: AiProposal[] = [];
+  if (lower.includes("goal")) {
+    proposals.push({
+      id: `p${number}`,
+      kind: "goal",
+      summary: "An exam goal for Medizin in six weeks",
+      source: "chat",
+      createdAt: "2026-11-01T09:30:00",
+      status: "pending",
+      goal: {
+        id: null,
+        name: "Medizin exam",
+        archived: false,
+        config: {
+          kind: "exam",
+          decks: [{ id: 3, name: "Medizin" }],
+          examDate: new Date(Date.now() + 42 * 86_400_000).toISOString().slice(0, 10),
+          bufferDays: 5,
+          mode: "reviewed",
+          counts: "newAndDue",
+          studyWeekdays: [0, 1, 2, 3, 4, 5],
+          freeDates: [],
+        },
+      },
+    });
+  }
   if (lower.includes("widget")) {
     proposals.push({
       id: `p${number}`,
@@ -180,7 +312,13 @@ function mockAnswer(text: string): void {
     : "You studied **1 h 24 min** on that day.";
   if (lower.includes("card") && !mockAi.permissions.cards) {
     mockChat = { ...mockChat, waiting: { kind: "permission", scope: "cards" } };
-    mockResume = () => mockFinish(answerId, "This card is in your Spanish deck.");
+    mockResume = (allowed = true) =>
+      mockFinish(
+        answerId,
+        allowed
+          ? "This card is in your Spanish deck."
+          : "I may not read your cards, so I cannot say.",
+      );
     emit("ai.changed", {});
     return;
   }
@@ -211,7 +349,13 @@ function setProposal(id: string, status: AiProposal["status"]): AiProposal | und
 
 let mockDevices: DeviceLayouts = { tablet: null, phone: null };
 
-const MOCK_TILES = new Set(["review-summary", "study-time", "success-rate", "due-cards"]);
+const MOCK_TILES = new Set([
+  "review-summary",
+  "learned-cards",
+  "study-time",
+  "success-rate",
+  "due-cards",
+]);
 
 function mockResolved(
   layout: DashboardLayout,
@@ -293,6 +437,40 @@ function mockSnapshot(tablet: DeviceWidget[], phone: DeviceWidget[]): Result<"mo
   };
 }
 
+/** A small sky, so browser tests see a wallpaper without a real file behind it. */
+const MOCK_WALLPAPER = { id: "c".repeat(64), type: "image/jpeg" as const };
+const MOCK_WALLPAPER_VIDEO = { id: "d".repeat(64), type: "video/webm" as const };
+const MOCK_SKY = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="9"><rect width="16" height="6" fill="#7cc8f0"/><rect y="6" width="16" height="3" fill="#5bb33a"/></svg>',
+)}`;
+const MOCK_MEDIA: Record<string, string> = {
+  [MOCK_WALLPAPER.id]: MOCK_SKY,
+  [MOCK_WALLPAPER_VIDEO.id]: "mock-video.webm",
+};
+
+function mockWallpaper(asset: { id: string; type: "image/jpeg" | "video/webm" }) {
+  const history = [asset, ...mockSettings.wallpaper.history.filter(({ id }) => id !== asset.id)];
+  mockSettings = {
+    ...mockSettings,
+    wallpaper: { ...mockSettings.wallpaper, source: "image", asset, enabled: true, history },
+  };
+  return mockSettings;
+}
+
+function mockForget(id: string) {
+  const wallpaper = mockSettings.wallpaper;
+  const current = wallpaper.asset?.id === id;
+  mockSettings = {
+    ...mockSettings,
+    wallpaper: {
+      ...wallpaper,
+      ...(current ? { source: "none" as const, asset: null, enabled: false } : {}),
+      history: wallpaper.history.filter((entry) => entry.id !== id),
+    },
+  };
+  return mockSettings;
+}
+
 const results: { [M in MethodName]: (params: never) => Result<M> } = {
   "system.ping": (params: { nonce: string }) => ({ nonce: params.nonce }),
   "system.info": () => ({
@@ -303,7 +481,16 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
   }),
   "system.collectionSummary": () => ({ cards: 12480, reviews: 386214 }),
   "system.openExternal": () => null,
+  "system.share": () => ({ method: "clipboard" as const }),
   ...statisticsMocks,
+  ...goalMocks,
+  "goals.delete": (params: { id: string }) => {
+    goalMocks["goals.delete"](params);
+    mockLayout = {
+      widgets: mockLayout.widgets.filter((widget) => !widget.type.startsWith(`goal:${params.id}:`)),
+    };
+    return null;
+  },
   "dashboard.get": () => mockLayout,
   "dashboard.save": ({ layout, devices }: { layout: DashboardLayout; devices?: DeviceLayouts }) => {
     mockLayout = layout;
@@ -367,8 +554,12 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
   },
   "shortcuts.beginRecording": () => null,
   "shortcuts.endRecording": () => null,
-  "feedback.visit": () => ({ askRating: location.search.includes("rating") }),
+  "feedback.visit": () => ({
+    askRating: location.search.includes("rating"),
+    askShare: location.search.includes("share"),
+  }),
   "feedback.answer": () => null,
+  "feedback.answerShare": () => null,
   "widgets.list": () => mockWidgets,
   "widgets.save": ({ widget }: { widget: CustomWidget }) => {
     mockWidgets = [...mockWidgets.filter((item) => item.id !== widget.id), widget];
@@ -383,16 +574,18 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
   },
   "widgets.addMedia": () => ({ asset: null }),
   "widgets.setGifLoop": ({ id }: { id: string }) => ({ id, type: "image/gif" as const }),
-  "widgets.media": () => ({ url: null }),
+  "widgets.media": ({ id }: { id: string }) => ({ url: MOCK_MEDIA[id] ?? null }),
   "widgets.export": () => ({ saved: true }),
   "widgets.import": () => ({ widget: null }),
   "mobile.status": () => mockMobile,
   "mobile.enable": () => {
-    mockMobile = { enabled: true, updated: "2026-11-01T09:30" };
+    if ("mobile.card" in mockGrants || mockDialog("mobile.card")) {
+      mockMobile = { enabled: true, updated: "2026-11-01T09:30" };
+    }
     return mockMobile;
   },
   "mobile.disable": () => {
-    mockMobile = { enabled: false, updated: null };
+    revokeMock("mobile.card");
     return mockMobile;
   },
   "mobile.refresh": () => mockMobile,
@@ -477,11 +670,9 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
     mockChat = NEW_CHAT;
     return null;
   },
-  "ai.answerPermission": ({ decision }: { decision: "once" | "always" | "deny" }) => {
-    if (decision === "always") {
-      mockAi = { ...mockAi, permissions: { ...mockAi.permissions, cards: true } };
-    }
-    mockResume?.();
+  "ai.answerPermission": ({ decision }: { decision: "once" | "deny" }) => {
+    mockChat = { ...mockChat, waiting: null };
+    mockResume?.(decision === "once");
     mockResume = null;
     return null;
   },
@@ -505,12 +696,37 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
     return null;
   },
   "ai.setPermission": ({ scope, allowed }: { scope: "decks" | "cards"; allowed: boolean }) => {
-    mockAi = { ...mockAi, permissions: { ...mockAi.permissions, [scope]: allowed } };
+    if (allowed) {
+      mockDialog(`ai.${scope}`);
+    } else {
+      revokeMock(`ai.${scope}`);
+    }
     return mockAi;
   },
   "ai.setExternalPermissions": ({ allowed }: { allowed: boolean }) => {
-    mockAi = { ...mockAi, externalPermissions: allowed };
+    if (allowed) {
+      mockDialog("ai.external");
+    } else {
+      revokeMock("ai.external");
+    }
     return mockAi;
+  },
+  "permissions.list": () => mockPermissions(),
+  "permissions.request": ({ id }: { id: PermissionId }) => {
+    mockDialog(id);
+    return mockPermissions();
+  },
+  "permissions.revoke": ({ id }: { id: PermissionId }) => {
+    revokeMock(id);
+    return mockPermissions();
+  },
+  "changes.list": () => mockAnkiChanges,
+  "changes.undo": ({ id }: { id: string }) => {
+    mockAnkiChanges = mockAnkiChanges.map((entry) =>
+      entry.id === id ? { ...entry, undone: true, canUndo: false } : entry,
+    );
+    mockRaise.forget(id);
+    return mockAnkiChanges;
   },
   "ai.setKeepChats": ({ keep }: { keep: boolean }) => {
     mockAi = { ...mockAi, keepChats: keep };
@@ -603,9 +819,20 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
     return { code: "statly1.52741.mock-code" };
   },
   "ai.saveBridge": () => ({ saved: true }),
-  "wallpaper.preview": () => ({ image: null }),
-  "wallpaper.choose": () => ({ image: null }),
-  "wallpaper.remove": () => ({ image: null }),
+  "wallpaper.choose": () => mockWallpaper(MOCK_WALLPAPER),
+  "wallpaper.dropped": () => mockWallpaper(MOCK_WALLPAPER_VIDEO),
+  "wallpaper.use": ({ id }: { id: string }) => {
+    const asset = mockSettings.wallpaper.history.find((entry) => entry.id === id);
+    return asset ? mockWallpaper(asset as typeof MOCK_WALLPAPER) : mockSettings;
+  },
+  "wallpaper.forget": ({ id }: { id: string }) => mockForget(id),
+  "wallpaper.remove": () => {
+    mockSettings = {
+      ...mockSettings,
+      wallpaper: { ...mockSettings.wallpaper, source: "none", asset: null, enabled: false },
+    };
+    return mockSettings;
+  },
   "shortcuts.set": ({ action, keys }: { action: ShortcutAction; keys: string }) => {
     if (keys === "Ctrl+Q") {
       return { conflict: "Quit", settings: mockSettings };

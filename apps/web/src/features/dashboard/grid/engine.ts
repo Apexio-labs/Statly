@@ -5,6 +5,9 @@ import {
   type DashboardLayout,
   type DashboardWidget,
   deviceMinHeight,
+  type GoalView,
+  goalWidgetPrefix,
+  goalWidgetSizes,
   gridColumns,
   maxGridRows,
   type SizeRules,
@@ -21,6 +24,15 @@ export type RulesOf = (type: string) => SizeRules;
 
 const FALLBACK_RULES: SizeRules = { ...widgetSizeLimits, w: 4, h: 6 };
 
+/** A goal widget, `goal:<id>:<view>`, takes the sizes of its view. Python knows whether it exists. */
+function goalRules(type: string): SizeRules | undefined {
+  if (!type.startsWith(goalWidgetPrefix)) {
+    return undefined;
+  }
+  const view = type.split(":")[2] as GoalView;
+  return view in goalWidgetSizes ? { ...goalWidgetSizes[view] } : undefined;
+}
+
 export function rulesOfWidgets(customWidgets: CustomWidget[] = []): RulesOf {
   const custom = new Map(
     customWidgets.map((widget) => [
@@ -28,7 +40,8 @@ export function rulesOfWidgets(customWidgets: CustomWidget[] = []): RulesOf {
       { ...widgetSizeLimits, ...widget.size, ...sizeLimits(widget.size) },
     ]),
   );
-  return (type) => builtinWidgets[type as WidgetType] ?? custom.get(type) ?? FALLBACK_RULES;
+  return (type) =>
+    builtinWidgets[type as WidgetType] ?? custom.get(type) ?? goalRules(type) ?? FALLBACK_RULES;
 }
 
 const builtinRules = rulesOfWidgets();
@@ -114,7 +127,7 @@ type Grid<W> = { widgets: W[] };
 
 function unusedId(layout: Grid<DashboardWidget>, type: string): string {
   const taken = new Set(layout.widgets.map((widget) => widget.id));
-  const base = type.replace(":", "-").slice(0, 56);
+  const base = type.replaceAll(":", "-").slice(0, 56);
   let number = layout.widgets.filter((widget) => widget.type === type).length + 1;
   while (taken.has(`${base}-${number}`)) {
     number += 1;

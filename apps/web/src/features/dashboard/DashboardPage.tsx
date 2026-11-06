@@ -1,17 +1,25 @@
-import { type DeviceKind, deviceColumns, gridColumns } from "@statly/contract";
+import { type DeviceKind, defaultLayout, deviceColumns, gridColumns } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
 import { useQuery } from "@tanstack/react-query";
-import { type LucideIcon, Monitor, Pencil, Smartphone, Tablet } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router";
 import { bridge } from "../../bridge/index.ts";
 import { Button } from "../../components/Button.tsx";
+import { ConfirmDialog } from "../../components/ConfirmDialog.tsx";
+import {
+  EditIcon,
+  MobileIcon,
+  MonitorIcon,
+  TabletIcon,
+  type ThemedIcon,
+} from "../../components/icons.tsx";
 import { PageHeader } from "../../components/PageHeader.tsx";
 import { useAppearance } from "../../lib/appearance.tsx";
 import { useStatistic } from "../../lib/calls.ts";
 import { useUnsavedGuard } from "../../lib/useUnsavedGuard.tsx";
 import { useRail } from "../../shell/ShellContext.tsx";
+import { useGoals } from "../goals/useGoals.ts";
 import { renderWidget, useWidgetTitle } from "../widgets/renderWidget.tsx";
 import { useCustomWidgets, useMedia } from "../widgets/useCustomWidgets.ts";
 import { DeckPicker } from "./DeckPicker.tsx";
@@ -33,10 +41,10 @@ import { useLayout } from "./useLayout.ts";
 import { WidgetRail } from "./WidgetRail.tsx";
 
 const NARROW_QUERY = "(max-width: 600px)";
-const DEVICES: [Device, LucideIcon][] = [
-  ["desktop", Monitor],
-  ["tablet", Tablet],
-  ["phone", Smartphone],
+const DEVICES: [Device, ThemedIcon][] = [
+  ["desktop", MonitorIcon],
+  ["tablet", TabletIcon],
+  ["phone", MobileIcon],
 ];
 
 function useNarrowWindow(): boolean {
@@ -85,17 +93,20 @@ function DevicePicker({
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { theme, settings } = useAppearance();
+  const { paletteKey, settings } = useAppearance();
   const filters = useDashboardFilters();
   const stored = useLayout();
-  const { draft, setDraft, device, begin, switchTo, followDesktop, close, dirty } =
+  const { draft, setDraft, device, begin, switchTo, followDesktop, resetTo, close, dirty } =
     useDeviceDraft();
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const startAt = useRef<Device | null>(null);
   const editing = draft !== null;
   const railHost = useRail(editing ? "widgets" : null);
 
   const today = useStatistic("statistics.today", {});
   const decks = useStatistic("statistics.decks", {});
   const { widgets: customWidgets } = useCustomWidgets();
+  const goals = useGoals();
   const rulesOf = useMemo(() => rulesOfWidgets(customWidgets), [customWidgets]);
   const titleOf = useWidgetTitle(customWidgets);
   const [search, setSearch] = useSearchParams();
@@ -124,14 +135,25 @@ export function DashboardPage() {
     });
   }, [search, setSearch, stored.layout, begin]);
 
-  // The phone settings lead straight to arranging the phone.
+  // A shortcut in Anki starts editing, and the phone settings lead straight to the phone. The
+  // address is cleaned up first: editing makes the guard ask before any address change.
   useEffect(() => {
-    const wanted = search.get("device");
-    if (wanted && stored.layout) {
+    const wanted = search.has("edit") ? "desktop" : search.get("device");
+    if (wanted) {
+      startAt.current = wanted as Device;
       setSearch({}, { replace: true });
-      void begin(stored.layout, wanted as Device);
     }
-  }, [search, setSearch, stored.layout, begin]);
+  }, [search, setSearch]);
+
+  useEffect(() => {
+    const start = startAt.current;
+    if (start && !search.has("edit") && !search.has("device") && stored.layout) {
+      startAt.current = null;
+      if (!editing) {
+        void begin(stored.layout, start);
+      }
+    }
+  }, [search, stored.layout, begin, editing]);
 
   async function storeDraft(): Promise<boolean> {
     if (!draft) {
@@ -187,7 +209,7 @@ export function DashboardPage() {
       firstReview: today.data.firstReview,
     }),
     deckId: deckIdOf(filters.deck),
-    themeKey: theme,
+    themeKey: paletteKey,
   };
   const other = (name: DeviceKind): DeviceKind => (name === "phone" ? "tablet" : "phone");
 
@@ -213,7 +235,7 @@ export function DashboardPage() {
           </>
         ) : (
           <Button primary onClick={() => stored.layout && void begin(stored.layout)}>
-            <Pencil size={15} />
+            <EditIcon size={15} />
             {t("dashboard.edit")}
           </Button>
         )}
@@ -275,13 +297,27 @@ export function DashboardPage() {
       </div>
       {guard.dialog}
       {offer.dialog}
+      {confirmingReset ? (
+        <ConfirmDialog
+          title={t("settings.resetConfirmTitle")}
+          body={t("dashboard.resetDraftBody")}
+          confirm={t("settings.resetConfirm")}
+          onCancel={() => setConfirmingReset(false)}
+          onConfirm={() => {
+            setConfirmingReset(false);
+            void resetTo(defaultLayout);
+          }}
+        />
+      ) : null}
       {draft && railHost
         ? createPortal(
             <WidgetRail
               layout={draft.desktop}
               customWidgets={customWidgets}
+              goals={goals.data ?? []}
               onAdd={addToCurrent}
               onImport={setDesktop}
+              onReset={() => setConfirmingReset(true)}
             />,
             railHost,
           )

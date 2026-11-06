@@ -89,7 +89,7 @@
 					backgroundRepeat: "no-repeat"
 				} : { background: "#000000" };
 			}
-			default: return { background: "var(--statly-card)" };
+			default: return { background: "var(--statly-widget, var(--statly-card))" };
 		}
 	}
 	// src/render.ts

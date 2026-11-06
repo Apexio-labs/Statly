@@ -12,6 +12,9 @@ Sponsored by [Oldschool Timeless](https://oldschooltimeless.com).
   and FSRS values, plus Statly's own widgets.
 - **Your own widgets, without code.** Build them from text, numbers, charts, pictures and shapes.
   Widgets are plain data, so sharing one can never run code on someone's computer.
+- **Study goals.** Set an exam date and Statly spreads the cards of the chosen decks over the days
+  before it, shows the day's goal as a ring, estimates how long today takes by your own pace and
+  keeps a streak. Goals can sync to your other computers through AnkiWeb.
 - **Your dashboard on your phone.** A card that travels with the normal Anki sync shows it on
   phones and tablets, with a layout worked out for each device. No server is involved.
 - **An assistant, if you want one.** Ask about your learning with your own API key or a local model
@@ -19,14 +22,16 @@ Sponsored by [Oldschool Timeless](https://oldschooltimeless.com).
 
 ## Your data and your cards
 
-Statly reads your collection and never changes your cards. The only thing it ever writes is its own
-phone card, and only after you switch that on. It sends nothing anywhere by itself: no telemetry,
-no account, no server of ours.
+Statly reads your collection and never changes your cards. It writes to Anki only after you allow it
+in its own popup: its phone card, for a study goal how many new cards a deck shows today, and, if
+you let goals sync, a small entry of its own in the collection's settings. A changed limit is a step
+you can undo with Anki's Edit → Undo, and Privacy & Security lists every change and permission.
+It sends nothing anywhere by itself: no telemetry, no account, no server of ours.
 
 The assistant is off until you set it up. Everything it can do is listed in
 [docs/adr/0002-how-the-assistant-stays-safe.md](docs/adr/0002-how-the-assistant-stays-safe.md):
 
-- It can never change cards, notes or decks.
+- It can never change cards, notes or decks, raise a deck's limit or allow anything.
 - It needs your permission to read card contents or deck names, and you can take that back.
 - Changes to widgets and settings wait for your click, and every one can be rolled back.
 - API keys stay in your system's keychain, optionally behind a password of your own.
@@ -71,6 +76,9 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/ar
 
 ## License
 
-Statly is released under the [MIT License](LICENSE). The Statly and Oldschool Timeless names and
-graphics are not part of it, see [TRADEMARKS.md](TRADEMARKS.md). Third-party components keep their own
-licenses, listed in `THIRD_PARTY_NOTICES.txt` inside the built add-on.
+Statly is free software under the [GNU Affero General Public License](LICENSE), version 3 or later.
+Companies that cannot meet its terms can get a commercial license, see [LICENSING.md](LICENSING.md).
+Version 2.0.0 was published under the MIT License and stays available under it. The Statly and
+Oldschool Timeless names and graphics are not part of either license, see
+[TRADEMARKS.md](TRADEMARKS.md). Third-party components keep their own licenses, listed in
+`THIRD_PARTY_NOTICES.txt` inside the built add-on.

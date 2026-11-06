@@ -27,10 +27,10 @@ def heat_levels(today_text: str, days: list[Any]) -> list[int]:
     """One level per day of the last 53 weeks, ending with the current week."""
     today = date.fromisoformat(today_text)
     start = today - timedelta(days=today.weekday() + 52 * 7)
-    reviews = {day["date"]: day["reviews"] for day in days}
-    highest = max(reviews.values(), default=0)
+    counts = {day["date"]: day["count"] for day in days}
+    highest = max(counts.values(), default=0)
     levels: list[int] = []
     for offset in range((today - start).days + 1):
-        value = reviews.get((start + timedelta(days=offset)).isoformat(), 0)
+        value = counts.get((start + timedelta(days=offset)).isoformat(), 0)
         levels.append(0 if value == 0 else min(_LEVELS, (value * _LEVELS + highest - 1) // highest))
     return levels

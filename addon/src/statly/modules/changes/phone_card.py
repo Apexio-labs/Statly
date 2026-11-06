@@ -1,7 +1,7 @@
-"""The only code in Statly that changes the collection.
+"""Writes the phone card: Statly's own deck, note type and note, and nothing else.
 
-It touches nothing but its own deck, note type and note. Each of these functions runs on Anki's
-collection worker.
+Each of these functions runs on Anki's collection worker, and only through the gate in
+``modules/changes``, which checks the permission first.
 
 People can edit the card on a phone like any other, so a sync may bring a broken one back. The
 desktop then restores exactly this card and leaves everything else alone.
@@ -16,14 +16,15 @@ from typing import Any, cast
 from anki.collection import Collection
 from anki.notes import Note
 
+from ...core.reader import STATLY_DECK_NAME as DECK_NAME
 from ...core.reader import STATLY_NOTE_GUID as NOTE_GUID
 from ...core.reader import CollectionReader
-from .card import MARKER, card_styles, front_template
+from ..mobile.card import MARKER, card_styles, front_template
 
-DECK_NAME = "Statly Dashboard"
 NOTETYPE_NAME = "Statly Dashboard"
 PRESET_NAME = "Statly Dashboard"
 TITLE = "Statly"
+PERMISSION = "mobile.card"
 _NEW_CARDS_PER_DAY = 9999
 _QUEUE_NEW = 0
 _BACK_TEMPLATE = "{{FrontSide}}"

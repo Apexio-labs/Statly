@@ -7,6 +7,11 @@ body,
   height: 100%;
 }
 
+:root {
+  /* How far a card tilts each way while the dashboard is being arranged. */
+  --statly-wobble: 0.1deg;
+}
+
 body {
   margin: 0;
   background: #000000;
@@ -30,12 +35,6 @@ body {
   display: none;
 }
 
-[data-theme="frutiger-aero"] main {
-  background:
-    radial-gradient(ellipse at 70% 0%, rgb(101 219 255 / 45%), transparent 45%),
-    linear-gradient(160deg, #e9fbff, #cdf1fb 60%, #dff7ff);
-}
-
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -56,6 +55,11 @@ body {
   touch-action: none;
   z-index: 1;
   outline: none;
+  animation: statly-wobble 320ms ease-in-out infinite alternate;
+}
+
+.statly-editing:nth-child(even) {
+  animation-delay: 120ms;
 }
 
 .statly-editing > section {
@@ -85,6 +89,7 @@ body {
   z-index: 4;
   cursor: grabbing;
   will-change: transform;
+  animation: none;
 }
 
 .statly-lifted > section {
@@ -111,6 +116,68 @@ body {
   transition: width 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* A group of the widget rail folds up under its title. */
+.statly-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease-out;
+}
+
+.statly-fold[data-open] {
+  grid-template-rows: 1fr;
+}
+
+/* Hidden only once it has folded up, so the movement stays visible. */
+.statly-fold > * {
+  visibility: hidden;
+  transition: visibility 0s 200ms;
+}
+
+.statly-fold[data-open] > * {
+  visibility: visible;
+  transition: none;
+}
+
+/*
+ * A wallpaper lies behind the window. The solid themes open their frame and let it shine through
+ * the page a little, while cards and the sidebar stay as they are. Frutiger Aero is glass already.
+ */
+[data-wallpaper] body,
+[data-wallpaper] .statly-shell {
+  background: transparent;
+}
+
+[data-wallpaper]:not([data-theme="frutiger-aero"]) {
+  .statly-main {
+    background: color-mix(in srgb, var(--statly-page) 74%, transparent);
+  }
+
+  /*
+   * The bar keeps its own shape. Only once the page has scrolled does a frosted strip appear behind
+   * it, fading out at its lower edge, so cards blur away under the bar instead of peeking past it.
+   */
+  .statly-page-header {
+    background: transparent;
+
+    &::before {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: color-mix(in srgb, var(--statly-page) 70%, transparent);
+      opacity: 0;
+      backdrop-filter: blur(14px);
+      content: "";
+      pointer-events: none;
+      transition: opacity 160ms ease-out;
+      mask-image: linear-gradient(#000000 78%, transparent);
+    }
+  }
+
+  .statly-main[data-scrolled] .statly-page-header::before {
+    opacity: 1;
+  }
+}
+
 .statly-typing::after {
   display: inline-block;
   width: 1px;
@@ -120,6 +187,16 @@ body {
   vertical-align: -0.12em;
   content: "";
   animation: statly-caret 1s steps(2, jump-none) infinite;
+}
+
+/* Rotate is a property of its own, so it adds to the transform that places a card in the grid. */
+@keyframes statly-wobble {
+  from {
+    rotate: calc(var(--statly-wobble) * -1);
+  }
+  to {
+    rotate: var(--statly-wobble);
+  }
 }
 
 @keyframes statly-caret {
@@ -145,6 +222,183 @@ body {
   border-radius: var(--radius-card, 14px);
 }
 
+/* Buffer days before an exam: striped, so they read as kept free for revision. */
+.statly-buffer-day {
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--statly-accent) 24%, transparent) 0 3px,
+    transparent 3px 7px
+  );
+}
+
+/* A goal's ring zooms into a deck, and confetti falls when the day's goal is met. */
+.statly-ring-zoom {
+  transform-origin: 50px 50px;
+  animation: statly-ring-zoom 0.35s ease-out;
+}
+
+@keyframes statly-ring-zoom {
+  from {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+}
+
+/* The slice under the pointer moves out of the ring a little and the others step back. */
+.statly-slice {
+  transition:
+    transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.25),
+    opacity 0.2s ease-out;
+}
+
+.statly-slice[data-lit] {
+  transform: translate(var(--out-x, 0), var(--out-y, 0));
+}
+
+.statly-slice[data-dim] {
+  opacity: 0.4;
+}
+
+/* What the middle of the ring or a tooltip says changes with a short fade. */
+.statly-fade-in {
+  animation: statly-fade-in 0.18s ease-out;
+}
+
+@keyframes statly-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+/* Days on the way to the exam rise into place, one after the other. */
+.statly-rise {
+  transform-origin: bottom;
+  animation: statly-rise 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation-delay: calc(min(var(--i, 0), 45) * 10ms);
+}
+
+@keyframes statly-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.statly-day {
+  transition: opacity 0.15s ease-out;
+
+  & .statly-bar {
+    transform-origin: bottom;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.3, 1.25);
+  }
+
+  &[data-lit] .statly-bar {
+    transform: scaleY(1.06);
+  }
+
+  &[data-dim] {
+    opacity: 0.5;
+  }
+}
+
+/* Cards and tiles that open something lift a little under the pointer. */
+.statly-lift {
+  transition:
+    transform 0.2s ease-out,
+    box-shadow 0.2s ease-out,
+    border-color 0.2s ease-out;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      var(--shadow-card),
+      0 10px 24px -8px rgb(0 0 0 / 22%);
+  }
+}
+
+.statly-badge {
+  transition: transform 0.25s cubic-bezier(0.2, 1.4, 0.4, 1);
+
+  &[data-earned="true"]:hover {
+    transform: scale(1.08) rotate(-3deg);
+  }
+}
+
+.statly-history-day {
+  transition: transform 0.15s ease-out;
+
+  &:hover {
+    transform: scale(1.35);
+  }
+}
+
+/* Menus grow out of where they were opened. */
+.statly-menu[data-state="open"] {
+  transform-origin: var(--radix-popover-content-transform-origin);
+  animation: statly-menu-in 0.14s ease-out;
+}
+
+@keyframes statly-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* The arrow back leans the way it leads. */
+.statly-back-arrow {
+  transition: transform 0.18s ease-out;
+}
+
+.statly-arrow-back:hover .statly-back-arrow {
+  transform: translateX(-2px);
+}
+
+.statly-confetti {
+  position: absolute;
+  top: -12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: statly-confetti-fall 1.9s cubic-bezier(0.25, 0.6, 0.4, 1) forwards;
+}
+
+@keyframes statly-confetti-fall {
+  0% {
+    transform: translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift), 300px) rotate(var(--spin));
+    opacity: 0;
+  }
+}
+
+.statly-celebration-badge {
+  transform: translateY(-50%);
+  animation: statly-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes statly-pop {
+  from {
+    transform: translateY(-50%) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* A setting someone was sent to: framed for a few seconds, so they learn where it lives. */
+.statly-spotlight {
+  outline: 2px solid var(--statly-accent);
+  outline-offset: 6px;
+  border-radius: var(--radius-control, 8px);
+  animation: statly-spotlight 1.2s ease-in-out 3;
+}
+
+@keyframes statly-spotlight {
+  50% {
+    outline-offset: 2px;
+  }
+}
+
 @keyframes statly-pulse {
   50% {
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--statly-accent) 45%, transparent);
@@ -153,12 +407,39 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .statly-gliding,
-  .statly-panel-slide {
+  .statly-panel-slide,
+  .statly-fold,
+  .statly-slice,
+  .statly-day .statly-bar,
+  .statly-lift,
+  .statly-badge,
+  .statly-history-day,
+  .statly-back-arrow {
     transition: none;
   }
 
+  .statly-slice[data-lit],
+  .statly-day[data-lit] .statly-bar,
+  .statly-lift:hover,
+  .statly-badge[data-earned="true"]:hover,
+  .statly-history-day:hover,
+  .statly-arrow-back:hover .statly-back-arrow {
+    transform: none;
+  }
+
   .statly-typing::after,
-  .statly-pulse {
+  .statly-pulse,
+  .statly-spotlight,
+  .statly-ring-zoom,
+  .statly-fade-in,
+  .statly-rise,
+  .statly-menu[data-state="open"],
+  .statly-celebration-badge,
+  .statly-editing {
     animation: none;
+  }
+
+  .statly-confetti {
+    display: none;
   }
 }

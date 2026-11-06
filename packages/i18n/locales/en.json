@@ -5,6 +5,7 @@
     "settings": "Settings",
     "ankiStatistics": "Anki statistics",
     "resize": "Resize the sidebar",
+    "goals": "Goals",
     "ai": "AI"
   },
   "time": {
@@ -16,7 +17,7 @@
     "edit": "Edit dashboard",
     "save": "Save",
     "cancel": "Cancel",
-    "reset": "Reset",
+    "reset": "Reset dashboard",
     "remove": "Remove from dashboard",
     "range": "Time range",
     "deck": "Deck",
@@ -56,29 +57,293 @@
     "importFailed": "This is not a usable Statly dashboard file.",
     "exported": "Dashboard exported.",
     "groups": {
+      "goals": "Study goals",
       "progress": "Learning progress",
       "collection": "Decks and collection",
       "habits": "Study habits",
       "custom": "Custom widgets",
       "favorites": "Favorites",
       "anki": "Anki statistics"
+    },
+    "resetDraftBody": "All widgets and their arrangement on computer, tablet and phone are replaced by the default view. It only takes effect when you save, and Cancel undoes it."
+  },
+  "goals": {
+    "title": "Study goals",
+    "new": "New goal",
+    "newInRail": "New study goal…",
+    "empty": "Set a goal, and Statly works out every day how much is left to do, also when you study on your phone.",
+    "archived_one": "{{count}} archived goal",
+    "archived_other": "{{count}} archived goals",
+    "gallery": {
+      "title": "What do you want to reach?",
+      "more": "More kinds of goals will follow."
+    },
+    "kinds": {
+      "exam": {
+        "title": "Pass an exam",
+        "description": "Learn every card of your decks by the exam, spread evenly over the days left."
+      }
+    },
+    "actions": {
+      "edit": "Edit",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete",
+      "addToDashboard": "Add to Dashboard",
+      "onDashboard": "On the dashboard"
+    },
+    "deleteConfirm": {
+      "title": "Delete this goal?",
+      "body": "Its history and its widgets go too. Your cards and the study time Statly measured stay.",
+      "confirm": "Delete"
+    },
+    "setup": {
+      "newTitle": "New exam goal",
+      "editTitle": "Edit goal",
+      "cancel": "Cancel",
+      "name": "Name",
+      "namePlaceholder": "Named after the first deck",
+      "decks": "Decks",
+      "decksNote": "A ticked deck covers its subdecks, also ones you add later.",
+      "chooseDecks": "Choose decks",
+      "decksChosen_one": "{{count}} deck",
+      "decksChosen_other": "{{count}} decks",
+      "deckCounts": "{{cards}} cards, {{open}} of them still to learn",
+      "exam": "Exam date, buffer and days off",
+      "examNote": "The buffer before the exam stays free for revision.",
+      "mode": "Goal",
+      "modes": {
+        "learned": {
+          "title": "Learn every card once",
+          "note": "A card counts once it went through its learning steps."
+        },
+        "reviewed": {
+          "title": "… and review it once",
+          "note": "Learn early enough that Anki shows every card once more before the deadline."
+        }
+      },
+      "counts": "What counts each day",
+      "countsOptions": {
+        "newAndDue": {
+          "title": "New cards and due reviews",
+          "note": "Both count, so reviews never quietly pile up."
+        },
+        "newOnly": {
+          "title": "New cards only",
+          "note": "Reviews show up, but do not count."
+        }
+      },
+      "recommended": "Recommended",
+      "view": "Look on the dashboard",
+      "viewNote": "You can add the other look later as well.",
+      "views": {
+        "ring": {
+          "title": "Ring",
+          "note": "Today's progress at a glance."
+        },
+        "timeline": {
+          "title": "Timeline",
+          "note": "The day's bar and the way to the exam."
+        }
+      },
+      "soon": "Coming soon",
+      "preview": "Preview",
+      "previewEmpty": "Choose decks to see your numbers.",
+      "save": "Save",
+      "saveAndAdd": "Save and Add to Dashboard",
+      "suggested": "The assistant suggested this goal. Check every setting; it becomes a goal only when you save it."
+    },
+    "calendar": {
+      "trigger_one": "{{date}} · {{count}} day buffer",
+      "trigger_other": "{{date}} · {{count}} days buffer",
+      "pick": "Choose",
+      "pickExam": "Exam day",
+      "pickFree": "Days off",
+      "examHint": "Click the day of your exam",
+      "freeHint": "Click single days you will not study",
+      "examField": "Exam date",
+      "future": "The exam has to lie in the future.",
+      "buffer": "Buffer before the exam",
+      "bufferDays_one": "{{count}} day",
+      "bufferDays_other": "{{count}} days",
+      "less": "One day less",
+      "more": "One day more",
+      "studyDays": "Study days",
+      "legendExam": "Exam",
+      "legendBuffer": "Buffer",
+      "legendFree": "Day off"
+    },
+    "widget": {
+      "newCards": "new cards today",
+      "cards": "cards today",
+      "left_one": "{{count}} to go",
+      "left_other": "{{count}} to go",
+      "states": {
+        "done": "Done for today",
+        "rest": "Day off"
+      },
+      "ringLabel": "{{done}} of {{target}} done today",
+      "streak_one": "{{count}} day in a row",
+      "streak_other": "{{count}} days in a row",
+      "tomorrow": "Tomorrow about {{count}}",
+      "daysLeft_one": "{{count}} study day left",
+      "daysLeft_other": "{{count}} study days left",
+      "examOn": "Exam on {{date}}",
+      "noDecks": "The decks of this goal are gone.",
+      "chooseDecks": "Choose decks",
+      "over": "The exam is over.",
+      "finished": "Every card is learned.",
+      "gone": "This goal no longer exists.",
+      "reviews": "Reviews",
+      "openDeck": "Open {{name}}: {{done}} of {{target}}",
+      "back": "Back",
+      "warnings_one": "{{count}} notice",
+      "warnings_other": "{{count}} notices",
+      "inProgress_one": "{{count}} in progress",
+      "inProgress_other": "{{count}} in progress",
+      "openInGoals": "Open in Goals",
+      "menu": "Goal"
+    },
+    "motivation": {
+      "start": "Let's go: {{count}} today",
+      "going": "Every card counts: {{count}} to go",
+      "halfway": "Good going: {{count}} to go",
+      "almost": "Almost there: just {{count}}",
+      "done": "Done for today!",
+      "doneStreak": "Done, {{count}} days in a row!",
+      "keepStreak": "Keep your {{count}}-day streak: {{left}} to go",
+      "rest": "Day off, enjoy it",
+      "finished": "Every card is learned",
+      "waiting_one": "All learned. {{count}} card waits to come back",
+      "waiting_other": "All learned. {{count}} cards wait to come back"
+    },
+    "streak": {
+      "atRisk": "Study today to keep your streak",
+      "alive": "Your streak"
+    },
+    "celebration": {
+      "done": "Goal reached!",
+      "milestone": "New badge: {{count}} days in a row"
+    },
+    "timeline": {
+      "label": "Days until the exam",
+      "exam": "Exam {{date}}",
+      "day_one": "{{date}}: {{count}} card, {{kind}}",
+      "day_other": "{{date}}: {{count}} cards, {{kind}}",
+      "kinds": {
+        "met": "met",
+        "missed": "missed",
+        "rest": "day off",
+        "today": "today",
+        "study": "planned",
+        "free": "day off",
+        "buffer": "buffer",
+        "exam": "exam",
+        "review": "seeing cards again"
+      },
+      "dayWithReviews_one": "{{date}}: {{count}} new card + {{reviews}} reviews, {{kind}}",
+      "dayWithReviews_other": "{{date}}: {{count}} new cards + {{reviews}} reviews, {{kind}}",
+      "dayOnlyReviews": "{{date}}: {{reviews}} reviews, {{kind}}"
+    },
+    "detail": {
+      "today": "Today",
+      "way": "The way to the exam",
+      "numbers": "Today in numbers",
+      "newCards": "New cards learned",
+      "reviewsCounted": "Reviews, part of the goal",
+      "reviewsNotCounted": "Reviews, not part of the goal",
+      "inProgress": "In their learning steps",
+      "ifMet": "Tomorrow, if you meet today's goal",
+      "ifStopped": "Tomorrow, if you stop now",
+      "learned": "Learned so far",
+      "deadline": "Last day for new cards",
+      "exam": "Exam",
+      "daysLeft": "Study days left",
+      "decks": "Decks",
+      "deck": "Deck",
+      "todayColumn": "Today",
+      "learningColumn": "Learning",
+      "openColumn": "Still open",
+      "streak": "Streak",
+      "best": "Best: {{count}}",
+      "badges": "Badges",
+      "badge_one": "{{count}} day",
+      "badge_other": "{{count}} days",
+      "calendar": "Recent weeks",
+      "notices": "Notices",
+      "noNotices": "Nothing stands in the way.",
+      "add": {
+        "ring": "Add Ring to Dashboard",
+        "timeline": "Add Timeline to Dashboard"
+      },
+      "placed": {
+        "ring": "Ring on the dashboard",
+        "timeline": "Timeline on the dashboard"
+      },
+      "timeDay": "Time for today",
+      "timeLeft": "Still to go",
+      "timeSplit": "Split",
+      "timeSplitValue": "{{newCards}} new ({{newTime}}) + {{reviews}} reviews ({{reviewTime}})",
+      "timeNote": "Estimated from your own pace in recent weeks, cut-off and undone answers included. The range shows how far the estimate was off on most days.",
+      "finished": "Learned and seen again",
+      "waiting": "Waiting to come back",
+      "reviewUntil": "Seeing them again until",
+      "reviewUntilValue_one": "{{date}} (back after about {{count}} day)",
+      "reviewUntilValue_other": "{{date}} (back after about {{count}} days)"
+    },
+    "warnings": {
+      "deckMissing": "The deck {{name}} no longer exists. The goal goes on without it.",
+      "suspended_one": "{{count}} suspended card does not count.",
+      "suspended_other": "{{count}} suspended cards do not count.",
+      "newLimit": "{{name}} shows only {{limit}} new cards a day, but today's goal needs {{target}}.",
+      "lateCards_one": "{{count}} learned card would come back only after the deadline.",
+      "lateCards_other": "{{count}} learned cards would come back only after the deadline.",
+      "noTimeToReview_one": "Cards come back after about {{count}} day, and that is no longer before the deadline. Statly plans as if they only had to be learned.",
+      "noTimeToReview_other": "Cards come back after about {{count}} days, and that is no longer before the deadline. Statly plans as if they only had to be learned."
+    },
+    "time": {
+      "left": "≈ {{time}} to go",
+      "range": "≈ {{time}} ({{low}}–{{high}} min)"
+    },
+    "limits": {
+      "raise": "Raise for today",
+      "raiseNote": "Statly asks first and shows exactly what it changes: only today's new card limit of these decks. Anki's Edit → Undo takes it back.",
+      "options": "Deck options",
+      "postponed": "Not right now: while you study, or while Anki waits to redo something, Statly changes nothing.",
+      "notNeeded": "The limits are already enough for today."
+    },
+    "sync": {
+      "on": "Your goals sync through AnkiWeb with your other computers.",
+      "off": "Your goals stay on this computer.",
+      "change": "Change",
+      "switchOn": "Sync through AnkiWeb"
     }
   },
   "widgets": {
     "review-summary": {
       "title": "Reviews",
-      "note": "Answers in the selected range",
-      "description": "Number of cards reviewed in the selected range."
+      "note": "Cards moved to a later day",
+      "description": "How many cards you finished reviewing in the selected range. A card counts once a day, as soon as it moves to a later day. Ratings count every single press."
+    },
+    "rating-summary": {
+      "title": "Ratings",
+      "note": "Every press of Again, Hard, Good or Easy",
+      "description": "How often you rated a card in the selected range. Every press counts, also several for the same card."
+    },
+    "learned-cards": {
+      "title": "Learned cards",
+      "note": "Different cards, {{new}} of them new",
+      "description": "How many different cards you studied in the selected range. A card counts once, however often it came up."
     },
     "study-time": {
       "title": "Study time",
       "note": "Time spent in the selected range",
-      "description": "Time spent reviewing in the selected range."
+      "description": "How long you studied in the selected range."
     },
     "success-rate": {
       "title": "Success rate",
-      "note": "Answers rated Hard or better",
-      "description": "Share of answers rated Hard or better in the selected range."
+      "note": "Ratings of Hard or better",
+      "description": "Share of ratings of Hard or better in the selected range."
     },
     "due-cards": {
       "title": "Due cards",
@@ -95,6 +360,11 @@
       "note": "Reviews by each card's current deck",
       "description": "Compare your reviews by current deck assignment."
     },
+    "deck-ratings": {
+      "title": "Ratings by deck",
+      "note": "Ratings by each card's current deck",
+      "description": "Compare how often you rated cards in each deck, by current deck assignment."
+    },
     "review-timeline": {
       "title": "Reviews over time",
       "note": "Bars show reviews, the line their running average",
@@ -107,6 +377,11 @@
         "year": "1 year",
         "selected": "Selected range"
       }
+    },
+    "rating-timeline": {
+      "title": "Ratings over time",
+      "note": "Bars show ratings, the line their running average",
+      "description": "Track how often you rate cards each day, week or month."
     },
     "answer-buttons": {
       "title": "Answer buttons",
@@ -125,10 +400,17 @@
     },
     "study-rhythm": {
       "title": "Your study times",
-      "note": "Answers by weekday and local hour",
+      "note": "Reviews by weekday and local hour",
       "weekdays": "Reviews by weekday",
       "hours": "Reviews by hour",
       "description": "See which weekdays and times you study."
+    },
+    "rating-rhythm": {
+      "title": "Study times by ratings",
+      "note": "Ratings by weekday and local hour",
+      "weekdays": "Ratings by weekday",
+      "hours": "Ratings by hour",
+      "description": "See on which weekdays and at which times you rate the most cards."
     },
     "review-heatmap": {
       "title": "Learning activity over the year",
@@ -138,6 +420,13 @@
       "previous": "Previous year",
       "next": "Next year",
       "description": "See your daily reviews over the year at a glance."
+    },
+    "rating-heatmap": {
+      "title": "Ratings over the year",
+      "summary": "Streak {{current}} days, longest {{longest}}, {{average}} ratings a day",
+      "tooltip_one": "{{date}}: {{reviews}} rating",
+      "tooltip_other": "{{date}}: {{reviews}} ratings",
+      "description": "See how often you rated cards on each day of the year."
     },
     "anki-today": {
       "title": "Today",
@@ -270,19 +559,16 @@
       "due": "Due"
     },
     "restoreColors": "Restore default colors",
-    "wallpaperEnable": "Enable custom background",
-    "wallpaperEnableNote": "The image is shown only on the deck overview.",
-    "wallpaperPreview": "Wallpaper preview",
-    "wallpaperNone": "No background image selected.",
-    "wallpaperChoose": "Choose image",
-    "wallpaperSample": "Sample wallpaper",
+    "wallpaperPreview": "Choose wallpaper",
+    "wallpaperNone": "No wallpaper chosen",
+    "wallpaperSample": "Frutiger Aero sky",
     "wallpaperRemove": "Remove",
     "wallpaperBlur": "Blur",
     "wallpaperOverlay": "Dark overlay",
     "wallpaperPosition": "Image position",
-    "wallpaperText": "Study summary text",
+    "wallpaperText": "Study summary text in Anki",
     "wallpaperDefaults": "Restore defaults",
-    "wallpaperLimits": "PNG, JPEG or WebP, up to 20 MB and 40 megapixels. Images are optimized and stored locally.",
+    "wallpaperLimits": "Images (PNG, JPEG, GIF, WebP) and videos (MP4, MOV, WebM) work. Videos are converted once into a format Anki can play.",
     "positions": {
       "center": "Center",
       "top": "Top",
@@ -304,15 +590,23 @@
     "aiBody": "Your AI assistant now lives in a panel beside the page. Its settings are there too, so everything stays in one place.",
     "shortcutActions": {
       "dashboard": "Open dashboard",
-      "settings": "Open settings",
       "library": "Open Widget Library",
-      "ankiStatistics": "Open Anki statistics"
+      "settings": "Open settings",
+      "ankiStatistics": "Open Anki statistics",
+      "appearance": "Open appearance",
+      "wallpaper": "Open wallpaper settings",
+      "editDashboard": "Edit dashboard",
+      "createWidget": "Create a new widget",
+      "importDashboard": "Import dashboard",
+      "assistant": "Open and close the AI assistant",
+      "nextTheme": "Switch to the next theme",
+      "fullscreen": "Toggle full screen"
     },
     "shortcutNone": "None",
     "shortcutRecording": "Press keys ...",
     "shortcutPress": "Press a key combination. Esc cancels, Backspace clears.",
     "shortcutSaved": "Shortcut saved.",
-    "shortcutConflict": "Already used by {{name}}.",
+    "shortcutConflict": "These keys already belong to “{{name}}”. Please choose another combination.",
     "supportTitle": "Statly works locally",
     "supportBody": "Links to the project and feedback page follow with the public release. Your cards, notes and review history are never transferred.",
     "sponsorTitle": "Simple in design. With a story that fits you.",
@@ -334,7 +628,7 @@
       },
       "wallpaper": {
         "title": "Wallpaper",
-        "note": "A custom background image for Anki's deck overview. Cards and decks remain unchanged."
+        "note": "A picture or video behind all of Statly, in every theme. If you like, also on Anki's deck overview, the home screen with your decks. Cards and decks stay unchanged."
       },
       "dashboard": {
         "title": "Dashboard",
@@ -343,6 +637,10 @@
       "ai": {
         "title": "AI",
         "note": "Your own AI assistant, in a panel beside the page."
+      },
+      "privacy": {
+        "title": "Privacy & Security",
+        "note": "What Statly may do, and what it changed in Anki"
       },
       "shortcuts": {
         "title": "Shortcuts",
@@ -365,15 +663,114 @@
         "note": "See your dashboard in AnkiMobile and AnkiDroid."
       }
     },
-    "jojoRole": "The idea for the Frutiger Aero theme.",
+    "jojoRole": "The idea for the Frutiger Aero theme and the wishes that shaped it: glass, big icons and the reflection.",
     "aiOpen": "Open AI panel",
     "fullscreen": "Open in full screen",
     "fullscreenNote": "Statly fills the whole screen when it opens.",
     "sponsorBestsellers": "View bestsellers",
     "backgrounds": "Background pictures",
-    "backgroundsNote": "A picture behind your dashboard, chosen for each device. Phones and tablets get it with the card.",
+    "backgroundsNote": "A picture behind the dashboard only, for each device. Phones and tablets get it with the card. A background for all of Statly and Anki's deck overview is set under Wallpaper.",
     "backgroundChoose": "Choose picture",
-    "backgroundRemove": "Remove"
+    "backgroundRemove": "Remove",
+    "wallpaperDeckOverview": "Also on Anki's deck overview",
+    "wallpaperDeckOverviewNote": "Shows the wallpaper on Anki's home screen with your decks as well.",
+    "wallpaperLoop": "Loop video",
+    "wallpaperLoopNote": "Plays the video or GIF over and over.",
+    "wallpaperDrop": "Drag an image or video here, or click",
+    "wallpaperReplace": "Click or drag another file here",
+    "wallpaperWorking": "Preparing ... videos take a little longer.",
+    "wallpaperThemeDefault": "Frutiger Aero default",
+    "resetConfirmTitle": "Reset the dashboard?",
+    "resetConfirmBody": "All widgets and their arrangement on computer, tablet and phone are replaced by the default view. This cannot be undone.",
+    "resetConfirm": "Reset",
+    "shortcutGroups": {
+      "pages": "Open pages",
+      "actions": "Actions"
+    },
+    "wallpaperHistory": "Recently used",
+    "wallpaperHistoryNote": "Statly keeps your last {{count}} wallpapers. Older ones are deleted.",
+    "wallpaperNumbered": "Wallpaper {{number}}",
+    "wallpaperForget": "Delete {{name}}",
+    "wallpaperEarlier": "Scroll back",
+    "wallpaperLater": "Scroll on",
+    "wallpaperUnsupported": "Statly cannot use this file as a wallpaper.",
+    "accent": "Own accent color",
+    "accentNote": "Replaces the theme's accent color everywhere in Statly, charts and widgets included.",
+    "accentColor": "Accent color",
+    "colorResetHint": "Point at it and press Delete to restore the default color",
+    "shortcutGroupNotes": {
+      "pages": "Jumps from Anki straight to a page of Statly.",
+      "actions": "Starts something at once, even while Statly is closed."
+    },
+    "shortcutConflictTitle": "{{keys}} is already taken",
+    "goalToast": "Note when a goal is met",
+    "goalToastNote": "Anki's study screen shows a short note the moment you meet the day's goal of a study goal."
+  },
+  "privacy": {
+    "principlesTitle": "How Statly handles this",
+    "principle1": "Statly does nothing new until you allow it in a window of its own. A page or the assistant can never allow anything.",
+    "principle2": "The assistant has to ask every time it wants to change something in Anki, even if you allowed it for good.",
+    "principle3": "Every change in Anki is a step in Anki's undo history and shows up below, so you can take it back.",
+    "permissionsTitle": "Permissions",
+    "allowedSince": "Allowed since {{when}}",
+    "migrated": "Allowed in an earlier version",
+    "notAllowed": "Not allowed",
+    "lastUsed": "last used {{when}}",
+    "revoke": "Remove",
+    "changesTitle": "Changes in Anki",
+    "changesNote": "Each change is also a step of its own under Anki's Edit → Undo.",
+    "noChanges": "Statly has not changed anything in Anki yet.",
+    "undo": "Undo",
+    "undone": "undone",
+    "sources": {
+      "user": "by you",
+      "automatic": "on its own",
+      "ai": "suggested by the assistant"
+    },
+    "kinds": {
+      "deckLimit": "{{deck}}: new cards today {{before}} → {{after}}"
+    },
+    "permissions": {
+      "ai": {
+        "decks": {
+          "title": "Assistant: deck names",
+          "note": "The assistant may see the names of your decks."
+        },
+        "cards": {
+          "title": "Assistant: cards",
+          "note": "The assistant may search and read your cards. It can never change them."
+        },
+        "external": {
+          "title": "External AI apps",
+          "note": "Apps connected through Statly's local access may use the assistant's permissions."
+        }
+      },
+      "mobile": {
+        "card": {
+          "title": "Phone card",
+          "note": "Statly may write its phone card into your collection and keep it current.",
+          "revokeTitle": "Remove the phone card?",
+          "revokeBody": "Statly makes a backup, then removes its card and its deck. Your own cards stay as they are."
+        }
+      },
+      "goals": {
+        "sync": {
+          "title": "Sync goals through AnkiWeb",
+          "note": "Statly may keep your goals in your collection's settings, so they reach your other computers."
+        }
+      },
+      "anki": {
+        "deckLimits": {
+          "title": "Limit for new cards",
+          "note": "Statly may raise a deck's limit for today when a goal needs more new cards."
+        }
+      }
+    },
+    "groups": {
+      "ai": "Assistant",
+      "mobile": "Phone/Tablet",
+      "goals": "Study goals"
+    }
   },
   "error": {
     "title": "Something went wrong",
@@ -381,7 +778,9 @@
     "reload": "Reload Statly"
   },
   "pages": {
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "path": "Pages above this one",
+    "backTo": "Back to {{name}}"
   },
   "library": {
     "remove": "Remove ({{count}})",
@@ -466,11 +865,22 @@
     "later": "Maybe later",
     "never": "No, thanks"
   },
+  "share": {
+    "title": "Know someone Statly would help?",
+    "body": "You have been studying with Statly for a while now. If you like it, feel free to recommend it, for example to your study group.",
+    "share": "Share Statly",
+    "later": "Maybe later",
+    "never": "No, thanks",
+    "message": "I use Statly for my Anki statistics. Have a look:",
+    "copied": "The link is on your clipboard. Just paste it into a chat or a message.",
+    "done": "Done"
+  },
   "calendar": {
     "selectRange": "Select range",
     "previous": "Previous month",
     "next": "Next month",
-    "invalid": "Please enter a valid date as dd.mm.yyyy."
+    "invalid": "Please enter a valid date as dd.mm.yyyy.",
+    "placeholder": "dd.mm.yyyy"
   },
   "editor": {
     "blocks": "Blocks",
@@ -555,6 +965,7 @@
     },
     "metrics": {
       "reviews": "Reviews",
+      "ratings": "Ratings",
       "studyTime": "Study time",
       "successRate": "Success rate",
       "retention": "Retention",
@@ -566,6 +977,7 @@
     },
     "series": {
       "timeline": "Reviews over time",
+      "ratingTimeline": "Ratings over time",
       "answerButtons": "Answer buttons",
       "deckActivity": "Activity by deck",
       "forecast": "Due forecast",
@@ -743,7 +1155,10 @@
       "applied": "Accepted. You can undo this under Changes.",
       "rejected": "Declined.",
       "pending": "Waiting for you.",
-      "openEditor": "Build it in the editor"
+      "openEditor": "Build it in the editor",
+      "goal": "Study goal",
+      "checkGoal": "Check and save",
+      "goalExam": "Exam on {{date}}"
     },
     "history": {
       "note": "Everything an AI changed. Each entry can be undone.",
@@ -854,9 +1269,10 @@
     },
     "working": "Thinking|Pondering|Mulling it over|Musing|Ruminating|Noodling|Puzzling|Tinkering|Contemplating|Cogitating|Brewing|Percolating|Connecting the dots|Weighing it up|Untangling|Deliberating|Reasoning|Reflecting|Sifting|Piecing it together|Chewing on it|Simmering|Marinating|Hatching a plan|Wondering|Sleuthing|Figuring it out|Digging deeper|Polishing the words|Following the thread",
     "permission": {
-      "always": "Always allow",
       "once": "Only in this chat",
+      "always": "Always allow…",
       "deny": "Decline",
+      "alwaysNote": "Always allow opens the settings, where you switch it on for good. The chat waits until then.",
       "cards": {
         "title": "Allow reading your cards?",
         "body": "The AI wants to read card contents to answer this. They go to the chosen service. It can never change a card.",
@@ -911,7 +1327,14 @@
         "change": "Your keys stay as they are. Only the password changes."
       }
     },
-    "workingLabel": "Working on your answer"
+    "workingLabel": "Working on your answer",
+    "settings": {
+      "service": "Service and model",
+      "permissionsNote": "Switching one on asks in Statly's own popup. In a chat you can also allow it for that chat only.",
+      "startTitle": "Set up the assistant",
+      "startBody": "Choose a service or a local model under Settings → AI. Your chats stay here.",
+      "start": "Set Up"
+    }
   },
   "devices": {
     "choose": "Choose a device",
@@ -1054,5 +1477,11 @@
         "all": "All time"
       }
     }
+  },
+  "changes": {
+    "noticeTitle": "Statly changed this in Anki",
+    "noticeUndone": "Taken back",
+    "noticeNote": "Only for today. Everything Statly changed is listed under Privacy & Security.",
+    "close": "Close"
   }
 }

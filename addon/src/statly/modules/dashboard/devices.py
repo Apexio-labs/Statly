@@ -11,7 +11,14 @@ from typing import Any
 
 _DESKTOP_COLUMNS = 12
 _FULL_WIDTH_FROM = {4: 5, 8: 10}
-_TILES = {"review-summary", "study-time", "success-rate", "due-cards"}
+_TILES = {
+    "review-summary",
+    "rating-summary",
+    "learned-cards",
+    "study-time",
+    "success-rate",
+    "due-cards",
+}
 _CUSTOM_PERIOD = "last7"
 DEVICE_MIN_HEIGHT = 3
 _TILE_HEIGHT = 3
@@ -22,7 +29,9 @@ _HEIGHTS = {
     "card-states": 5,
     "review-breakdown": 5,
     "deck-activity": 6,
+    "deck-ratings": 6,
     "review-heatmap": {4: 3, 8: 5},
+    "rating-heatmap": {4: 3, 8: 5},
     "anki-today": 5,
     "anki-calendar": {4: 3, 8: 5},
     "anki-card-counts": 5,
@@ -35,14 +44,16 @@ type Widget = dict[str, Any]
 
 
 def default_period(kind: str) -> str:
-    if kind in _TILES:
+    # A goal is about today, whatever range a statistic beside it shows.
+    if kind in _TILES or kind.startswith("goal:"):
         return "today"
     return _CUSTOM_PERIOD if kind.startswith("custom:") else "last30"
 
 
 def _height_on(widget: Widget, columns: int) -> int:
     kind = widget["type"]
-    if kind.startswith("custom:"):
+    if ":" in kind:
+        # Stored widgets, such as custom ones, were drawn for the height they have.
         return widget["h"]
     if kind in _TILES:
         return _TILE_HEIGHT

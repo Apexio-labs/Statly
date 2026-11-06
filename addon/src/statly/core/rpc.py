@@ -161,8 +161,19 @@ class Router:
         self,
         work: Callable[[CollectionReader], Any],
         done: Callable[[Any], None],
+        failed: Callable[[Exception], None] | None = None,
     ) -> None:
-        """Read the collection for Python's own needs, in line with the web app's queries."""
+        """Read the collection for Python's own needs, in line with the web app's queries.
+
+        Without ``failed``, errors are only logged, and nothing happens while no collection is
+        open. Pass it when someone waits for an answer."""
+
+        def tell(error: Exception) -> None:
+            if failed is not None:
+                try:
+                    failed(error)
+                except Exception:
+                    logger.exception("Statly could not report a background failure")
 
         def finished(result: Any) -> None:
             try:
@@ -171,16 +182,18 @@ class Router:
                 logger.exception("Statly could not use a background result")
             self._start_next_query()
 
-        def failed(error: Exception) -> None:
+        def broke(error: Exception) -> None:
             logger.warning("Statly background read failed", exc_info=error)
+            tell(error)
             self._start_next_query()
 
         def start() -> None:
             if self._runtime.collection_is_open():
                 self._runtime.run_query(
-                    lambda collection: work(CollectionReader(collection)), finished, failed
+                    lambda collection: work(CollectionReader(collection)), finished, broke
                 )
             else:
+                tell(CollectionUnavailable("The collection is not open."))
                 self._start_next_query()
 
         self._waiting.append(start)

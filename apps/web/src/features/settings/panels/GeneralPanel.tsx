@@ -50,6 +50,15 @@ export function GeneralPanel() {
           />
         </Row>
       </Card>
+      <Card highlight="goalToast">
+        <Row title={t("settings.goalToast")} note={t("settings.goalToastNote")}>
+          <Toggle
+            label={t("settings.goalToast")}
+            checked={settings.goalToast}
+            onChange={(goalToast) => update({ goalToast })}
+          />
+        </Row>
+      </Card>
       <Card>
         <Row
           title={t("settings.updates")}

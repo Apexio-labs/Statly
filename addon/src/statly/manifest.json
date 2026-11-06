@@ -1,7 +1,7 @@
 {
   "package": "statly",
   "name": "Statly",
-  "human_version": "2.0.0",
+  "human_version": "2.1.0",
   "min_point_version": 250900,
   "homepage": "https://github.com/apexio-labs/statly"
 }

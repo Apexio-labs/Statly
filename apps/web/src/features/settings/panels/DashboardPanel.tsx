@@ -2,8 +2,10 @@ import type { Settings } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
+import { useState } from "react";
 import { bridge } from "../../../bridge/index.ts";
 import { Button } from "../../../components/Button.tsx";
+import { ConfirmDialog } from "../../../components/ConfirmDialog.tsx";
 import { useAppearance } from "../../../lib/appearance.tsx";
 import { useLayout } from "../../dashboard/useLayout.ts";
 import { useMedia } from "../../widgets/useCustomWidgets.ts";
@@ -56,6 +58,7 @@ export function DashboardPanel() {
   const { t } = useTranslation();
   const { settings, update } = useAppearance();
   const { reset } = useLayout();
+  const [confirming, setConfirming] = useState(false);
   return (
     <Panel
       title={t("settings.sections.dashboard.title")}
@@ -90,12 +93,24 @@ export function DashboardPanel() {
       </Card>
       <Card>
         <Row title={t("settings.resetDashboard")} note={t("settings.resetDashboardNote")}>
-          <Button className="shrink-0" onClick={() => reset.mutate()}>
+          <Button className="shrink-0" onClick={() => setConfirming(true)}>
             <RotateCcw size={15} />
             {reset.isSuccess ? t("settings.resetDone") : t("settings.resetAction")}
           </Button>
         </Row>
       </Card>
+      {confirming ? (
+        <ConfirmDialog
+          title={t("settings.resetConfirmTitle")}
+          body={t("settings.resetConfirmBody")}
+          confirm={t("settings.resetConfirm")}
+          onCancel={() => setConfirming(false)}
+          onConfirm={() => {
+            setConfirming(false);
+            reset.mutate();
+          }}
+        />
+      ) : null}
     </Panel>
   );
 }

@@ -1,7 +1,7 @@
 import { useTranslation } from "@statly/i18n";
+import orb from "@statly/ui/assets/aero/logo-orb.png";
 import logo from "@statly/ui/assets/Statly_Logo_Cropped_Dark.png";
 import icon from "@statly/ui/assets/Statly_Logo_Icon.png";
-import { ChartColumn, Home, LayoutGrid, type LucideIcon, Settings, Sparkles } from "lucide-react";
 import {
   type KeyboardEvent,
   type PointerEvent,
@@ -11,13 +11,26 @@ import {
   useRef,
   useState,
 } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router";
+import { NavLink, Outlet, useNavigate, useSearchParams } from "react-router";
 import { bridge } from "../bridge/index.ts";
+import {
+  AiIcon,
+  GoalsIcon,
+  HomeIcon,
+  LibraryIcon,
+  SettingsIcon,
+  StatisticsIcon,
+  type ThemedIcon,
+} from "../components/icons.tsx";
 import { AiPanel } from "../features/ai/AiPanel.tsx";
 import { useAiChangesApply } from "../features/ai/useAi.ts";
+import { ChangeNotice } from "../features/changes/ChangeNotice.tsx";
+import { useGoalUpdates } from "../features/goals/useGoals.ts";
 import { OnboardingDialog } from "../features/onboarding/OnboardingDialog.tsx";
 import { RatingDialog } from "../features/onboarding/RatingDialog.tsx";
-import { useAppearance } from "../lib/appearance.tsx";
+import { ShareDialog } from "../features/onboarding/ShareDialog.tsx";
+import { WallpaperLayer } from "../features/wallpaper/WallpaperLayer.tsx";
+import { useAero, useAppearance } from "../lib/appearance.tsx";
 import { useStatisticsUpdates } from "../lib/calls.ts";
 import { type RailKind, ShellContext } from "./ShellContext.tsx";
 import {
@@ -36,7 +49,7 @@ const KEYBOARD_STEP = 16;
 const HIGHLIGHT_DELAY_MS = 250;
 const HIGHLIGHT_MS = 3400;
 const NAV_ITEM =
-  "flex h-[38px] min-w-0 cursor-pointer items-center gap-2 rounded-control border-0 bg-transparent text-[13px] font-semibold whitespace-nowrap text-nav-text no-underline transition-colors hover:bg-nav-hover";
+  "statly-nav-item flex h-[38px] min-w-0 cursor-pointer items-center gap-2 rounded-control border-0 bg-transparent text-[13px] font-semibold whitespace-nowrap text-nav-text no-underline transition-colors hover:bg-nav-hover";
 
 function NavItem({
   to,
@@ -47,7 +60,7 @@ function NavItem({
 }: {
   to: string;
   end: boolean;
-  icon: LucideIcon;
+  icon: ThemedIcon;
   label: string;
   compact: boolean;
 }) {
@@ -67,6 +80,21 @@ function NavItem({
   );
 }
 
+function Brand({ compact }: { compact: boolean }) {
+  const aero = useAero();
+  if (aero) {
+    return (
+      <span className="statly-aero-brand" data-compact={compact || undefined}>
+        <img src={orb} alt="Statly" />
+        {compact ? null : <span aria-hidden="true">Statly</span>}
+      </span>
+    );
+  }
+  return (
+    <img src={compact ? icon : logo} alt="Statly" className={compact ? "w-[30px]" : "w-[150px]"} />
+  );
+}
+
 function useWindowWidth(): number {
   const [width, setWidth] = useState(innerWidth);
   useEffect(() => {
@@ -81,6 +109,7 @@ export function Shell() {
   const { t } = useTranslation();
   const { settings, update } = useAppearance();
   useStatisticsUpdates();
+  useGoalUpdates();
   useHostNavigation();
   useAiChangesApply();
 
@@ -157,15 +186,27 @@ export function Shell() {
     setAiOpen(true);
   }, []);
 
+  useAssistantRequest(openAi);
+  useEffect(
+    () =>
+      bridge.on("host.toggleAssistant", () => {
+        setAiMounted(true);
+        setAiOpen((open) => !open);
+      }),
+    [],
+  );
+  useStrayDrops();
+
   const shell = useMemo(() => ({ railHost, setRail, openAi }), [railHost, openAi]);
   const animated = dragged === null ? "transition-[width] duration-[240ms] ease-out" : "";
 
   return (
     <ShellContext.Provider value={shell}>
-      <div className="flex h-full bg-window p-[3px]">
+      <WallpaperLayer />
+      <div className="statly-shell flex h-full bg-window p-[3px]">
         <aside
           data-testid="sidebar"
-          className={`flex h-full shrink-0 overflow-hidden rounded-card bg-nav ${animated}`}
+          className={`statly-sidebar flex h-full shrink-0 overflow-hidden rounded-card bg-nav ${animated}`}
           style={{ width: sidebarWidth + railWidth }}
         >
           <nav
@@ -176,17 +217,13 @@ export function Shell() {
             <div
               className={`mb-1 flex shrink-0 items-center justify-center ${compact ? "h-[72px]" : "h-[92px]"}`}
             >
-              <img
-                src={compact ? icon : logo}
-                alt="Statly"
-                className={compact ? "w-[30px]" : "w-[150px]"}
-              />
+              <Brand compact={compact} />
             </div>
-            <NavItem to="/" end icon={Home} label={t("nav.dashboard")} compact={compact} />
+            <NavItem to="/" end icon={HomeIcon} label={t("nav.dashboard")} compact={compact} />
             <NavItem
               to="/library"
               end={false}
-              icon={LayoutGrid}
+              icon={LibraryIcon}
               label={t("nav.library")}
               compact={compact}
             />
@@ -197,9 +234,21 @@ export function Shell() {
               onClick={() => void bridge.call("system.openAnkiStatistics", {})}
               className={`${NAV_ITEM} ${compact ? "justify-center" : "px-3"}`}
             >
-              <ChartColumn size={17} className="shrink-0" />
+              <StatisticsIcon size={17} className="shrink-0" />
               {compact ? null : t("nav.ankiStatistics")}
             </button>
+            <NavItem
+              to="/goals"
+              end={false}
+              icon={GoalsIcon}
+              label={t("nav.goals")}
+              compact={compact}
+            />
+            {/* The assistant is a companion rather than a page, so it stands a little apart. */}
+            <div
+              aria-hidden="true"
+              className="statly-nav-divider mx-3 my-2 h-px shrink-0 bg-nav-text/15"
+            />
             <button
               type="button"
               title={compact ? t("nav.ai") : undefined}
@@ -208,14 +257,14 @@ export function Shell() {
               onClick={() => (aiOpen ? setAiOpen(false) : openAi())}
               className={`${NAV_ITEM} ${compact ? "justify-center" : "px-3"} ${aiOpen ? "bg-nav-hover" : ""}`}
             >
-              <Sparkles size={17} className="shrink-0" />
+              <AiIcon size={17} className="shrink-0" />
               {compact ? null : t("nav.ai")}
             </button>
             <div className="mt-auto">
               <NavItem
                 to="/settings"
                 end={false}
-                icon={Settings}
+                icon={SettingsIcon}
                 label={t("nav.settings")}
                 compact={compact}
               />
@@ -251,7 +300,11 @@ export function Shell() {
         />
         <main
           data-scroll-area
-          className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-card bg-page statly-scroll"
+          // Marks the page as scrolled without a render, for the strip behind a sticky bar.
+          onScroll={(event) =>
+            event.currentTarget.toggleAttribute("data-scrolled", event.currentTarget.scrollTop > 4)
+          }
+          className="statly-main min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-card bg-page statly-scroll"
         >
           <Outlet />
         </main>
@@ -263,10 +316,40 @@ export function Shell() {
           />
         ) : null}
       </div>
+      <ChangeNotice />
       <OnboardingDialog />
       <RatingDialog />
+      <ShareDialog />
     </ShellContext.Provider>
   );
+}
+
+/** A shortcut in Anki opens the assistant through the address while Statly is still closed. */
+function useAssistantRequest(openAi: () => void) {
+  const [search, setSearch] = useSearchParams();
+  useEffect(() => {
+    if (search.has("assistant")) {
+      setSearch({}, { replace: true });
+      openAi();
+    }
+  }, [search, setSearch, openAi]);
+}
+
+/** A file dropped where nothing takes it would make the browser open it in place of Statly. */
+function useStrayDrops() {
+  useEffect(() => {
+    function stop(event: DragEvent) {
+      if (event.dataTransfer?.types.includes("Files")) {
+        event.preventDefault();
+      }
+    }
+    addEventListener("dragover", stop);
+    addEventListener("drop", stop);
+    return () => {
+      removeEventListener("dragover", stop);
+      removeEventListener("drop", stop);
+    };
+  }, []);
 }
 
 /** Lets Anki's menus and shortcuts open a page. */

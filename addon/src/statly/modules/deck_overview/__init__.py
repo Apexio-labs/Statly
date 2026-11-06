@@ -12,9 +12,8 @@ from ...core.reader import CollectionReader
 from ...core.settings import SettingsService
 from ..statistics import metrics
 from ..statistics.calendar import AnkiCalendar
-from ..wallpaper import image_data_url
 from .heatmap_html import render_heatmap_markup
-from .styles import counter_styles, wallpaper_styles
+from .styles import counter_styles, shows_wallpaper, wallpaper_styles, wallpaper_video
 
 _HEATMAP_ELEMENT = "statly-deck-heatmap"
 _RELEVANT_SETTINGS = {
@@ -25,11 +24,12 @@ _RELEVANT_SETTINGS = {
     "wallpaper",
 }
 _GERMAN = "de"
+_VIDEO = "video/"
 
 
 def heatmap_grid(year: int, days: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """Every day of the year's weeks, Monday first, including days without reviews."""
-    reviews = {day["date"]: day["reviews"] for day in days}
+    counts = {day["date"]: day["count"] for day in days}
     first = date(year, 1, 1)
     last = date(year, 12, 31)
     current = first - timedelta(days=first.weekday())
@@ -37,7 +37,7 @@ def heatmap_grid(year: int, days: Sequence[Mapping[str, Any]]) -> list[dict[str,
     grid: list[dict[str, Any]] = []
     while current <= end:
         iso = current.isoformat()
-        grid.append({"date": iso, "value": reviews.get(iso, 0)})
+        grid.append({"date": iso, "value": counts.get(iso, 0)})
         current += timedelta(days=1)
     return grid
 
@@ -49,7 +49,7 @@ def heatmap_payload(reader: CollectionReader) -> dict[str, Any]:
     return {
         "year": heatmap["year"],
         "days": heatmap_grid(heatmap["year"], heatmap["days"]),
-        "totalReviews": heatmap["totalReviews"],
+        "totalReviews": heatmap["total"],
         "dailyAverage": heatmap["dailyAverage"],
         "daysLearned": round(heatmap["daysLearned"] * 100),
         "longestStreak": heatmap["longestStreak"],
@@ -64,6 +64,7 @@ class DeckOverview:
         self._host: Host = context.host
         self._settings: SettingsService = context.settings
         self._router = context.router
+        self._wallpaper = context.services["wallpaper"]
         self._heatmap_css = (Path(__file__).parent / "heatmap.css").read_text(encoding="utf-8")
         self._heatmap_html = ""
 
@@ -73,12 +74,15 @@ class DeckOverview:
         It shows the last known heatmap at once and replaces it when the fresh one is ready.
         """
         settings = self._settings.get()
-        image = None
-        wallpaper = settings["wallpaper"]
-        if wallpaper["enabled"] and wallpaper["source"] == "image":
-            image = image_data_url(self._host)
+        chosen = None
+        if shows_wallpaper(settings) and settings["wallpaper"]["source"] == "image":
+            chosen = self._wallpaper.media()
+        video = chosen is not None and chosen[1].startswith(_VIDEO)
+        image = chosen[0] if chosen is not None and not video else None
         styles = counter_styles(settings) + wallpaper_styles(settings, image)
         parts = [f"<style>{styles}</style>"] if styles else []
+        if chosen is not None and video:
+            parts.append(wallpaper_video(settings, chosen[0]))
         if settings["deckHeatmap"]:
             parts.append(f"<style>{self._heatmap_css}</style>")
             parts.append(f'<div id="{_HEATMAP_ELEMENT}">{self._heatmap_html}</div>')

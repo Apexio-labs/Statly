@@ -15,7 +15,7 @@ from ..statistics.calendar import AnkiCalendar
 from .anki_blocks import PREFIX as ANKI_PREFIX
 from .anki_blocks import AnkiBlocks
 from .formats import duration, heat_levels, number, percent
-from .labels import labels_for
+from .labels import labels_for, month_name
 
 _MAX_DECK_ROWS = 8
 _PERIOD_DAYS = {"today": 1, "last7": 7, "last30": 30, "lastYear": 365}
@@ -26,6 +26,8 @@ type Thumbnail = Callable[[dict[str, str]], str | None]
 
 _WORDS = ("back", "average", "best", "share", "comparedTo", "videoHere")
 _TILE_PERIODS = ("today", "last7", "last30")
+# Custom widget sources that count ratings instead of reviews.
+_RATING_SERIES = {"ratingTimeline": "timeline"}
 
 
 class _Builder:
@@ -71,12 +73,17 @@ class _Builder:
     def counted(self, data: Any, keys: Sequence[str]) -> list[dict[str, Any]]:
         return [{"label": self.text[key], "value": data[key]} for key in keys]
 
-    def series(self, source: str, span: dict[str, Any]) -> list[dict[str, Any]]:
+    def series(
+        self, source: str, span: dict[str, Any], measure: str = "reviews"
+    ) -> list[dict[str, Any]]:
         """The bars of a chart, for built-in statistics and custom widgets alike."""
         text, reader = self.text, self.reader
+        if source in _RATING_SERIES:
+            source, measure = _RATING_SERIES[source], "ratings"
+        span = {**span, "measure": measure}
         if source == "timeline":
             items = metrics.timeline(span, reader)["items"]
-            return [{"label": item["date"][5:], "value": item["reviews"]} for item in items]
+            return [{"label": item["date"][5:], "value": item["count"]} for item in items]
         if source == "answerButtons":
             keys = ("again", "hard", "good", "easy")
             return self.counted(metrics.answer_buttons(span, reader), keys)
@@ -91,7 +98,7 @@ class _Builder:
             return [
                 {
                     "label": (row["name"] or text["deleted"]).split("::")[-1],
-                    "value": row["reviews"],
+                    "value": row["count"],
                 }
                 for row in rows
             ]
@@ -115,6 +122,18 @@ class _Builder:
                 return number(metrics.summary(chosen, reader)["reviews"], self.language)
 
             return self.tile(text["reviews"], reviews(span), named, self.over_periods(reviews))
+        if kind == "rating-summary":
+
+            def ratings(chosen: dict[str, Any]) -> str:
+                return number(metrics.summary(chosen, reader)["ratings"], self.language)
+
+            return self.tile(text["ratings"], ratings(span), named, self.over_periods(ratings))
+        if kind == "learned-cards":
+
+            def learned(chosen: dict[str, Any]) -> str:
+                return number(metrics.categories(chosen, reader)["total"], self.language)
+
+            return self.tile(text["learned"], learned(span), named, self.over_periods(learned))
         if kind == "study-time":
 
             def time(chosen: dict[str, Any]) -> str:
@@ -132,6 +151,9 @@ class _Builder:
             return self.tile(text["due"], number(cards, self.language), text["now"])
         if kind == "review-timeline":
             return self.bars(text["timeline"], self.series("timeline", span), named)
+        if kind == "rating-timeline":
+            rated = self.series("timeline", span, "ratings")
+            return self.bars(text["ratingTimeline"], rated, named)
         if kind == "answer-buttons":
             return self.bars(text["buttons"], self.series("answerButtons", span), named, True)
         if kind == "due-forecast":
@@ -140,22 +162,25 @@ class _Builder:
             return self.bars(text["states"], self.series("cardStates", span), "", True)
         if kind == "deck-activity":
             return self.bars(text["decks"], self.series("deckActivity", span), named, True)
+        if kind == "deck-ratings":
+            rated = self.series("deckActivity", span, "ratings")
+            return self.bars(text["deckRatings"], rated, named, True)
         if kind == "review-breakdown":
             data = metrics.categories(span, reader)
             keys = ("total", "failed", "new", "reviewed", "relearned", "longInterval")
             return self.bars(text["breakdown"], self.counted(data, keys), named, True)
         if kind == "study-rhythm":
             return self.bars(text["weekdays"], self.series("hours", span), named)
+        if kind == "rating-rhythm":
+            return self.bars(text["ratingHours"], self.series("hours", span, "ratings"), named)
         if kind == "review-heatmap":
-            return {
-                "kind": "heatmap",
-                "label": text["heatmap"],
-                **self.heatmap(),
-            }
+            return {"kind": "heatmap", "label": text["heatmap"], **self.heatmap()}
+        if kind == "rating-heatmap":
+            return {"kind": "heatmap", "label": text["ratingHeatmap"], **self.heatmap("ratings")}
         return None
 
-    def heatmap(self) -> dict[str, Any]:
-        data = metrics.heatmap({"year": None, "deckId": None}, self.reader)
+    def heatmap(self, measure: str = "reviews") -> dict[str, Any]:
+        data = metrics.heatmap({"year": None, "deckId": None, "measure": measure}, self.reader)
         text = self.text
         note = text["streak"].format(current=data["currentStreak"], longest=data["longestStreak"])
         facts = [
@@ -236,6 +261,11 @@ class _Builder:
         }
 
 
+# Stands in a block's text for the moment the card is written, see ``filled``.
+STAND = "{stand}"
+_GOAL_PREFIX = "goal:"
+
+
 def build_snapshot(
     reader: CollectionReader,
     devices: Mapping[str, Sequence[Any]],
@@ -243,8 +273,12 @@ def build_snapshot(
     custom_widgets: Mapping[str, Any],
     thumbnail: Thumbnail = lambda _asset: None,
     backgrounds: Mapping[str, str | None] | None = None,
+    goal_block: Callable[[str], dict[str, Any] | None] | None = None,
 ) -> dict[str, Any]:
-    """Each block is worked out once, however many devices show it."""
+    """Each block is worked out once, however many devices show it.
+
+    ``goal_block`` turns a ``goal:<id>:<view>`` widget into a block, from the goals module.
+    """
     builder = _Builder(reader, language, thumbnail)
     blocks: dict[str, Any] = {}
     placed: dict[str, list[dict[str, Any]]] = {}
@@ -254,7 +288,11 @@ def build_snapshot(
             kind, period = item["type"], item["period"]
             key = f"{kind}|{period}"
             if key not in blocks:
-                block = _block(builder, kind, period, custom_widgets)
+                block = (
+                    (goal_block(kind) if goal_block else None)
+                    if kind.startswith(_GOAL_PREFIX)
+                    else _block(builder, kind, period, custom_widgets)
+                )
                 if block is None:
                     continue
                 blocks[key] = block
@@ -287,12 +325,28 @@ def content_hash(snapshot: dict[str, Any]) -> str:
 
 
 def filled(snapshot: dict[str, Any], now: datetime, language: str) -> dict[str, Any]:
+    labels = labels_for(language)
     when = (
         now.strftime("%d.%m.%Y %H:%M")
         if language.startswith("de")
         else now.strftime("%Y-%m-%d %H:%M")
     )
-    return {**snapshot, "updated": labels_for(language)["updated"].format(when=when)}
+    stand = labels["stand"].format(
+        day=now.day, month=month_name(language, now.month), time=f"{now.hour}:{now.minute:02d}"
+    )
+    blocks = {
+        key: _with_stand(block, stand) if block["kind"] == "custom" else block
+        for key, block in snapshot["blocks"].items()
+    }
+    return {**snapshot, "blocks": blocks, "updated": labels["updated"].format(when=when)}
+
+
+def _with_stand(block: dict[str, Any], stand: str) -> dict[str, Any]:
+    values = {
+        key: {**value, "text": stand} if value.get("text") == STAND else value
+        for key, value in block["values"].items()
+    }
+    return {**block, "values": values}
 
 
 def encode_snapshot(snapshot: dict[str, Any], now: datetime, language: str) -> str:

@@ -3,11 +3,14 @@ import { resolveLanguage, setLanguage } from "@statly/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { bridge } from "../bridge/index.ts";
+import { applyAccent } from "./accent.ts";
 
 type Appearance = {
   settings: Settings;
   /** The theme in effect, after resolving "system" to Anki's mode. */
   theme: string;
+  /** Changes with every color charts read, so they redraw. */
+  paletteKey: string;
   update: (patch: Partial<Settings>) => void;
 };
 
@@ -46,20 +49,42 @@ export function AppearanceProvider({
   });
 
   useEffect(() => bridge.on("host.themeChanged", (event) => setNightMode(event.nightMode)), []);
+  useEffect(
+    () =>
+      bridge.on(
+        "settings.changed",
+        () => void client.invalidateQueries({ queryKey: SETTINGS_KEY }),
+      ),
+    [client],
+  );
 
   const theme = settings.theme === "system" ? (nightMode ? "dark" : "light") : settings.theme;
+  const accent = settings.accentColor;
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
+  // Charts read the colors while they render, so the page has to carry them before that, not in
+  // an effect afterwards. Both writes repeat the same values and are safe to run twice.
+  const root = document.documentElement;
+  if (root.dataset.theme !== theme) {
+    root.dataset.theme = theme;
+  }
+  applyAccent(root, accent, theme === "dark");
 
   useEffect(() => {
     const language = settings.language === "auto" ? ankiLanguage : settings.language;
     void setLanguage(resolveLanguage(language));
   }, [settings.language, ankiLanguage]);
 
-  const value = useMemo(() => ({ settings, theme, update: mutate }), [settings, theme, mutate]);
+  const paletteKey = accent ? `${theme}:${accent}` : theme;
+  const value = useMemo(
+    () => ({ settings, theme, paletteKey, update: mutate }),
+    [settings, theme, paletteKey, mutate],
+  );
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
+}
+
+/** Works without a provider too, so a single component can be tested on its own. */
+export function useAero(): boolean {
+  return useContext(AppearanceContext)?.theme === "frutiger-aero";
 }
 
 export function useAppearance(): Appearance {

@@ -108,12 +108,16 @@ function BigNumber({ text }: { text: string }) {
 
 const PICTURES: Record<WidgetType, () => React.ReactNode> = {
   "review-summary": () => <BigNumber text="412" />,
+  "rating-summary": () => <BigNumber text="556" />,
+  "learned-cards": () => <BigNumber text="318" />,
   "study-time": () => <BigNumber text="1:24 h" />,
   "success-rate": () => <BigNumber text="91 %" />,
   "due-cards": () => <BigNumber text="86" />,
   "review-breakdown": () => <Rows values={[100, 74, 52, 40, 22]} />,
   "deck-activity": () => <Rows values={[100, 62, 38, 20]} />,
+  "deck-ratings": () => <Rows values={[100, 70, 34, 24]} />,
   "review-timeline": () => <Bars values={[4, 6, 5, 8, 7, 9, 6, 10, 8, 11, 9, 12, 10, 13]} />,
+  "rating-timeline": () => <Bars values={[6, 8, 7, 11, 9, 12, 8, 13, 11, 14, 12, 15, 13, 16]} />,
   "answer-buttons": () => <Bars values={[3, 5, 12, 4]} gap={12} />,
   "due-forecast": () => <Bars values={[12, 9, 8, 6, 5, 4, 3]} gap={8} />,
   "card-states": () => <Ring />,
@@ -123,7 +127,14 @@ const PICTURES: Record<WidgetType, () => React.ReactNode> = {
       gap={2}
     />
   ),
+  "rating-rhythm": () => (
+    <Bars
+      values={[1, 1, 1, 2, 4, 6, 9, 11, 10, 8, 5, 5, 6, 8, 9, 11, 13, 15, 14, 11, 8, 5, 2, 1]}
+      gap={2}
+    />
+  ),
   "review-heatmap": () => <Heat />,
+  "rating-heatmap": () => <Heat />,
   "anki-today": () => <BigNumber text="128" />,
   "anki-future-due": () => <Bars values={[12, 11, 9, 9, 7, 6, 6, 5, 4, 4, 3, 2]} />,
   "anki-calendar": () => <Heat />,

@@ -1,5 +1,6 @@
+import { shortcutActions } from "@statly/contract";
 import { describe, expect, it } from "vitest";
-import { displayKeys, keysFromEvent } from "./ShortcutsPanel.tsx";
+import { displayKeys, keysFromEvent, SHORTCUT_GROUPS } from "./ShortcutsPanel.tsx";
 
 const none = { ctrlKey: false, metaKey: false, altKey: false, shiftKey: false };
 
@@ -35,5 +36,12 @@ describe("displayKeys", () => {
 
   it("keeps the words elsewhere", () => {
     expect(displayKeys("Ctrl+Alt+D", false)).toBe("Ctrl+Alt+D");
+  });
+});
+
+describe("SHORTCUT_GROUPS", () => {
+  it("shows every action exactly once", () => {
+    const grouped: string[] = Object.values(SHORTCUT_GROUPS).flat();
+    expect([...grouped].sort()).toEqual([...shortcutActions].sort());
   });
 });

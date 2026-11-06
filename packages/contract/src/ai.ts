@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { dashboardLayout, settings } from "./dashboard.ts";
+import { goalDraft } from "./goals.ts";
 import { customWidget } from "./widget.ts";
 
 export const aiProviders = [
@@ -74,6 +75,8 @@ export const aiPages = {
   "settings-mobile": "/settings/mobile",
   "settings-shortcuts": "/settings/shortcuts",
   "settings-support": "/settings/support",
+  goals: "/goals",
+  "new-goal": "/goals/new",
 } as const;
 
 /** Settings the assistant can point at after opening their page. */
@@ -193,7 +196,7 @@ export const aiModels = z
 export const aiProposal = z
   .object({
     id: z.string(),
-    kind: z.enum(["widget", "dashboard", "settings"]),
+    kind: z.enum(["widget", "dashboard", "settings", "goal"]),
     summary: z.string(),
     source: z.enum(["chat", "external"]),
     createdAt: z.string(),
@@ -202,6 +205,8 @@ export const aiProposal = z
     addToDashboard: z.boolean().optional(),
     layout: dashboardLayout.optional(),
     patch: aiSettingsPatch.optional(),
+    /** A goal is never saved from here: the person checks it on the setup page and saves it. */
+    goal: goalDraft.optional(),
   })
   .strict();
 
@@ -209,7 +214,7 @@ export const aiChange = z
   .object({
     id: z.string(),
     at: z.string(),
-    kind: z.enum(["widget", "dashboard", "settings"]),
+    kind: z.enum(["widget", "dashboard", "settings", "goal"]),
     summary: z.string(),
     source: z.enum(["chat", "external"]),
     /** "approved" came from a click, "auto" from the automatic mode. */

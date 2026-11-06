@@ -362,17 +362,19 @@ function AnkiCalendar({ scope }: WidgetProps) {
   const { status, data } = useAnkiView("calendar", "calendar", scope.deckId, "all");
   const theme = useChartTheme(scope.themeKey);
   const shownYear = year ?? data?.lastYear ?? new Date().getFullYear();
-  const days = (data?.days ?? []).filter((day) => day.date.startsWith(`${shownYear}-`));
+  const days = (data?.days ?? [])
+    .filter((day) => day.date.startsWith(`${shownYear}-`))
+    .map((day) => ({ date: day.date, count: day.reviews }));
   const option = heatmapOption({
     year: shownYear,
     days,
     theme,
     locale,
-    format: (date, reviews) =>
+    format: (date, count) =>
       t("widgets.review-heatmap.tooltip", {
         date: fullDate(date, locale),
-        count: reviews,
-        reviews: number(reviews),
+        count,
+        reviews: number(count),
       }),
   });
   const actions = data ? (

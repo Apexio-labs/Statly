@@ -24,9 +24,29 @@ _FIELDS = {
     "deck": ("deckId",),
     "view": ("view", "deckId"),
 }
+# Only these take ``measure``: the other statistics have no such parameter.
+_MEASURED = {
+    "statistics.deckActivity",
+    "statistics.timeline",
+    "statistics.rhythm",
+    "statistics.heatmap",
+}
 _ANKI_VIEW_DEFAULTS = {"range": "month", "option": False}
-_PROPOSING_TOOLS = {"propose_widget", "propose_dashboard", "propose_settings"}
+_PROPOSING_TOOLS = {"propose_widget", "propose_dashboard", "propose_settings", "propose_goal"}
 _DENIED = "The person did not allow this."
+# A second lock behind the tool list in the contract: whatever a tool names, these calls change
+# Anki, allow things or reach the phone card, and the assistant never makes them.
+NEVER_CALLED = (
+    "permissions.",
+    "changes.",
+    "mobile.",
+    "goals.raiseLimit",
+    "goals.openDeckOptions",
+    "goals.save",
+    "goals.delete",
+    "goals.acknowledge",
+)
+_READS = ("cards.", "dashboard.get", "statistics.", "widgets.list", "goals.overview")
 
 type Answer = Callable[[dict[str, Any], bool], None]
 type AskPermission = Callable[[str, Callable[[bool], None]], None]
@@ -40,6 +60,18 @@ class Session:
     granted: set[str] = field(default_factory=set[str])
     trusted: bool = True
     ask: AskPermission | None = None
+
+
+def _masked_goals(result: Any) -> Any:
+    """Goal names are mostly deck names, so without permission both become numbers."""
+    numbers: dict[str, int] = {}
+    masked: list[Any] = []
+    for index, entry in enumerate(result, start=1):
+        decks = [
+            f"Deck {numbers.setdefault(name, len(numbers) + 1)}" for name in entry.get("decks", [])
+        ]
+        masked.append({**entry, "name": f"Goal {index}", "decks": decks})
+    return masked
 
 
 def _masked(result: Any) -> Any:
@@ -162,6 +194,8 @@ class ToolBox:
     def _read_statistic(self, arguments: Any, session: Session, answer: Answer) -> None:
         statistic = self._statistics[arguments["name"]]
         params = {key: arguments.get(key) for key in _FIELDS[statistic["needs"]]}
+        if statistic["method"] in _MEASURED and arguments.get("measure"):
+            params["measure"] = arguments["measure"]
         missing = [key for key in ("start", "end", "view") if key in params and params[key] is None]
         if "view" in params:
             params |= _ANKI_VIEW_DEFAULTS
@@ -171,9 +205,15 @@ class ToolBox:
             self._read(statistic["method"], params, session, answer)
 
     def _read(self, method: str, arguments: Any, session: Session, answer: Answer) -> None:
+        if method.startswith(NEVER_CALLED) or not method.startswith(_READS):
+            answer({"error": "The assistant can only read."}, True)
+            return
+
         def done(result: Any) -> None:
             if method in _MASKED_DECK_METHODS and not self._allowed("decks", session):
                 result = _masked(result)
+            elif method == "goals.overview" and not self._allowed("decks", session):
+                result = _masked_goals(result)
             answer({"result": result}, False)
 
         self._router.call(method, arguments, done, lambda message: answer({"error": message}, True))
@@ -183,7 +223,13 @@ class ToolBox:
         fields["kind"] = name.removeprefix("propose_")
         try:
             proposal = self._changes.propose(fields, session.source)
-            alone = session.trusted and self._may_act_alone(session.source)
+            # A goal is saved only by the person on the setup page, never by the automatic mode:
+            # a goal can lead Statly to raise a deck's limit, which needs a person every time.
+            alone = (
+                session.trusted
+                and proposal["kind"] != "goal"
+                and self._may_act_alone(session.source)
+            )
             if alone and self._changes.may_apply_alone():
                 self._changes.apply(proposal["id"], "auto")
                 answer({"status": "applied", "id": proposal["id"]}, False)

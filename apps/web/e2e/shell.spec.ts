@@ -57,7 +57,7 @@ test("settings show their own panel and a small main menu", async ({ page }) => 
   await page.getByRole("searchbox", { name: "Search settings" }).fill("wallpaper");
   await expect(page.getByRole("link", { name: "News" })).toHaveCount(0);
   await page.getByRole("link", { name: "Wallpaper" }).click();
-  await expect(page.getByRole("heading", { name: "Enable custom background" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Also on Anki's deck overview" })).toBeVisible();
   await page.getByRole("link", { name: "Back to dashboard" }).click();
   await expect.poll(() => width(page)).toBe(260);
 });
@@ -97,13 +97,16 @@ test("a shortcut can be recorded, and conflicts are reported", async ({ page }) 
 
   await field.click();
   await page.keyboard.press(process.platform === "darwin" ? "Meta+Q" : "Control+Q");
-  await expect(page.getByRole("status")).toContainText("Already used by Quit");
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("is already taken");
+  await expect(alert).toContainText("These keys already belong to “Quit”");
+  await expect(field).toHaveAttribute("aria-invalid", "true");
 });
 
 test("the library shows all statistics and adds or removes them", async ({ page }) => {
   await page.getByRole("link", { name: "Widget Library" }).click();
   await page.getByRole("tab", { name: /^Progress/ }).click();
-  await expect(page.locator("[data-library-card]")).toHaveCount(7);
+  await expect(page.locator("[data-library-card]")).toHaveCount(10);
   await page.getByRole("tab", { name: /^All/ }).click();
 
   await page.getByRole("button", { name: "Add Your study times", exact: true }).click();
@@ -141,14 +144,14 @@ test("Anki's statistics have their own group and reach the dashboard", async ({ 
 test("the library finds tiles by filter and search", async ({ page }) => {
   await page.getByRole("link", { name: "Widget Library" }).click();
   await page.getByRole("tab", { name: /^Habits/ }).click();
-  await expect(page.locator("[data-library-card]")).toHaveCount(2);
+  await expect(page.locator("[data-library-card]")).toHaveCount(4);
   await page.getByRole("tab", { name: /^Templates/ }).click();
   await expect(page.locator("[data-library-template]")).toHaveCount(3);
   await expect(page.locator("[data-library-card]")).toHaveCount(0);
 
   await page.getByRole("tab", { name: /^All/ }).click();
   await page.getByRole("searchbox", { name: "Search widgets and templates" }).fill("heatmap");
-  await expect(page.locator("[data-library-card]")).toHaveCount(2);
+  await expect(page.locator("[data-library-card]")).toHaveCount(3);
   await page.getByRole("searchbox", { name: "Search widgets and templates" }).fill("zzz");
   await expect(page.getByText("Nothing matches this search.")).toBeVisible();
 });
@@ -221,15 +224,18 @@ test("the phone card asks before it touches anything", async ({ page }) => {
 });
 
 const aiPanel = (page: import("@playwright/test").Page) => page.getByTestId("ai-panel");
+/** The assistant's settings live under Settings → AI, next to the chat panel. */
+const aiSettings = (page: import("@playwright/test").Page) => page.locator("main");
 
 async function setUpAi(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "AI", exact: true }).click();
-  await aiPanel(page)
+  await aiPanel(page).getByRole("button", { name: "Set Up" }).click();
+  await aiSettings(page)
     .getByRole("radio", { name: /Anthropic/ })
     .click();
-  await aiPanel(page).getByRole("textbox", { name: "API key" }).fill("sk-test-123456789");
-  await aiPanel(page).getByRole("button", { name: "Save" }).click();
-  await aiPanel(page).getByRole("button", { name: "Understood" }).click();
+  await aiSettings(page).getByRole("textbox", { name: "API key" }).fill("sk-test-123456789");
+  await aiSettings(page).getByRole("button", { name: "Save" }).click();
+  await aiSettings(page).getByRole("button", { name: "Understood" }).click();
   await aiPanel(page).getByRole("button", { name: "Chat", exact: true }).click();
 }
 
@@ -268,11 +274,11 @@ test("the AI panel slides in and out instead of popping", async ({ page }) => {
   await expect(aiPanel(page)).toHaveCount(0);
 });
 
-test("the AI opens as a third block and starts with its settings", async ({ page }) => {
+test("the AI opens as a third block and points to its settings first", async ({ page }) => {
   const before = await page.locator("main").boundingBox();
   await page.getByRole("button", { name: "AI", exact: true }).click();
   await expect(aiPanel(page)).toBeVisible();
-  await expect(aiPanel(page).getByRole("radiogroup", { name: "Service" })).toBeVisible();
+  await expect(aiPanel(page).getByRole("button", { name: "Set Up" })).toBeVisible();
   await expect
     .poll(async () => (await page.locator("main").boundingBox())?.width ?? 0)
     .toBeLessThan((before?.width ?? 0) - 300);
@@ -284,49 +290,50 @@ test("the AI opens as a third block and starts with its settings", async ({ page
     })
     .toBeGreaterThan(0);
 
+  await aiPanel(page).getByRole("button", { name: "Set Up" }).click();
+  await expect(aiSettings(page).getByRole("radiogroup", { name: "Service" })).toBeVisible();
   await aiPanel(page).getByRole("button", { name: "Close the AI panel" }).click();
   await expect(aiPanel(page)).toHaveCount(0);
 });
 
 test("a saved API key disappears from the page for good", async ({ page }) => {
-  await page.getByRole("button", { name: "AI", exact: true }).click();
-  await aiPanel(page)
+  await page.goto("/#/settings/ai");
+  await aiSettings(page)
     .getByRole("radio", { name: /Anthropic/ })
     .click();
-  const field = aiPanel(page).getByRole("textbox", { name: "API key" });
+  const field = aiSettings(page).getByRole("textbox", { name: "API key" });
   await expect(field).toHaveAttribute("type", "password");
   await field.fill("sk-secret-123456789");
-  await aiPanel(page).getByRole("button", { name: "Save" }).click();
+  await aiSettings(page).getByRole("button", { name: "Save" }).click();
 
-  await expect(aiPanel(page).getByText("Encrypted in your system's keychain")).toBeVisible();
+  await expect(aiSettings(page).getByText("Encrypted in your system's keychain")).toBeVisible();
   await expect(field).toHaveCount(0);
   expect(await page.content()).not.toContain("sk-secret-123456789");
-  await aiPanel(page).getByRole("button", { name: "Delete" }).click();
+  await aiSettings(page).getByRole("button", { name: "Delete" }).click();
   await expect(field).toBeVisible();
   await expect(field).toHaveValue("");
 });
 
 async function openKeyLock(page: import("@playwright/test").Page) {
   await aiPanel(page).getByRole("button", { name: "AI settings" }).click();
-  await aiPanel(page).getByRole("button", { name: "Advanced" }).click();
 }
 
 async function setKeyPassword(page: import("@playwright/test").Page, password: string) {
-  await aiPanel(page).getByRole("switch", { name: "Extra password for your keys" }).click();
-  await aiPanel(page).getByRole("textbox", { name: "New password", exact: true }).fill(password);
-  await aiPanel(page).getByRole("textbox", { name: "Repeat new password" }).fill(password);
-  await aiPanel(page).getByRole("button", { name: "Set password" }).click();
-  await expect(aiPanel(page).getByRole("button", { name: "Lock now" })).toBeVisible();
+  await aiSettings(page).getByRole("switch", { name: "Extra password for your keys" }).click();
+  await aiSettings(page).getByRole("textbox", { name: "New password", exact: true }).fill(password);
+  await aiSettings(page).getByRole("textbox", { name: "Repeat new password" }).fill(password);
+  await aiSettings(page).getByRole("button", { name: "Set password" }).click();
+  await expect(aiSettings(page).getByRole("button", { name: "Lock now" })).toBeVisible();
 }
 
 test("an extra password locks saved keys until it is entered again", async ({ page }) => {
   await setUpAi(page);
   await openKeyLock(page);
   await setKeyPassword(page, "correct horse");
-  await expect(aiPanel(page).getByText("locked with your password")).toBeVisible();
+  await expect(aiSettings(page).getByText("locked with your password")).toBeVisible();
   expect(await page.content()).not.toContain("correct horse");
 
-  await aiPanel(page).getByRole("button", { name: "Lock now" }).click();
+  await aiSettings(page).getByRole("button", { name: "Lock now" }).click();
   await aiPanel(page).getByRole("button", { name: "Chat", exact: true }).click();
   await expect(aiPanel(page).getByText("Your keys are locked")).toBeVisible();
   await expect(aiPanel(page).getByRole("textbox", { name: "Ask about your learning" })).toHaveCount(
@@ -349,19 +356,19 @@ test("an extra password locks saved keys until it is entered again", async ({ pa
 test("a new key password has to be long enough and typed twice", async ({ page }) => {
   await setUpAi(page);
   await openKeyLock(page);
-  await aiPanel(page).getByRole("switch", { name: "Extra password for your keys" }).click();
-  await expect(aiPanel(page).getByText("nobody can get your keys back")).toBeVisible();
-  const save = aiPanel(page).getByRole("button", { name: "Set password" });
-  await aiPanel(page).getByRole("textbox", { name: "New password", exact: true }).fill("short");
-  await expect(aiPanel(page).getByText("Use at least 8 characters.")).toBeVisible();
+  await aiSettings(page).getByRole("switch", { name: "Extra password for your keys" }).click();
+  await expect(aiSettings(page).getByText("nobody can get your keys back")).toBeVisible();
+  const save = aiSettings(page).getByRole("button", { name: "Set password" });
+  await aiSettings(page).getByRole("textbox", { name: "New password", exact: true }).fill("short");
+  await expect(aiSettings(page).getByText("Use at least 8 characters.")).toBeVisible();
   await expect(save).toBeDisabled();
-  await aiPanel(page)
+  await aiSettings(page)
     .getByRole("textbox", { name: "New password", exact: true })
     .fill("long enough");
-  await aiPanel(page).getByRole("textbox", { name: "Repeat new password" }).fill("different");
-  await expect(aiPanel(page).getByText("The passwords don't match.")).toBeVisible();
+  await aiSettings(page).getByRole("textbox", { name: "Repeat new password" }).fill("different");
+  await expect(aiSettings(page).getByText("The passwords don't match.")).toBeVisible();
   await expect(save).toBeDisabled();
-  await aiPanel(page).getByRole("textbox", { name: "Repeat new password" }).fill("long enough");
+  await aiSettings(page).getByRole("textbox", { name: "Repeat new password" }).fill("long enough");
   await expect(save).toBeEnabled();
 });
 
@@ -370,32 +377,34 @@ test("a key password can be changed and removed again", async ({ page }) => {
   await openKeyLock(page);
   await setKeyPassword(page, "correct horse");
 
-  await aiPanel(page).getByRole("button", { name: "Change password" }).click();
-  await aiPanel(page).getByRole("textbox", { name: "Current password" }).fill("wrong one");
-  await aiPanel(page)
+  await aiSettings(page).getByRole("button", { name: "Change password" }).click();
+  await aiSettings(page).getByRole("textbox", { name: "Current password" }).fill("wrong one");
+  await aiSettings(page)
     .getByRole("textbox", { name: "New password", exact: true })
     .fill("battery staple");
-  await aiPanel(page).getByRole("textbox", { name: "Repeat new password" }).fill("battery staple");
-  await aiPanel(page).getByRole("button", { name: "Change password" }).click();
-  await expect(aiPanel(page).getByRole("alert")).toHaveText("That password isn't right.");
-  await aiPanel(page).getByRole("textbox", { name: "Current password" }).fill("correct horse");
-  await aiPanel(page).getByRole("button", { name: "Change password" }).click();
-  await expect(aiPanel(page).getByRole("button", { name: "Lock now" })).toBeVisible();
+  await aiSettings(page)
+    .getByRole("textbox", { name: "Repeat new password" })
+    .fill("battery staple");
+  await aiSettings(page).getByRole("button", { name: "Change password" }).click();
+  await expect(aiSettings(page).getByRole("alert")).toHaveText("That password isn't right.");
+  await aiSettings(page).getByRole("textbox", { name: "Current password" }).fill("correct horse");
+  await aiSettings(page).getByRole("button", { name: "Change password" }).click();
+  await expect(aiSettings(page).getByRole("button", { name: "Lock now" })).toBeVisible();
 
-  await aiPanel(page).getByRole("switch", { name: "Extra password for your keys" }).click();
-  await aiPanel(page).getByRole("textbox", { name: "Current password" }).fill("battery staple");
-  await aiPanel(page).getByRole("button", { name: "Remove password" }).click();
+  await aiSettings(page).getByRole("switch", { name: "Extra password for your keys" }).click();
+  await aiSettings(page).getByRole("textbox", { name: "Current password" }).fill("battery staple");
+  await aiSettings(page).getByRole("button", { name: "Remove password" }).click();
   await expect(
-    aiPanel(page).getByRole("switch", { name: "Extra password for your keys" }),
+    aiSettings(page).getByRole("switch", { name: "Extra password for your keys" }),
   ).not.toBeChecked();
-  await expect(aiPanel(page).getByText("Encrypted in your system's keychain")).toBeVisible();
+  await expect(aiSettings(page).getByText("Encrypted in your system's keychain")).toBeVisible();
 });
 
 test("a forgotten key password can be given up deliberately", async ({ page }) => {
   await setUpAi(page);
   await openKeyLock(page);
   await setKeyPassword(page, "correct horse");
-  await aiPanel(page).getByRole("button", { name: "Lock now" }).click();
+  await aiSettings(page).getByRole("button", { name: "Lock now" }).click();
   await aiPanel(page).getByRole("button", { name: "Chat", exact: true }).click();
 
   await aiPanel(page).getByRole("button", { name: "Forgot your password?" }).click();
@@ -406,15 +415,15 @@ test("a forgotten key password can be given up deliberately", async ({ page }) =
   await aiPanel(page).getByRole("button", { name: "Delete keys and password" }).click();
   await expect(aiPanel(page).getByText("Your keys are locked")).toHaveCount(0);
   await aiPanel(page).getByRole("button", { name: "AI settings" }).click();
-  await expect(aiPanel(page).getByRole("textbox", { name: "API key" })).toBeVisible();
+  await expect(aiSettings(page).getByRole("textbox", { name: "API key" })).toBeVisible();
 });
 
 test("local models keep working while keys are locked", async ({ page }) => {
   await setUpAi(page);
   await openKeyLock(page);
   await setKeyPassword(page, "correct horse");
-  await aiPanel(page).getByRole("button", { name: "Lock now" }).click();
-  await aiPanel(page)
+  await aiSettings(page).getByRole("button", { name: "Lock now" }).click();
+  await aiSettings(page)
     .getByRole("radio", { name: /LM Studio/ })
     .click();
   await aiPanel(page).getByRole("button", { name: "Chat", exact: true }).click();
@@ -422,17 +431,17 @@ test("local models keep working while keys are locked", async ({ page }) => {
 });
 
 test("cloud services explain what gets sent, local ones do not need to", async ({ page }) => {
-  await page.getByRole("button", { name: "AI", exact: true }).click();
-  await aiPanel(page)
+  await page.goto("/#/settings/ai");
+  await aiSettings(page)
     .getByRole("radio", { name: /^OpenAI/ })
     .click();
-  await expect(aiPanel(page).getByText("What gets sent to this service")).toBeVisible();
-  await aiPanel(page)
+  await expect(aiSettings(page).getByText("What gets sent to this service")).toBeVisible();
+  await aiSettings(page)
     .getByRole("radio", { name: /LM Studio/ })
     .click();
-  await expect(aiPanel(page).getByText("What gets sent to this service")).toHaveCount(0);
-  await expect(aiPanel(page).getByRole("textbox", { name: "API key" })).toHaveCount(0);
-  await expect(aiPanel(page).getByRole("textbox", { name: "Address" })).toHaveValue(
+  await expect(aiSettings(page).getByText("What gets sent to this service")).toHaveCount(0);
+  await expect(aiSettings(page).getByRole("textbox", { name: "API key" })).toHaveCount(0);
+  await expect(aiSettings(page).getByRole("textbox", { name: "Address" })).toHaveValue(
     "http://127.0.0.1:1234/v1",
   );
 });
@@ -486,15 +495,36 @@ test("the AI asks before it reads cards", async ({ page }) => {
 
   const request = aiPanel(page).getByRole("alertdialog", { name: "Allow reading your cards?" });
   await expect(request).toBeVisible();
-  await request.getByRole("button", { name: "Always allow" }).click();
+  await request.getByRole("button", { name: "Always allow…" }).click();
+
+  // The settings open with the switch framed, and switching it on there lets the chat go on.
+  await expect(page.locator('[data-highlight="ai-permission-cards"]')).toHaveClass(
+    /statly-spotlight/,
+  );
+  const toggle = aiSettings(page).getByRole("switch", { name: "Read cards" });
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await expect(aiPanel(page).getByTestId("ai-answer")).toContainText("Spanish deck");
+
+  await page.goto("/#/settings/privacy");
+  await expect(page.locator('[data-permission="ai.cards"]')).toContainText("Allowed since");
+});
+
+test("the chat can allow itself only, which leaves the setting off", async ({ page }) => {
+  await setUpAi(page);
+  const field = aiPanel(page).getByRole("textbox", { name: "Ask about your learning" });
+  await field.fill("Which deck is this card in?");
+  await field.press("Enter");
+  const request = aiPanel(page).getByRole("alertdialog", { name: "Allow reading your cards?" });
+  await request.getByRole("button", { name: "Only in this chat" }).click();
   await expect(aiPanel(page).getByTestId("ai-answer")).toContainText("Spanish deck");
 
   await aiPanel(page).getByRole("button", { name: "AI settings" }).click();
-  await aiPanel(page).getByRole("button", { name: "Advanced" }).click();
-  const toggle = aiPanel(page).getByRole("switch", { name: "Read cards" });
-  await expect(toggle).toHaveAttribute("aria-checked", "true");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await expect(aiSettings(page).getByRole("switch", { name: "Read cards" })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
 });
 
 test("the AI offers choices when it has a question", async ({ page }) => {
@@ -556,22 +586,25 @@ test("earlier chats can be reopened and deleted", async ({ page }) => {
 });
 
 test("cloud services are marked as beta", async ({ page }) => {
-  await page.getByRole("button", { name: "AI", exact: true }).click();
-  await expect(aiPanel(page).getByRole("radio", { name: /Anthropic/ })).toContainText("Beta");
-  await expect(aiPanel(page).getByRole("radio", { name: /LM Studio/ })).not.toContainText("Beta");
+  await page.goto("/#/settings/ai");
+  await expect(aiSettings(page).getByRole("radio", { name: /Anthropic/ })).toContainText("Beta");
+  await expect(aiSettings(page).getByRole("radio", { name: /LM Studio/ })).not.toContainText(
+    "Beta",
+  );
 });
 
 test("automatic mode is hidden, off and needs a confirmed warning", async ({ page }) => {
+  await page.goto("/#/settings/ai");
   await page.getByRole("button", { name: "AI", exact: true }).click();
-  await expect(aiPanel(page).getByRole("switch", { name: "Automatic mode" })).toHaveCount(0);
-  await aiPanel(page).getByRole("button", { name: "Advanced" }).click();
+  await expect(aiSettings(page).getByRole("switch", { name: "Automatic mode" })).toHaveCount(0);
+  await aiSettings(page).getByRole("button", { name: "Advanced" }).click();
 
-  const toggle = aiPanel(page).getByRole("switch", { name: "Automatic mode" });
+  const toggle = aiSettings(page).getByRole("switch", { name: "Automatic mode" });
   await expect(toggle).toHaveAttribute("aria-checked", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-checked", "false");
 
-  const warning = aiPanel(page).getByRole("alertdialog", { name: "Security warning" });
+  const warning = aiSettings(page).getByRole("alertdialog", { name: "Security warning" });
   await expect(warning).toContainText("without asking you");
   await expect(warning.getByRole("button", { name: "Turn on anyway" })).toBeDisabled();
   await warning.getByRole("checkbox").check();
@@ -584,18 +617,199 @@ test("automatic mode is hidden, off and needs a confirmed warning", async ({ pag
 });
 
 test("external apps stay off until allowed and show their code only once", async ({ page }) => {
+  await page.goto("/#/settings/ai");
   await page.getByRole("button", { name: "AI", exact: true }).click();
-  await aiPanel(page).getByRole("button", { name: "Advanced" }).click();
-  await aiPanel(page).getByRole("switch", { name: "Allow external AI apps" }).click();
-  await aiPanel(page).getByRole("button", { name: "Create connection code" }).click();
-  const code = aiPanel(page).getByRole("textbox", { name: "Connection code" });
+  await aiSettings(page).getByRole("button", { name: "Advanced" }).click();
+  await aiSettings(page).getByRole("switch", { name: "Allow external AI apps" }).click();
+  await aiSettings(page).getByRole("button", { name: "Create connection code" }).click();
+  const code = aiSettings(page).getByRole("textbox", { name: "Connection code" });
   await expect(code).toHaveValue("statly1.52741.mock-code");
 
   await aiPanel(page).getByRole("button", { name: "Close the AI panel" }).click();
   await expect(aiPanel(page)).toHaveCount(0);
+  await page.goto("/#/settings/general");
   await page.getByRole("button", { name: "AI", exact: true }).click();
   await aiPanel(page).getByRole("button", { name: "AI settings" }).click();
-  await aiPanel(page).getByRole("button", { name: "Advanced" }).click();
+  await aiSettings(page).getByRole("button", { name: "Advanced" }).click();
   await expect(code).toHaveCount(0);
-  await expect(aiPanel(page).getByRole("button", { name: "Create new code" })).toBeVisible();
+  await expect(aiSettings(page).getByRole("button", { name: "Create new code" })).toBeVisible();
+});
+
+test("a wallpaper can be chosen by click or drop and lies behind all of Statly", async ({
+  page,
+}) => {
+  await page.goto("/#/settings/wallpaper");
+  const tile = page.getByRole("button", { name: "Choose wallpaper" });
+  await expect(page.getByText("No wallpaper chosen")).toBeVisible();
+  await expect(page.getByRole("switch", { name: "Also on Anki's deck overview" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await expect(page.getByRole("switch", { name: "Loop video" })).toHaveCount(0);
+
+  await tile.click();
+  await expect(page.locator("html")).toHaveAttribute("data-wallpaper", "own");
+  await expect(page.locator(".statly-wallpaper")).toHaveCount(1);
+
+  await tile.dispatchEvent("drop", {
+    dataTransfer: await page.evaluateHandle(() => {
+      const transfer = new DataTransfer();
+      transfer.items.add(new File(["video"], "sky.mp4", { type: "video/mp4" }));
+      return transfer;
+    }),
+  });
+  await expect(page.locator(".statly-wallpaper video")).toHaveCount(1);
+  const loop = page.getByRole("switch", { name: "Loop video" });
+  await expect(loop).toHaveAttribute("aria-checked", "true");
+  await loop.click();
+  await expect(page.locator(".statly-wallpaper video")).not.toHaveAttribute("loop");
+
+  await page.getByRole("button", { name: "Remove", exact: true }).click();
+  await expect(page.locator("html")).not.toHaveAttribute("data-wallpaper");
+});
+
+test("the Frutiger Aero sky works in the other themes too", async ({ page }) => {
+  await page.goto("/#/settings/wallpaper");
+  await page.getByRole("button", { name: "Recently used" }).click();
+  await page.getByRole("button", { name: "Frutiger Aero sky" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-wallpaper", "sky");
+  await page.getByRole("button", { name: "Remove", exact: true }).click();
+  await expect(page.locator("html")).not.toHaveAttribute("data-wallpaper");
+});
+
+test("used wallpapers come back from the history and can be deleted there", async ({ page }) => {
+  await page.goto("/#/settings/wallpaper");
+  const tile = page.getByRole("button", { name: "Choose wallpaper" });
+  await tile.click();
+  await tile.dispatchEvent("drop", {
+    dataTransfer: await page.evaluateHandle(() => {
+      const transfer = new DataTransfer();
+      transfer.items.add(new File(["video"], "sky.mp4", { type: "video/mp4" }));
+      return transfer;
+    }),
+  });
+  await expect(page.locator(".statly-wallpaper video")).toHaveCount(1);
+
+  const history = page.getByRole("list", { name: "Recently used" });
+  await expect(history).toBeHidden();
+  await page.getByRole("button", { name: "Recently used" }).click();
+  await expect(history.getByRole("listitem")).toHaveCount(3);
+  await history.getByRole("button", { name: "Wallpaper 2", exact: true }).click();
+  await expect(page.locator(".statly-wallpaper video")).toHaveCount(0);
+  await expect(page.locator("html")).toHaveAttribute("data-wallpaper", "own");
+
+  await history.getByRole("button", { name: "Delete Wallpaper 1" }).click();
+  await expect(history.getByRole("listitem")).toHaveCount(2);
+});
+
+test("a file that is no picture or video explains what works", async ({ page }) => {
+  await page.goto("/#/settings/wallpaper");
+  await expect(page.getByText("Images (PNG, JPEG, GIF, WebP)")).toHaveCount(0);
+  await page.getByRole("button", { name: "Choose wallpaper" }).dispatchEvent("drop", {
+    dataTransfer: await page.evaluateHandle(() => {
+      const transfer = new DataTransfer();
+      transfer.items.add(new File(["text"], "notes.pdf", { type: "application/pdf" }));
+      return transfer;
+    }),
+  });
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("Statly cannot use this file as a wallpaper.");
+  await expect(alert).toContainText("Images (PNG, JPEG, GIF, WebP)");
+});
+
+test("an own accent color reaches every accent and can be reset with Delete", async ({ page }) => {
+  await page.goto("/#/settings/appearance");
+  const accent = () =>
+    page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue("--statly-accent"),
+    );
+  const original = await accent();
+  await page.getByRole("switch", { name: "Own accent color" }).click();
+  const field = page.getByLabel("Accent color", { exact: true });
+  await field.fill("#c2185b");
+  await expect.poll(accent).toBe("#c2185b");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue("--statly-sequence-4"),
+      ),
+    )
+    .toBe("#c2185b");
+
+  await field.hover();
+  await page.keyboard.press("Delete");
+  await expect.poll(accent).toBe(original);
+  await expect(page.getByRole("switch", { name: "Own accent color" })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+});
+
+test("a counter color goes back to its default with Delete", async ({ page }) => {
+  await page.goto("/#/settings/appearance");
+  await page.getByRole("switch", { name: "Custom counter colors" }).click();
+  const field = page.getByLabel("Light mode: New", { exact: true });
+  const original = await field.inputValue();
+  await field.fill("#123456");
+  await expect(field).toHaveValue("#123456");
+  await field.hover();
+  await page.keyboard.press("Backspace");
+  await expect(field).toHaveValue(original);
+});
+
+test("settings open where they were left, for three minutes", async ({ page }) => {
+  await page.clock.install();
+  // A fresh document, because the fake clock only reaches pages loaded after it.
+  await page.goto("/?clock#/settings/shortcuts");
+  await page.getByRole("link", { name: "Home" }).click();
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(page).toHaveURL(/#\/settings\/shortcuts$/);
+
+  await page.getByRole("link", { name: "Home" }).click();
+  // The page change itself waits for a timer, which the paused clock has to let through first.
+  await page.clock.runFor(500);
+  await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible();
+  await page.clock.fastForward("03:01");
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(page).toHaveURL(/#\/settings\/general$/);
+});
+
+test("the recommendation appears when due and hands over the link", async ({ page }) => {
+  await page.goto("/?share");
+  const dialog = page.getByRole("dialog", { name: "Know someone Statly would help?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Share Statly" }).click();
+  await expect(dialog.getByRole("status")).toContainText("The link is on your clipboard");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(dialog).toHaveCount(0);
+});
+
+test("a shortcut in Anki can open the assistant", async ({ page }) => {
+  await page.goto("/#/?assistant=1");
+  await expect(page.getByTestId("ai-panel")).toBeVisible();
+});
+
+test("a suggested goal is checked on the setup page and becomes a goal only there", async ({
+  page,
+}) => {
+  await setUpAi(page);
+  const field = aiPanel(page).getByRole("textbox", { name: "Ask about your learning" });
+  await field.fill("Plan a goal for my exam");
+  await field.press("Enter");
+
+  const card = aiPanel(page).locator('[data-proposal="pending"]');
+  await expect(card).toContainText("Study goal");
+  await expect(card).toContainText("Medizin");
+  await expect(card.getByRole("button", { name: "Apply" })).toHaveCount(0);
+  await card.getByRole("button", { name: "Check and save" }).click();
+
+  await expect(page.locator("[data-suggested-goal]")).toContainText("The assistant suggested");
+  await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue("Medizin exam");
+  await expect(page.getByRole("radio", { name: /review it once/ })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator("[data-goal]")).toContainText("Medizin exam");
+  await expect(aiPanel(page).locator('[data-proposal="applied"]')).toBeVisible();
 });

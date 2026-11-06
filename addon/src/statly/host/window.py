@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import aqt
-from aqt.qt import QCloseEvent, QMainWindow, QMessageBox, QUrl
+from aqt.qt import QCloseEvent, QDropEvent, QMainWindow, QMessageBox, QUrl
 from aqt.utils import restoreGeom, saveGeom
 from aqt.webview import AnkiWebView
 
+from ..core.module import PermissionPrompt
 from ..core.rpc import is_same_page
+from .labels import host_labels
+from .prompt import Appearance, PromptLayer, PromptUnavailable
 
 DIALOG_NAME = "statly"
 _GEOMETRY_KEY = "statlyWindow"
@@ -19,9 +23,24 @@ _COMMAND_PREFIX = "statly:"
 
 
 class StatlyWebView(AnkiWebView):
+    _dropped_file: Path | None = None
+
     def onEsc(self) -> None:
         # Anki closes the window on Esc, but Esc belongs to the app's own menus and dialogs.
         pass
+
+    def dropEvent(self, evt: QDropEvent | None) -> None:
+        # A page sees a dropped file's content but not its path, and a video can be too large to
+        # pass through the bridge. So the path waits here until the page asks for it.
+        data = evt.mimeData() if evt is not None else None
+        urls = data.urls() if data is not None else []
+        local = [url for url in urls if url.isLocalFile()]
+        self._dropped_file = Path(local[0].toLocalFile()) if local else None
+        super().dropEvent(evt)
+
+    def take_dropped_file(self) -> Path | None:
+        dropped, self._dropped_file = self._dropped_file, None
+        return dropped
 
 
 class StatlyWindow(QMainWindow):
@@ -32,6 +51,8 @@ class StatlyWindow(QMainWindow):
         on_close: Callable[[], None],
         unsaved_message: Callable[[], str | None],
         fullscreen: bool,
+        prompt_url: str,
+        appearance: Appearance,
     ) -> None:
         super().__init__(None)
         self.setWindowTitle("Statly")
@@ -40,7 +61,10 @@ class StatlyWindow(QMainWindow):
         self._on_message = on_message
         self._on_close = on_close
         self._unsaved_message = unsaved_message
+        self._appearance = appearance
         self._on_closed: Callable[[], None] | None = None
+        # Set once the person said Close in Statly's popup, so the next close goes through.
+        self._close_confirmed = False
 
         self.web = StatlyWebView(parent=self, title="statly")
         self.web.requiresCol = False
@@ -50,6 +74,7 @@ class StatlyWindow(QMainWindow):
         # load_url switches this off, and it must stay on for files dropped onto the page.
         self.web.allow_drops = True
         self.setCentralWidget(self.web)
+        self.prompts = PromptLayer(self, self.web, prompt_url, appearance)
 
         self.resize(1280, 820)
         restoreGeom(self, _GEOMETRY_KEY)
@@ -75,22 +100,47 @@ class StatlyWindow(QMainWindow):
         self._on_closed = callback
         self.close()
 
-    def _user_wants_to_stay(self) -> bool:
-        """Anki closing the collection cannot wait for an answer, so only a person gets asked."""
+    def _ask_before_closing(self) -> bool:
+        """True while the person still has to answer. Anki closing the collection cannot wait for
+        an answer, so only a person gets asked, and only with unsaved work."""
         message = self._unsaved_message()
-        if message is None or self._on_closed is not None:
+        if message is None or self._on_closed is not None or self._close_confirmed:
             return False
-        answer = QMessageBox.question(
-            self,
-            "Statly",
-            message,
-            QMessageBox.StandardButton.Close | QMessageBox.StandardButton.Cancel,
-            QMessageBox.StandardButton.Cancel,
+        text = host_labels(self._appearance().get("language", "en"))
+        prompt = PermissionPrompt(
+            title=text["closeTitle"],
+            body=message,
+            details=(),
+            choices=(("stay", text["cancel"]), ("close", text["close"])),
+            tone="danger",
         )
-        return answer != QMessageBox.StandardButton.Close
+
+        def answered(answer: str | None) -> None:
+            if answer == "close":
+                self._close_confirmed = True
+                self.close()
+
+        try:
+            self.prompts.ask(prompt, answered)
+        except PromptUnavailable:
+            choice = QMessageBox.question(
+                self,
+                "Statly",
+                message,
+                QMessageBox.StandardButton.Close | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel,
+            )
+            return choice != QMessageBox.StandardButton.Close
+        return True
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
-        if self._user_wants_to_stay():
+        if self.prompts.is_open:
+            # A question is still open: closing answers it with no, and the window stays for now.
+            self.prompts.cancel()
+            if a0 is not None:
+                a0.ignore()
+            return
+        if self._ask_before_closing():
             if a0 is not None:
                 a0.ignore()
             return

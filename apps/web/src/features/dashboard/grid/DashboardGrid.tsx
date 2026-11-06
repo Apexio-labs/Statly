@@ -331,6 +331,11 @@ export function DashboardGrid<W extends DashboardWidget>({
 
   const place = (box: Box) => ({
     transform: `translate3d(calc(var(--grid-step) * ${box.x}), ${box.y * stepY}px, 0)`,
+    // The wobble turns a card after it was moved into place, around this point. Left at its
+    // default, that point stays at the grid's corner, and cards far from it swing much wider.
+    transformOrigin: `calc(var(--grid-step) * ${box.x + box.w / 2} - ${gap / 2}px) ${
+      box.y * stepY + (box.h * stepY - gap) / 2
+    }px`,
     width: `calc(var(--grid-step) * ${box.w} - ${gap}px)`,
     height: box.h * stepY - gap,
   });
@@ -406,7 +411,9 @@ export function DashboardGrid<W extends DashboardWidget>({
             className={`statly-grid-card ${editing ? "statly-editing" : ""} ${
               lifted ? "statly-lifted" : gliding ? "statly-gliding" : ""
             }`}
-            style={lifted ? { ...box, transform: liftedAt.current } : box}
+            style={
+              lifted ? { ...box, transform: liftedAt.current, transformOrigin: undefined } : box
+            }
           >
             <WidgetBoundary title={titleOf(widget.type)} message={t("dashboard.error")}>
               {renderWidget(widget, scope)}
@@ -417,7 +424,7 @@ export function DashboardGrid<W extends DashboardWidget>({
                   type="button"
                   aria-label={t("dashboard.remove")}
                   onClick={() => onRemove(widget.id)}
-                  className="absolute top-1.5 right-1.5 z-10 grid size-5 cursor-pointer place-items-center rounded-full border border-line bg-page text-muted hover:bg-hover hover:text-text"
+                  className="statly-close absolute top-1.5 right-1.5 z-10 grid size-5 cursor-pointer place-items-center rounded-full border border-line bg-page text-muted hover:bg-hover hover:text-text"
                 >
                   <X size={11} />
                 </button>

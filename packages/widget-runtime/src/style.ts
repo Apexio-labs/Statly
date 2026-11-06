@@ -72,7 +72,7 @@ export function backgroundStyle(background: WidgetBackground, mediaUrl?: string)
         : { background: "#000000" };
     }
     default:
-      return { background: "var(--statly-card)" };
+      return { background: "var(--statly-widget, var(--statly-card))" };
   }
 }
 

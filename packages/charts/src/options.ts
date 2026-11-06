@@ -10,6 +10,8 @@ export type ChartTheme = {
   sequence: string[];
   /** For telling series apart, always in this order: it keeps neighbors distinguishable. */
   series: string[];
+  /** Glass themes light their bars like tubes. All others keep flat colors. */
+  gloss: boolean;
 };
 
 const BAR_RADIUS = 4;
@@ -29,6 +31,39 @@ export function readChartTheme(): ChartTheme {
     card: readToken(styles, "--statly-card"),
     sequence: [1, 2, 3, 4, 5].map((step) => readToken(styles, `--statly-sequence-${step}`)),
     series: [1, 2, 3, 4, 5, 6, 7].map((step) => readToken(styles, `--statly-series-${step}`)),
+    gloss: readToken(styles, "--statly-chart-gloss") !== "",
+  };
+}
+
+/** Moves a #rrggbb color toward white (above 0) or black (below 0). */
+function shade(color: string, amount: number): string {
+  const target = amount > 0 ? 255 : 0;
+  const channels = [1, 3, 5].map((start) => {
+    const channel = Number.parseInt(color.slice(start, start + 2), 16);
+    return Math.round(channel + (target - channel) * Math.abs(amount))
+      .toString(16)
+      .padStart(2, "0");
+  });
+  return `#${channels.join("")}`;
+}
+
+/** Lit from one side and across the width of the bar, so it stays right at any length. */
+function barColor(color: string, theme: ChartTheme, horizontal: boolean) {
+  if (!(theme.gloss && /^#[0-9a-f]{6}$/i.test(color))) {
+    return color;
+  }
+  return {
+    type: "linear" as const,
+    x: 0,
+    y: 0,
+    x2: horizontal ? 0 : 1,
+    y2: horizontal ? 1 : 0,
+    colorStops: [
+      { offset: 0, color: shade(color, 0.62) },
+      { offset: 0.38, color: shade(color, 0.2) },
+      { offset: 0.42, color: color },
+      { offset: 1, color: shade(color, -0.22) },
+    ],
   };
 }
 
@@ -107,7 +142,7 @@ export function barOption({
             barMaxWidth: 28,
             barCategoryGap: "24%",
             itemStyle: {
-              color: theme.accent,
+              color: barColor(theme.accent, theme, horizontal),
               borderRadius: horizontal
                 ? [0, BAR_RADIUS, BAR_RADIUS, 0]
                 : [BAR_RADIUS, BAR_RADIUS, 0, 0],
@@ -253,7 +288,11 @@ export function seriesOption({
         data: item.values,
         ...(stacked ? { stack: "all" } : {}),
         barMaxWidth: 24,
-        itemStyle: { color: item.color, borderColor: theme.card, borderWidth: 1 },
+        itemStyle: {
+          color: barColor(item.color, theme, false),
+          borderColor: theme.card,
+          borderWidth: 1,
+        },
         tooltip: { valueFormatter: (item_: unknown) => format(Number(item_)) },
       })),
       ...(trend
@@ -277,10 +316,10 @@ export function seriesOption({
 
 type HeatmapOptions = {
   year: number;
-  days: { date: string; reviews: number }[];
+  days: { date: string; count: number }[];
   theme: ChartTheme;
   locale: string;
-  format: (date: string, reviews: number) => string;
+  format: (date: string, count: number) => string;
 };
 
 export function heatmapOption({
@@ -290,7 +329,7 @@ export function heatmapOption({
   locale,
   format,
 }: HeatmapOptions): EChartsOption {
-  const highest = Math.max(1, ...days.map((day) => day.reviews));
+  const highest = Math.max(1, ...days.map((day) => day.count));
   const emptyDay = theme.sequence[0] ?? theme.line;
   const names = (options: Intl.DateTimeFormatOptions, dates: Date[]) =>
     dates.map((date) => new Intl.DateTimeFormat(locale, options).format(date));
@@ -301,8 +340,8 @@ export function heatmapOption({
     tooltip: {
       ...tooltip(theme),
       formatter: (item) => {
-        const [date, reviews] = (item as unknown as { value: [string, number] }).value;
-        return format(date, reviews);
+        const [date, count] = (item as unknown as { value: [string, number] }).value;
+        return format(date, count);
       },
     },
     visualMap: {
@@ -334,7 +373,7 @@ export function heatmapOption({
       {
         type: "heatmap",
         coordinateSystem: "calendar",
-        data: days.map((day) => [day.date, day.reviews]),
+        data: days.map((day) => [day.date, day.count]),
       },
     ],
   };

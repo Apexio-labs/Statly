@@ -42,15 +42,21 @@ Protecting the user's cards comes first. These rules are enforced by
 - Only `core/reader.py` touches the database, and it accepts nothing but a plain `SELECT`.
   `WITH` queries, comments and multiple statements are rejected because Anki treats them as
   writes and clears the user's undo history.
-- Only `modules/mobile` may call anything that changes the collection, and only after the user
-  switched it on.
+- Only `modules/changes` may call anything that changes the collection, and only its gate hands
+  work to Anki's worker, after checking the permission. See "Permissions and changes" below.
 - Only `host/` may import `aqt`.
+- Only `core/localdb.py` may use `sqlite3`, and only on `statly.db` in `statly_data`.
 
-Two further rules protect Anki itself:
+Further rules protect Anki itself:
 
-- Hook handlers use `guarded`, so a Statly failure never reaches Anki.
-- Never recompute statistics during reviews. Queries share one worker with answering cards:
-  an answer takes about 4 ms normally and about 260 ms next to constant queries.
+- Hook handlers use `guarded`, so a Statly failure never reaches Anki. Filters use
+  `guarded_filter`, which hands Anki's value back unchanged even when Statly fails.
+- Never start a query while a card is being answered. Queries share one worker with answering
+  cards: an answer takes about 4 ms normally and about 260 ms next to constant queries. The
+  window counts again after each answer only once the next card is on screen, and at most one
+  round of queries waits at a time (`useStatisticsUpdates`).
+- Nothing listens for `reviewer_did_answer_card`: with a listener there, Anki loads every
+  answered card again. See "Reviewer" below.
 
 ## Window
 
@@ -84,7 +90,9 @@ generated from `packages/contract/src/aiTools.ts`. The rules that keep this safe
 `docs/adr/0002-how-the-assistant-stays-safe.md`.
 
 To add a tool, add it to `aiTools.ts`, run `pnpm contract`, and map reading tools to an existing
-call. A test refuses tools that reach beyond statistics, the dashboard and custom widgets.
+call. A test refuses tools that reach beyond statistics, the dashboard, custom widgets and the goal
+overview, and `ToolBox` refuses every call that changes Anki even if a tool named one. Goals are
+read with `get_goals` and suggested with `propose_goal`, which only fills in the setup page.
 
 ## Editors
 
@@ -123,11 +131,132 @@ To add an element, define it in `widget.ts`, draw it in
 `apps/web/src/features/widgets/ElementView.tsx`, give it fields in `editor/Inspector.tsx`, and
 offer it in `editor/Palette.tsx` and `editor/templates.ts`.
 
+## Permissions and changes
+
+Statly does nothing new until the person allows it, and the question comes from Python in a popup
+of its own, never from a button in the page. The popup (`host/prompt.py`, drawn by
+`apps/web/src/prompt`) is a second web view laid over the app in the same window: it looks like the
+app, but the app's page cannot reach into it. Uninstalling and closing with unsaved work ask there
+too. `packages/contract/src/permissions.ts` lists every
+permission, `core/permissions.py` keeps the answers per profile and computer, and
+`modules/permissions` asks and takes back. Settings → Privacy & Security shows all of them and every
+change Statly made in Anki. The reasons are in [ADR 3](adr/0003-permissions-and-changes.md).
+
+`modules/changes` is the one door for writes. Each file there is one kind of change and names its
+permission: `phone_card.py` for the phone card, `deck_limits.py` for today's limit of new cards. A
+single change becomes a named step in Anki's undo history and an entry in Statly's log. The
+assistant's changes ask every time, and changes Statly makes on its own wait while someone reviews
+or a redo is waiting. A goal raises today's limits with `goals.raiseLimit`, which takes only the
+goal's id; `GoalService.limits_needed` works out the decks and numbers, and with "Always allow"
+the goals module does the same by itself on the studied deck's overview, at most three times a
+goal and day (`MAX_RAISES_A_DAY`).
+`ChangeNotice` in the app shows each change with an undo button.
+
+To add a kind of change, add its permission to `permissions.ts`, write a file in `modules/changes`
+with `PERMISSION` and the methods of `Change`, list it in `_rebuilt` for undo, and add its texts to
+`modules/permissions/labels.py` and the web app's `privacy.*` keys.
+
+## Goals
+
+A study goal is the main thing, and a dashboard widget is a window onto it: `goal:<id>:ring` or
+`goal:<id>:timeline`, so one goal can be on the dashboard in both views. `modules/goals` registers
+`goal:` as a widget source, so a deleted goal leaves the dashboard by itself. The shapes live in
+`packages/contract/src/goals.ts`.
+
+The code is in four layers, so one can change without the others:
+
+- **Collect** (`exam/inputs.py`): the only SQL of a goal. It reads Anki's history only from the
+  first day that is not settled yet, so a goal costs the same on any collection: 85 ms over 100,000
+  cards and a million reviews without the cache, 0.2 ms with it.
+- **Plan** (`exam/plan.py`): pure rules. What is still open is spread over the study days left,
+  every morning anew, so the plan corrects itself. A card counts once it went through its learning
+  steps. Each day's goal is fixed at the first count of that day. Cards added after that wait for
+  tomorrow, deleted ones lower the goal at once.
+- **Shared rules** (`days.py`, `allocate.py`, `streaks.py`): study days, exact shares for decks
+  and subdecks, and streaks that are worked out from the days instead of being counted up.
+- **Put together** (`service.py`, `store.py`, `ledger.py`): one file per goal and a day book per
+  goal. A day's goal stays as it was fixed, what was done is read again for a week because phone
+  reviews arrive with the sync, and days on which Anki did not run are worked out from its history.
+  Each entry names the algorithm that made it, so a new one never changes old days.
+
+A goal either has every card learned once (`learned`) or also seen again once before the deadline
+(`reviewed`). A `reviewed` goal learns new cards until the deadline minus the days a card needs to
+come back, measured from the person's own first intervals (`estimates/returns.py`, with the
+deck's graduating interval as fallback). When that day has passed, it plans like a `learned` goal
+and says so. A card counts as seen again with any review or relearning answer; learned cards that
+Anki would show only after the deadline are named, for cards in filtered decks by their original
+due day. This is the goal's most expensive query: 250 ms over a million reviews, within its
+400 ms budget. Coming days expect the reviews already due then plus the planned cards coming back,
+from the person's echo: how many reviews a learned card brought on each day after learning.
+
+Statly counts goals whenever Anki runs, also with its window closed: when the deck list shows,
+on a deck's overview right before studying, after studying and after a sync, never during it.
+While someone studies, `live.py` counts along in memory from the numbers of that last count and
+tells Anki's reviewer the moment the day's goal is met (the setting `goalToast`).
+
+Goals reach the person's other computers through Anki's normal sync, with the permission
+`goals.sync`, which the first goal asks about once. Each computer writes one entry of its own in
+the collection's settings, `statly.goals.<device>`, with a random name for the computer
+(`SyncStore`), right before a sync and only when it changed (`modules/changes/goal_sync.py`). After
+a sync, `sync.py` brings the entries of all computers together: the newest change of a goal wins,
+deleting always wins, and for a day the goal fixed first on any computer applies. An entry holds
+the goals, the ones deleted or archived, the day's goals of the last week and the best streaks,
+and stays below 8 KB; what was learned every computer reads from Anki's own history. Anki passes
+no removed setting on, so switching off writes an "off" entry. `addon/tests/test_goal_sync.py`
+syncs two fresh collections through Anki's own sync server on the test machine: a goal arrives
+with a normal sync, a deletion goes back, and the undo history and the schema stay as they were.
+
+## Reviewer
+
+`modules/review` is the only part of Statly that listens to Anki's reviewer. It keeps each look at
+a card as an `Attempt` in memory: card, home deck, its state before, when it was shown, how long it
+took, how much of that Anki was in the background, and the button. It listens to four moments:
+the question shown, the answer about to be given (a filter that never changes it), an undo whose
+step Anki names "Answer Card" (compared with Anki's own label, so it works in every language), and
+the end of studying. An answer is told to other modules only once the next card is on screen
+(`Host.later`), so whatever they do cannot delay it. Undo marks the newest answer of the card it
+brings back. `modules/statistics` tells the window after each answer and undo, so the widgets
+follow along while the person studies; an answer given while that round still runs waits behind
+at most one query.
+
+The stopwatch (`modules/timing`) and the goals listen to these attempts. The stopwatch always
+runs, without a permission: it only measures on this computer, never changes Anki, never sends
+anything and never stores what a card says. The stopwatch keeps them in Statly's own SQLite file, `statly_data/statly.db`, which
+`core/localdb.py` writes on a thread of its own every few seconds and when studying ends. Each part
+keeps its tables there under a name with numbered steps, which run once in order. Undone looks are
+kept too, so the time at a card adds up every look: 40 seconds, undo, then 1 second is 41 seconds,
+where Anki keeps 1. The file stays when a goal is deleted, because the study time model learns
+from it.
+
+## Estimates
+
+`modules/estimates` holds estimates other parts share; the first is study time. Like goals, it is
+built in steps that can change one at a time:
+
+- **Read** (`history.py`): the only SQL. Answers of the last 90 days, at most the newest 25,000,
+  because older answers count little and this keeps a cold estimate near 60 ms on a million
+  reviews.
+- **Interpret** (`sessions.py`, pure): Anki stops its clock at the deck's limit and forgets undone
+  looks. The gap to the previous answer bounds a cut-off time, ends a session when it is a break,
+  and, when clearly longer than usual but no break, most likely held an undo or an edit, so the
+  extra time goes to the card. Stopwatch measurements replace all of this where they exist.
+- **Fit** (`censored.py`, pure): a log-normal per options preset and card state, fitted with
+  expectation maximisation, so cut-off times count as "at least" or "between" instead of being
+  taken at face value. Small presets lean on the person's overall pace, recent days weigh more.
+- **Forecast** (`study_time.py`, pure): time per answer, the seconds between cards, the answers a
+  new card needs until it is learned and how often a review needs relearning. The last 30 days
+  calibrate it: the middle of how far forecasts were off is applied, and the range is where most
+  days fell. Every estimate names its model, `study-time/1`.
+
+`scripts/backtest_goals.py` forecasts past days from the days before them on a copy of a
+collection and reports the error and how often the range held. Run it with the old and the new
+model before replacing one.
+
 ## Phone card
 
 iOS has no add-ons, so `modules/mobile` keeps a single card in its own deck, and Anki's normal sync
-carries it to phones. This is the only code in Statly that writes to the collection, and it runs
-only after the user switched it on and a backup was made. `writer.py` follows rules that real
+carries it to phones. It is written only after the person allowed `mobile.card` in Statly's dialog
+and a backup was made, through `modules/changes/phone_card.py`, which follows rules that real
 collections taught us:
 
 - Writes join the user's last action with `merge_undo_entries`. A plain write would wipe undo.
@@ -137,6 +266,12 @@ collections taught us:
   contain double braces or sound tags. `card.py` refuses such a build.
 - Before a session's first sync nothing is written, so a stale card cannot replace a newer one.
 - Statistics skip this card through `CollectionReader.excluded_cards`.
+
+A study goal on the dashboard reaches the card too. `modules/goals/phone.py` turns it into a
+custom block built from the card's own elements, a ring or bar and lines of text, so the phone
+needs nothing new to show it. The card is no live count, so the block says when it was made
+("Stand: 5. Nov., 7:12"). That time goes in only when the card is written (`filled`), so an
+unchanged goal leaves the card's content unchanged and causes no extra write or sync.
 
 People can edit the card on a phone like any other, so a sync may bring a broken one back.
 `needs_repair` checks it on every look at the deck list and right after a sync, and the next write
@@ -163,6 +298,13 @@ from Statly's sidebar. `host/menu.py` adds a Statly menu to the menu bar.
 does all wording and formatting.
 
 - Days are Anki days. They start at the user's rollover hour, computed from `sched.day_cutoff`.
+- A review is a card moved to a later day: an answer with `ivl > 0` (steps within the day are
+  negative, previews 0). Each card counts once a day, however often it came up. A rating is every
+  press of a button, what Anki itself calls reviews. Charts take `measure` to count ratings
+  instead, which the `rating-*` widgets use. Study goals follow the same rule for their reviews.
+  The rule is "moved on at least once that day", not "moved on by the day's last answer": the
+  second costs about six times as much over a million answers and only differs when a card comes
+  back the same day after it moved on, for example through Review ahead.
 - Reviews of deleted cards stay in the history. Cards in filtered decks count for their home deck.
   `revlog` does not record the deck, so history follows a card's current deck.
 - Queries run one at a time, because answering a card waits behind every queued query.

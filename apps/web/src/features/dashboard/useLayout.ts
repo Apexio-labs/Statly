@@ -11,9 +11,12 @@ export function useLayout() {
     queryFn: () => bridge.call("dashboard.get", {}),
     staleTime: Number.POSITIVE_INFINITY,
   });
+  // The new layout shows at once, so a second change right after the first builds on it instead
+  // of on the old one. If Python refuses it, the stored layout is read again.
   const save = useMutation({
     mutationFn: (layout: DashboardLayout) => bridge.call("dashboard.save", { layout }),
-    onSuccess: (_result, layout) => client.setQueryData(LAYOUT_KEY, layout),
+    onMutate: (layout) => client.setQueryData(LAYOUT_KEY, layout),
+    onError: () => client.invalidateQueries({ queryKey: LAYOUT_KEY }),
   });
   const saveAll = useMutation({
     mutationFn: (params: { layout: DashboardLayout; devices: DeviceLayouts }) =>

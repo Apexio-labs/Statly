@@ -31,6 +31,8 @@ def main() -> None:
         for path in package_files():
             archive.write(path, path.relative_to(SOURCE).as_posix())
         archive.write(ROOT / "LICENSE", "LICENSE")
+        archive.write(ROOT / "NOTICE", "NOTICE")
+        archive.write(ROOT / "LICENSING.md", "LICENSING.md")
         archive.write(ROOT / "TRADEMARKS.md", "TRADEMARKS.md")
 
     with ZipFile(OUTPUT) as archive:
@@ -40,6 +42,8 @@ def main() -> None:
         "__init__.py",
         "manifest.json",
         "LICENSE",
+        "NOTICE",
+        "LICENSING.md",
         "TRADEMARKS.md",
         "web/index.html",
         "web/THIRD_PARTY_NOTICES.txt",

@@ -20,6 +20,22 @@ import {
   settingsPatch,
   shortcutActions,
 } from "./dashboard.ts";
+import {
+  goal,
+  goalDeckChoice,
+  goalDraft,
+  goalId,
+  goalOverview,
+  goalStatus,
+  maxGoals,
+} from "./goals.ts";
+import {
+  changeEntry,
+  changeList,
+  changeResult,
+  permissionIds,
+  permissionList,
+} from "./permissions.ts";
 import { customWidget, mediaTypes } from "./widget.ts";
 
 const empty = z.object({}).strict();
@@ -46,13 +62,27 @@ const deckScope = z.number().int().nullable();
 
 /** A range of Anki days, both ends included, optionally limited to a deck and its subdecks. */
 const rangeParams = z.object({ start: isoDate, end: isoDate, deckId: deckScope }).strict();
+
+/**
+ * What a chart counts. A review is a card moved to a later day, counted once per card and day.
+ * A rating is every press of Again, Hard, Good or Easy (what Anki calls reviews).
+ */
+export const measures = ["reviews", "ratings"] as const;
+export type Measure = (typeof measures)[number];
+const measure = z.enum(measures).optional();
+const countedRangeParams = z
+  .object({ start: isoDate, end: isoDate, deckId: deckScope, measure })
+  .strict();
 const deckParams = z.object({ deckId: deckScope }).strict();
 
 export const reviewSummary = z
   .object({
+    /** Cards moved to a later day, once per card and day. */
     reviews: count,
+    /** Every press of Again, Hard, Good or Easy. */
+    ratings: count,
     studyTimeMs: count,
-    /** Share of all answers rated Hard or better, from 0 to 1. Null without reviews. */
+    /** Share of all ratings that were Hard or better, from 0 to 1. Null without ratings. */
     successRate: z.number().nullable(),
     /** Same share, limited to cards in review with an interval of at least one day. */
     retention: z.number().nullable(),
@@ -79,7 +109,8 @@ export const deckActivity = z.array(
       /** Null for cards that have since been deleted. */
       deckId: z.number().int().nullable(),
       name: z.string().nullable(),
-      reviews: count,
+      /** Reviews or ratings, as asked. */
+      count,
     })
     .strict(),
 );
@@ -88,9 +119,7 @@ export const reviewTimeline = z
   .object({
     granularity: z.enum(["day", "week", "month"]),
     items: z.array(
-      z
-        .object({ date: isoDate, reviews: count, runningAverage: z.number().nonnegative() })
-        .strict(),
+      z.object({ date: isoDate, count, runningAverage: z.number().nonnegative() }).strict(),
     ),
   })
   .strict();
@@ -113,10 +142,11 @@ export const reviewHeatmap = z
     firstYear: z.number().int(),
     lastYear: z.number().int(),
     today: isoDate,
-    days: z.array(z.object({ date: isoDate, reviews: count }).strict()),
-    totalReviews: count,
+    /** Reviews or ratings, as asked. */
+    days: z.array(z.object({ date: isoDate, count }).strict()),
+    total: count,
     dailyAverage: z.number().nonnegative(),
-    /** Share of days with at least one review, from 0 to 1. */
+    /** Share of days with at least one rating, from 0 to 1. Streaks count such days too. */
     daysLearned: z.number().nonnegative(),
     longestStreak: count,
     currentStreak: count,
@@ -135,9 +165,6 @@ export const cardStates = z
     other: count,
   })
   .strict();
-
-/** The chosen wallpaper as a data URL, or null if there is none. */
-export const wallpaperPreview = z.object({ image: z.string().nullable() }).strict();
 
 export const mobileStatus = z
   .object({ enabled: z.boolean(), updated: z.string().nullable() })
@@ -299,12 +326,12 @@ export const methods = {
   "statistics.decks": { params: empty, result: deckList },
   "statistics.summary": { params: rangeParams, result: reviewSummary },
   "statistics.categories": { params: rangeParams, result: reviewCategories },
-  "statistics.deckActivity": { params: rangeParams, result: deckActivity },
-  "statistics.timeline": { params: rangeParams, result: reviewTimeline },
+  "statistics.deckActivity": { params: countedRangeParams, result: deckActivity },
+  "statistics.timeline": { params: countedRangeParams, result: reviewTimeline },
   "statistics.answerButtons": { params: rangeParams, result: answerButtons },
-  "statistics.rhythm": { params: rangeParams, result: studyRhythm },
+  "statistics.rhythm": { params: countedRangeParams, result: studyRhythm },
   "statistics.heatmap": {
-    params: z.object({ year: z.number().int().nullable(), deckId: deckScope }).strict(),
+    params: z.object({ year: z.number().int().nullable(), deckId: deckScope, measure }).strict(),
     result: reviewHeatmap,
   },
   "statistics.due": { params: deckParams, result: z.object({ cards: count }).strict() },
@@ -335,11 +362,29 @@ export const methods = {
   "settings.update": { params: settingsPatch, result: settings },
   "feedback.visit": {
     params: empty,
-    result: z.object({ askRating: z.boolean() }).strict(),
+    result: z.object({ askRating: z.boolean(), askShare: z.boolean() }).strict(),
   },
   "feedback.answer": {
     params: z.object({ choice: z.enum(["rate", "later", "never"]) }).strict(),
     result: z.null(),
+  },
+  "feedback.answerShare": {
+    params: z.object({ choice: z.enum(["share", "later", "never"]) }).strict(),
+    result: z.null(),
+  },
+  /** Opens the system's share sheet where there is one. Elsewhere the text lands on the clipboard. */
+  "system.share": {
+    params: z
+      .object({
+        text: z.string().max(300),
+        url: z.string().max(300),
+        /** The button it opens from, in page pixels. */
+        anchor: z
+          .object({ x: z.number(), y: z.number(), width: z.number(), height: z.number() })
+          .strict(),
+      })
+      .strict(),
+    result: z.object({ method: z.enum(["sheet", "clipboard"]) }).strict(),
   },
   "widgets.list": { params: empty, result: z.array(customWidget) },
   "widgets.save": { params: z.object({ widget: customWidget }).strict(), result: customWidget },
@@ -397,7 +442,8 @@ export const methods = {
         tags: z.array(z.string()),
         state: z.enum(["new", "learning", "review", "suspended", "buried"]),
         intervalDays: z.number().int(),
-        reviews: count,
+        /** Every answer the card ever got. */
+        ratings: count,
         lapses: count,
         lastReview: isoDate.nullable(),
         recent: z.array(z.object({ date: isoDate, answer: z.number().int() }).strict()),
@@ -443,14 +489,22 @@ export const methods = {
   "ai.reset": { params: empty, result: z.null() },
   /** `widget` replaces what the assistant suggested, after someone worked on it in the editor. */
   "ai.applyProposal": {
-    params: z.object({ id: z.string().max(40), widget: customWidget.optional() }).strict(),
+    params: z
+      .object({
+        id: z.string().max(40),
+        widget: customWidget.optional(),
+        /** A suggested goal as the person saved it on the setup page, after checking it. */
+        goal: goal.optional(),
+      })
+      .strict(),
     result: z.null(),
   },
   "ai.rejectProposal": { params: z.object({ id: z.string().max(40) }).strict(), result: z.null() },
   "ai.changes": { params: empty, result: z.array(aiChange) },
   "ai.rollback": { params: z.object({ id: z.string().max(40) }).strict(), result: z.null() },
+  /** The chat's own buttons. They only allow this chat: for good is a switch in the settings. */
   "ai.answerPermission": {
-    params: z.object({ decision: z.enum(["once", "always", "deny"]) }).strict(),
+    params: z.object({ decision: z.enum(["once", "deny"]) }).strict(),
     result: z.null(),
   },
   "ai.answerQuestion": {
@@ -482,21 +536,72 @@ export const methods = {
   /** Shown once. Only a hash of it is kept, and a new code cancels the old one. */
   "ai.newExternalCode": { params: empty, result: z.object({ code: z.string() }).strict() },
   "ai.saveBridge": { params: empty, result: z.object({ saved: z.boolean() }).strict() },
-  "wallpaper.preview": { params: empty, result: wallpaperPreview },
-  "wallpaper.choose": { params: empty, result: wallpaperPreview },
-  "wallpaper.remove": { params: empty, result: wallpaperPreview },
+  "wallpaper.choose": { params: empty, result: settings },
+  /** Uses the file that was just dropped onto the page, which a page cannot name itself. */
+  "wallpaper.dropped": { params: empty, result: settings },
+  "wallpaper.remove": { params: empty, result: settings },
+  /** Puts a file from the history back behind Statly. */
+  "wallpaper.use": { params: z.object({ id: z.string().max(64) }).strict(), result: settings },
+  /** Drops a file from the history, and deletes it once nothing else uses it. */
+  "wallpaper.forget": { params: z.object({ id: z.string().max(64) }).strict(), result: settings },
   "shortcuts.beginRecording": { params: empty, result: z.null() },
   "shortcuts.endRecording": { params: empty, result: z.null() },
   "shortcuts.set": {
     params: z.object({ action: z.enum(shortcutActions), keys: z.string().max(40) }).strict(),
     result: z.object({ conflict: z.string().nullable(), settings }).strict(),
   },
+  /** Every permission a part of Statly offers, and the ones given earlier. */
+  "permissions.list": { params: empty, result: permissionList },
+  /** Opens Statly's own dialog. Only the person's click there allows anything. */
+  "permissions.request": {
+    params: z.object({ id: z.enum(permissionIds) }).strict(),
+    result: permissionList,
+  },
+  /** Takes a permission back at once, after cleaning up what it allowed, such as the phone card. */
+  "permissions.revoke": {
+    params: z.object({ id: z.enum(permissionIds) }).strict(),
+    result: permissionList,
+  },
+  /**
+   * Lets the goal's decks show today the new cards it plans. Statly works out the numbers itself
+   * and asks in its own popup unless this was allowed for good. Never offered to the assistant.
+   */
+  "goals.raiseLimit": { params: z.object({ id: goalId }).strict(), result: changeResult },
+  /** Every goal in short, with today's numbers, for the assistant's get_goals. Only reads. */
+  "goals.overview": { params: empty, result: z.array(goalOverview).max(maxGoals) },
+  /** Opens Anki's own options of a deck. That changes nothing by itself. */
+  "goals.openDeckOptions": {
+    params: z.object({ deckId: z.number().int() }).strict(),
+    result: z.null(),
+  },
+  /** What Statly changed in Anki, newest first. */
+  "changes.list": { params: empty, result: changeList },
+  "changes.undo": {
+    params: z.object({ id: changeEntry.shape.id }).strict(),
+    result: changeList,
+  },
+  /** Every goal, archived ones included. */
+  "goals.list": { params: empty, result: z.array(goal).max(maxGoals) },
+  /** Creates a goal when its id is null. Checks the decks, so it reads the collection. */
+  "goals.save": { params: z.object({ goal: goalDraft }).strict(), result: goal },
+  /** Removes the goal and its history. Its widgets leave the dashboard by themselves. */
+  "goals.delete": { params: z.object({ id: goalId }).strict(), result: z.null() },
+  "goals.status": { params: z.object({ id: goalId }).strict(), result: goalStatus },
+  /** The numbers a goal would have, for the live preview while setting one up. Stores nothing. */
+  "goals.preview": { params: z.object({ goal: goalDraft }).strict(), result: goalStatus },
+  "goals.decks": { params: empty, result: z.array(goalDeckChoice).max(5000) },
+  /** The celebration for today's goal was shown, so it does not come again today. */
+  "goals.acknowledge": { params: z.object({ id: goalId }).strict(), result: z.null() },
 } as const;
 
 /** Every event Python can push to the web app. */
 export const events = {
   "host.themeChanged": z.object({ nightMode: z.boolean() }).strict(),
   "statistics.changed": z.object({}).strict(),
+  /** The assistant's shortcut: opens it, or closes it when it is open. */
+  "host.toggleAssistant": z.object({}).strict(),
+  /** Python changed a setting on its own, so the app should read them again. */
+  "settings.changed": z.object({}).strict(),
   "host.navigate": z
     .object({ path: z.string(), highlight: z.enum(aiHighlights).optional() })
     .strict(),
@@ -508,6 +613,12 @@ export const events = {
   "ai.changed": z.object({}).strict(),
   /** A change reached the dashboard, a widget or the settings. */
   "ai.applied": z.object({}).strict(),
+  /** Something was allowed or taken back, possibly in a dialog or by cleaning up. */
+  "permissions.changed": z.object({}).strict(),
+  /** Statly changed something in Anki, so the app can offer to undo it. */
+  "changes.applied": z.object({ id: changeEntry.shape.id }).strict(),
+  /** A goal was saved, removed or counted again, so the app should read goals again. */
+  "goals.changed": z.object({}).strict(),
 } as const;
 
 export const errorCodes = [

@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import threading
+import time
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -96,6 +97,7 @@ def prepare_settings() -> None:
     folder = Path(mw.pm.profileFolder()) / "statly_data"
     folder.mkdir(exist_ok=True)
     settings = {
+        "theme": os.environ.get("STATLY_SMOKE_THEME", "system"),
         "onboardingDone": True,
         "deckHeatmap": True,
         "counterColorsEnabled": True,
@@ -122,7 +124,7 @@ def check_deck_overview() -> None:
     def check(value: str) -> None:
         page = json.loads(value)
         results["deck_heatmap"] = page["heatmap"]
-        results["deck_wallpaper"] = "radial-gradient" in page["styles"]
+        results["deck_wallpaper"] = "data:image/jpeg;base64," in page["styles"]
         results["deck_counters"] = ".new-count{color:#0071D3" in page["styles"]
         record_shortcut()
 
@@ -164,7 +166,7 @@ def take_screenshots() -> None:
         capture(
             "edit",
             "[...document.querySelectorAll('button')]"
-            ".find((b) => /^(Edit|Bearbeiten)$/.test(b.textContent)).click()",
+            ".find((b) => /^(Edit dashboard|Dashboard bearbeiten)$/.test(b.textContent)).click()",
             settings_page,
         )
 
@@ -418,8 +420,46 @@ def video_flow() -> None:
     wait(60)
 
 
+READ_PROMPT = """JSON.stringify({
+  title: document.querySelector('[role="alertdialog"] h2')?.textContent ?? null,
+  answers: [...document.querySelectorAll('[data-answer]')].map((button) => button.dataset.answer),
+  focused: document.activeElement?.dataset?.answer ?? null,
+  links: document.querySelectorAll('a').length,
+  theme: document.documentElement.dataset.theme ?? null,
+  backdrop: [...document.querySelectorAll('div')].some((node) => node.style.backgroundImage !== ''),
+})"""
+
+
+def answer_dialog(accept: bool, key: str, attempts: int = 30, choice: str | None = None) -> None:
+    """Press a button in Statly's own popup over the app, as a person would.
+
+    The popup waits in its own event loop, so this timer still fires while it is open.
+    """
+
+    def press() -> None:
+        layer = window().prompts
+        if not (layer.is_open and layer.view.isVisible()):
+            if attempts > 0:
+                answer_dialog(accept, key, attempts - 1, choice)
+            else:
+                results[key] = None
+            return
+        layer.view.evalWithCallback(READ_PROMPT, step(lambda value: choose(json.loads(value))))
+
+    def choose(shown: dict[str, Any]) -> None:
+        results[key] = shown
+        if SCREENSHOTS is not None:
+            window().grab().save(str(SCREENSHOTS / f"{key}.png"))
+        answer = choice or (shown["answers"][-1] if accept else shown["answers"][0])
+        selector = json.dumps(f'[data-answer="{answer}"]')
+        window().prompts.view.eval(f"document.querySelector({selector}).click()")
+
+    later(300, press)
+
+
 def phone_card() -> None:
-    """The one writing feature, through the real worker and a real backup."""
+    """The one writing feature, through Statly's own dialog, the real worker and a real backup."""
+    answer_dialog(True, "phone_dialog")
     call_from_page(915, "mobile.enable")
 
     def check_enabled() -> None:
@@ -433,9 +473,52 @@ def phone_card() -> None:
 
     def check_disabled() -> None:
         results["phone_removed"] = mw.col.decks.id_for_name("Statly Dashboard") is None
-        ai_flow()
+        refused_permission()
 
     later(3000, check_enabled)
+
+
+def refused_permission() -> None:
+    """A "no" in the real dialog leaves the permission off."""
+    answer_dialog(False, "refused_dialog")
+    call_from_page(917, "permissions.request", {"id": "ai.decks"})
+
+    def check() -> None:
+        stored = Path(mw.pm.profileFolder()) / "statly_data" / "permissions.json"
+        grants = json.loads(stored.read_text(encoding="utf-8")).get("grants", {})
+        results["refused_kept_off"] = "ai.decks" not in grants
+        collection_op()
+
+    later(1500, check)
+
+
+def collection_op() -> None:
+    """The gate's kind of step through Anki's real CollectionOp: named, undoable, refreshed."""
+    from types import SimpleNamespace
+
+    from statly.host.runtime import AnkiRuntime
+
+    deck_id = mw.col.decks.id("Default")
+    host: Any = SimpleNamespace(_mw=mw, _dialog_parent=lambda: mw)
+
+    def work(collection: Any) -> Any:
+        position = collection.add_custom_undo_entry("Statly: smoke")
+        deck = collection.decks.get(deck_id)
+        deck["newLimitToday"] = {"limit": 77, "today": collection.sched.today}
+        collection.decks.update_dict(deck)
+        return collection.merge_undo_entries(position)
+
+    def done(_changes: Any) -> None:
+        results["collection_op_step"] = mw.col.undo_status().undo
+        results["collection_op_limit"] = mw.col.decks.get(deck_id)["newLimitToday"]["limit"]
+        mw.col.undo()
+        results["collection_op_undone"] = mw.col.decks.get(deck_id).get("newLimitToday") is None
+        ai_flow()
+
+    def failed(error: Exception) -> None:
+        raise error
+
+    AnkiRuntime.run_collection_op(host, work, step(done), step(failed))
 
 
 def chunk(payload: dict[str, Any]) -> bytes:
@@ -658,9 +741,226 @@ def ask_bridge(bridge: str, code: str) -> None:
 def wait_for_bridge(attempts: int) -> None:
     if "mcp" in results or attempts == 0 or "STATLY_SMOKE_BRIDGE" not in os.environ:
         call_from_page(937, "ai.setExternal", {"enabled": False})
-        later(200, reopen)
+        later(200, review_flow)
     else:
         later(100, lambda: wait_for_bridge(attempts - 1))
+
+
+REVIEW_CARDS = 60
+LATENCY_ANSWERS = 30
+
+
+def statly_hooks() -> list[tuple[Any, Any]]:
+    """Statly's own listeners in the reviewer, to take them out for a comparison."""
+    found: list[tuple[Any, Any]] = []
+    for hook in (
+        gui_hooks.reviewer_did_show_question,
+        gui_hooks.reviewer_will_answer_card,
+        gui_hooks.state_did_undo,
+    ):
+        for callback in list(hook._hooks):
+            if getattr(callback, "__module__", "").startswith("statly."):
+                found.append((hook, callback))
+    return found
+
+
+def median(values: list[float]) -> float:
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    return (ordered[middle] + ordered[~middle]) / 2
+
+
+def review_flow() -> None:
+    """Study in Anki's real reviewer: answers stay quick, undo is kept, a met goal is told."""
+    from datetime import date, timedelta
+
+    import statly.host.runtime as statly_runtime
+
+    toasts: list[str] = []
+    shown_tooltip = statly_runtime.tooltip
+
+    def record_tooltip(text: str, *args: Any, **kwargs: Any) -> Any:
+        toasts.append(text)
+        return shown_tooltip(text, *args, **kwargs)
+
+    statly_runtime.tooltip = record_tooltip
+    results["review_toasts"] = toasts
+
+    deck_id = mw.col.decks.id("Smoke Review")
+    config = mw.col.decks.config_dict_for_deck_id(deck_id)
+    config["new"]["perDay"] = 200
+    mw.col.decks.update_config(config)
+    notetype = mw.col.models.by_name("Basic")
+    for index in range(REVIEW_CARDS):
+        note = mw.col.new_note(notetype)
+        note["Front"] = f"Question {index}"
+        note["Back"] = "Answer"
+        mw.col.add_note(note, deck_id)
+    # Sixty cards over ten days: six new cards a day.
+    goal = {
+        "kind": "exam",
+        "decks": [{"id": deck_id, "name": "Smoke Review"}],
+        "examDate": (date.today() + timedelta(days=10)).isoformat(),
+        "bufferDays": 0,
+        "mode": "learned",
+        "counts": "newOnly",
+        "studyWeekdays": [0, 1, 2, 3, 4, 5, 6],
+        "freeDates": [],
+    }
+    # The first goal asks once whether goals may sync through AnkiWeb. The test says no.
+    answer_dialog(False, "sync_dialog")
+    call_from_page(
+        950,
+        "goals.save",
+        {"goal": {"id": None, "name": "Smoke exam", "archived": False, "config": goal}},
+    )
+
+    def overview() -> None:
+        mw.col.decks.select(deck_id)
+        # Statly counts the goal on the deck's overview, right before the first card.
+        mw.moveToState("overview")
+        later(1500, study)
+
+    def study() -> None:
+        mw.moveToState("review")
+        later(800, lambda: answer(6, learn_phase_done))
+
+    latencies: dict[str, list[float]] = {"with": [], "without": []}
+    pressed = [0.0]
+    measuring = [""]
+
+    def question_shown(_card: Any) -> None:
+        if measuring[0] and pressed[0]:
+            latencies[measuring[0]].append((time.perf_counter() - pressed[0]) * 1000)
+        pressed[0] = 0.0
+
+    gui_hooks.reviewer_did_show_question.append(question_shown)
+
+    def answer(remaining: int, then: Any, ease: int = 4) -> None:
+        if remaining == 0:
+            later(300, then)
+            return
+        mw.reviewer._showAnswer()
+
+        def press() -> None:
+            pressed[0] = time.perf_counter()
+            mw.reviewer._answerCard(ease)
+            later(350, lambda: answer(remaining - 1, then, ease))
+
+        later(120, press)
+
+    def learn_phase_done() -> None:
+        # Six cards learned: the goal's day is met. Then one answer is taken back and given again.
+        results["review_toast"] = any("Smoke exam" in text for text in toasts)
+        from aqt.operations.collection import undo
+
+        undo(parent=mw)
+
+        def back_in_the_reviewer() -> None:
+            # Statly's window has the focus here. Anki redraws its reviewer after an undo only
+            # once the main window is active again, which is what this does.
+            mw.reviewer.refresh_if_needed()
+            later(500, lambda: answer(1, compare, ease=3))
+
+        later(400, back_in_the_reviewer)
+
+    def compare() -> None:
+        hooks = statly_hooks()
+        results["review_statly_hooks"] = len(hooks)
+
+        def one(index: int) -> None:
+            if index == LATENCY_ANSWERS:
+                for hook, callback in hooks:
+                    if callback not in hook._hooks:
+                        hook.append(callback)
+                later(300, finish_studying)
+                return
+            without = index % 2 == 1
+            for hook, callback in hooks:
+                if without and callback in hook._hooks:
+                    hook.remove(callback)
+                elif not without and callback not in hook._hooks:
+                    hook.append(callback)
+            measuring[0] = "without" if without else "with"
+            answer(1, lambda: one(index + 1), ease=4)
+
+        one(0)
+
+    def finish_studying() -> None:
+        measuring[0] = ""
+        gui_hooks.reviewer_did_show_question.remove(question_shown)
+        with_hooks, without_hooks = median(latencies["with"]), median(latencies["without"])
+        results["review_latency"] = {
+            "with": round(with_hooks, 2),
+            "without": round(without_hooks, 2),
+            "answers": [len(latencies["with"]), len(latencies["without"])],
+        }
+        results["review_latency_ok"] = with_hooks - without_hooks <= 1.0
+        mw.moveToState("overview")
+        later(1500, check_kept)
+
+    def check_kept() -> None:
+        import sqlite3
+
+        path = Path(mw.pm.profileFolder()) / "statly_data" / "statly.db"
+        with sqlite3.connect(path) as database:
+            kept, undone = database.execute(
+                "SELECT COUNT(*), COALESCE(SUM(undone), 0) FROM attempts"
+            ).fetchone()
+        results["review_attempts"] = kept
+        results["review_undone"] = undone
+
+        def counted(page: dict[str, Any]) -> None:
+            saved = next((r for r in page["smoke"] or [] if r.get("id") == 950), None)
+            goal_id = saved["result"]["id"] if saved and saved.get("ok") else None
+            results["review_goal"] = goal_id
+            if goal_id is None:
+                results["review_counted"] = None
+                later(200, reopen)
+                return
+            call_from_page(951, "goals.status", {"id": goal_id})
+            later(1200, lambda: read_page(status))
+
+        def status(page: dict[str, Any]) -> None:
+            found = next((r for r in page["smoke"] or [] if r.get("id") == 951), None)
+            results["review_counted"] = found["result"]["newCards"]["done"] if found else None
+            mw.moveToState("deckBrowser")
+            later(200, lambda: limit_flow(results["review_goal"], deck_id))
+
+        read_page(counted)
+
+    later(800, overview)
+
+
+def limit_flow(goal_id: str, deck_id: int) -> None:
+    """Raising today's limit for a goal: Statly's popup, one undo step, and no card touched."""
+    deck = mw.col.decks.get(deck_id)
+    deck["newLimit"] = 2
+    mw.col.decks.update_dict(deck)
+
+    def snapshot() -> Any:
+        database = mw.col.db
+        return [
+            database.all("SELECT * FROM cards ORDER BY id"),
+            database.all("SELECT * FROM notes ORDER BY id"),
+            database.all("SELECT * FROM revlog ORDER BY id"),
+            database.scalar("SELECT scm FROM col"),
+        ]
+
+    before = snapshot()
+    answer_dialog(True, "limit_dialog", choice="once")
+    call_from_page(960, "goals.raiseLimit", {"id": goal_id})
+
+    def check() -> None:
+        stored = mw.col.decks.get(deck_id).get("newLimitToday") or {}
+        results["limit_raised"] = stored.get("limit")
+        results["limit_step"] = mw.col.undo_status().undo
+        results["limit_untouched"] = snapshot() == before
+        mw.col.undo()
+        results["limit_undone"] = mw.col.decks.get(deck_id).get("newLimitToday") is None
+        later(200, reopen)
+
+    later(3000, check)
 
 
 def reopen() -> None:

@@ -66,7 +66,6 @@ class Chat:
         changes: ChangeBook,
         history: ChatHistory,
         keep_chats: Callable[[], bool],
-        remember_permission: Callable[[str], None],
         review_due: Callable[[str], bool],
     ) -> None:
         self._host = host
@@ -75,7 +74,6 @@ class Chat:
         self._changes = changes
         self._history = history
         self._keep_chats = keep_chats
-        self._remember_permission = remember_permission
         self._review_due = review_due
         self._client: Client | None = None
         self._provider: str | None = None
@@ -374,6 +372,11 @@ class Chat:
         self._changed()
 
     def _ask_permission(self, run: int, scope: str, decided: Callable[[bool], None]) -> None:
+        """The chat asks with buttons of its own, which only ever allow this chat.
+
+        Allowing for good is a switch in the settings. Flipping it there while the chat waits lets
+        the chat go on by itself, see ``permission_changed``.
+        """
         self._waiting = {"kind": "permission", "scope": scope}
 
         def resume(granted: bool) -> None:
@@ -388,17 +391,23 @@ class Chat:
         return resume
 
     def answer_permission(self, decision: str) -> None:
+        """ "once" allows this chat, "deny" says no. There is no "always" here on purpose."""
         if self._waiting is None or self._waiting["kind"] != "permission":
             return
-        scope = self._waiting["scope"]
-        if decision == "always":
-            self._remember_permission(scope)
-        if decision != "deny":
-            self._session.granted.add(scope)
+        if decision == "once":
+            self._session.granted.add(self._waiting["scope"])
         resume = self._take_resume()
         self._changed()
         if resume:
-            resume(decision != "deny")
+            resume(decision == "once")
+
+    def permission_changed(self, scope: str, granted: bool) -> None:
+        """Allowed for good in the settings while the chat waited for it: the chat goes on."""
+        if granted and self._waiting == {"kind": "permission", "scope": scope}:
+            resume = self._take_resume()
+            self._changed()
+            if resume:
+                resume(True)
 
     def answer_question(self, text: str) -> None:
         if self._waiting is None or self._waiting["kind"] != "question":

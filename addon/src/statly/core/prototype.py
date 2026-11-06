@@ -34,6 +34,10 @@ def convert_settings(old: dict[str, Any]) -> dict[str, Any]:
         "wallpaper": {
             "enabled": old.get("wallpaper_enabled", False),
             "source": source,
+            "asset": None,
+            "deckOverview": True,
+            "loop": True,
+            "history": [],
             "blur": old.get("wallpaper_blur", 0),
             "overlay": old.get("wallpaper_overlay", 0),
             "position": old.get("wallpaper_position", "center"),

@@ -33,7 +33,7 @@ export function Tile({ value, note }: { value: ReactNode; note: string }) {
       title={note}
       className="flex h-full flex-col flex-wrap overflow-hidden [container-type:inline-size]"
     >
-      <p className="m-0 w-full truncate text-[clamp(15px,22cqw,24px)] leading-tight font-bold text-text">
+      <p className="statly-tile-value m-0 w-full truncate text-[clamp(15px,22cqw,24px)] leading-tight font-bold text-text">
         {value}
       </p>
       <p className="m-0 mt-1 w-full text-[13px] text-muted">{note}</p>

@@ -6,23 +6,30 @@ _TEXT = {
     "en": {
         "title": "Statly",
         "updated": "Updated {when}",
+        "stand": "As of {month} {day}, {time}",
         "hint": "This card shows your statistics. There is no need to answer it.",
         "today": "Today",
         "last7": "Last 7 days",
         "last30": "Last 30 days",
         "reviews": "Reviews",
+        "ratings": "Ratings",
+        "learned": "Learned cards",
         "time": "Study time",
         "success": "Success rate",
         "due": "Due cards",
         "now": "Ready to study now",
         "timeline": "Reviews over time",
+        "ratingTimeline": "Ratings over time",
         "buttons": "Answer buttons",
         "forecast": "Due reviews, next 7 days",
         "states": "Cards by learning state",
         "decks": "Activity by deck",
+        "deckRatings": "Ratings by deck",
         "breakdown": "Reviews by category",
         "weekdays": "Your study times",
+        "ratingHours": "Ratings by hour",
         "heatmap": "Learning activity over the year",
+        "ratingHeatmap": "Ratings over the year",
         "streak": "Streak {current} days, longest {longest}",
         "deleted": "Deleted",
         "again": "Again",
@@ -105,23 +112,30 @@ _TEXT = {
     "de": {
         "title": "Statly",
         "updated": "Aktualisiert {when}",
+        "stand": "Stand: {day}. {month}, {time}",
         "hint": "Diese Karte zeigt deine Statistiken. Du musst sie nicht beantworten.",
         "today": "Heute",
         "last7": "Letzte 7 Tage",
         "last30": "Letzte 30 Tage",
         "reviews": "Wiederholungen",
+        "ratings": "Bewertungen",
+        "learned": "Gelernte Karten",
         "time": "Lernzeit",
         "success": "Erfolgsquote",
         "due": "Fällige Karten",
         "now": "Jetzt lernbereit",
         "timeline": "Wiederholungen im Zeitverlauf",
+        "ratingTimeline": "Bewertungen im Zeitverlauf",
         "buttons": "Antwortknöpfe",
         "forecast": "Fällige Wiederholungen, nächste 7 Tage",
         "states": "Karten nach Lernstatus",
         "decks": "Aktivität nach Stapel",
+        "deckRatings": "Bewertungen nach Stapel",
         "breakdown": "Wiederholungen nach Kategorie",
         "weekdays": "Deine Lernzeiten",
+        "ratingHours": "Bewertungen nach Uhrzeit",
         "heatmap": "Lernaktivität im Jahresverlauf",
+        "ratingHeatmap": "Bewertungen im Jahresverlauf",
         "streak": "Serie {current} Tage, längste {longest}",
         "deleted": "Gelöscht",
         "again": "Nochmal",
@@ -202,6 +216,30 @@ _TEXT = {
         "anki.all": "Gesamt",
     },
 }
+
+
+_MONTHS = {
+    "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
+    "de": (
+        "Jan.",
+        "Feb.",
+        "März",
+        "Apr.",
+        "Mai",
+        "Juni",
+        "Juli",
+        "Aug.",
+        "Sept.",
+        "Okt.",
+        "Nov.",
+        "Dez.",
+    ),
+}
+
+
+def month_name(language: str, month: int) -> str:
+    """A short month name, 1 being January."""
+    return _MONTHS["de" if language.lower().startswith("de") else "en"][month - 1]
 
 
 def labels_for(language: str) -> dict[str, str]:

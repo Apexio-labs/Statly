@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from aqt.main import AnkiQt
 from aqt.qt import QAction, QMenu
 
@@ -15,6 +13,12 @@ _LABELS = {
         "createWidget": "Create Widget",
         "importDashboard": "Import Dashboard",
         "settings": "Statly Settings",
+        "editDashboard": "Edit Dashboard",
+        "assistant": "Open Assistant",
+        "appearance": "Appearance",
+        "wallpaper": "Wallpaper",
+        "nextTheme": "Next Theme",
+        "fullscreen": "Toggle Full Screen",
     },
     "de": {
         "dashboard": "Dashboard öffnen",
@@ -23,6 +27,12 @@ _LABELS = {
         "createWidget": "Widget erstellen",
         "importDashboard": "Dashboard importieren",
         "settings": "Statly-Einstellungen",
+        "editDashboard": "Dashboard bearbeiten",
+        "assistant": "Assistent öffnen",
+        "appearance": "Erscheinungsbild",
+        "wallpaper": "Wallpaper",
+        "nextTheme": "Nächstes Theme",
+        "fullscreen": "Vollbild umschalten",
     },
 }
 
@@ -38,13 +48,12 @@ class StatlyMenu:
         # On a Mac, Qt would otherwise move anything named "Settings" into Anki's app menu.
         action.setMenuRole(QAction.MenuRole.NoRole)
         self._menu.addAction(action)
+        self.name(name, action)
+
+    def name(self, name: str, action: QAction) -> None:
+        """A shortcut outside the menu still needs a word for it, should another one clash."""
         self._actions[name] = action
         action.setText(_LABELS["en"][name])
-
-    def add_item(self, name: str, trigger: Callable[[], None]) -> None:
-        action = QAction(self._main_window)
-        action.triggered.connect(lambda: trigger())
-        self.add(name, action)
 
     def add_separator(self) -> None:
         self._menu.addSeparator()

@@ -14,7 +14,7 @@ from anki.collection import Collection
 from anki.scheduler.v3 import CardAnswer
 
 from statly.core.reader import STATLY_NOTE_GUID, CollectionReader
-from statly.modules.mobile import writer
+from statly.modules.changes import phone_card as writer
 from statly.modules.mobile.card import MARKER, card_styles, front_template, viewer_script
 from statly.modules.mobile.snapshot import build_snapshot, content_hash, encode_snapshot
 from statly.modules.statistics import metrics
@@ -471,6 +471,7 @@ def test_the_card_script_has_nothing_anki_would_rewrite() -> None:
 
 ALL_KINDS = (
     "review-summary",
+    "learned-cards",
     "review-breakdown",
     "study-time",
     "success-rate",
@@ -499,9 +500,29 @@ def snapshot_of(collection: Collection, *items: dict[str, Any], **options: Any) 
 
 def test_snapshot_covers_every_built_in_statistic(collection: Collection) -> None:
     snapshot = snapshot_of(collection, *[placed(kind) for kind in ALL_KINDS], language="de")
-    assert len(snapshot["blocks"]) == 12
+    assert len(snapshot["blocks"]) == 13
     assert snapshot["blocks"]["review-summary|today"]["label"] == "Wiederholungen"
     assert snapshot["blocks"]["review-heatmap|today"]["kind"] == "heatmap"
+
+
+def test_learned_cards_count_each_card_once(collection: Collection) -> None:
+    scheduler: Any = collection.sched
+    answers = 0
+    while answers < 6 and (card := scheduler.getCard()):
+        states = collection._backend.get_scheduling_states(card.id)
+        scheduler.answer_card(scheduler.build_answer(card=card, states=states, rating=1))
+        answers += 1
+
+    blocks = snapshot_of(
+        collection, placed("learned-cards"), placed("review-summary"), placed("rating-summary")
+    )["blocks"]
+
+    # Every answer was Again, so no card moved to a later day: no reviews, only ratings.
+    assert blocks["review-summary|today"]["value"] == "0"
+    assert int(blocks["rating-summary|today"]["value"]) >= 6
+    assert blocks["rating-summary|today"]["label"] == "Ratings"
+    assert blocks["learned-cards|today"]["value"] == "3"
+    assert blocks["learned-cards|today"]["label"] == "Learned cards"
 
 
 def test_phone_and_tablet_share_their_blocks(collection: Collection) -> None:
@@ -540,7 +561,7 @@ def custom_widget(**changes: Any) -> dict[str, Any]:
                 **text,
                 "id": "m",
                 "kind": "metric",
-                "source": "reviews",
+                "source": "ratings",
                 "range": "dashboard",
             },
             {

@@ -16,6 +16,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "addon" / "src"))
 
 from statly.core.reader import CollectionReader  # noqa: E402
+from statly.modules.estimates import StudyTime  # noqa: E402
+from statly.modules.goals.exam.inputs import collect  # noqa: E402
+from statly.modules.goals.exam.plan import plan  # noqa: E402
 from statly.modules.statistics import _METRICS  # noqa: E402
 from statly.modules.statistics.cache import ResultCache  # noqa: E402
 from statly.modules.statistics.calendar import AnkiCalendar  # noqa: E402
@@ -27,6 +30,10 @@ DECKS = 20
 DAY_MS = 86_400_000
 BUDGET_COLD_MS = 1000
 BUDGET_CACHED_MS = 300
+BUDGET_GOAL_COLD_MS = 150
+BUDGET_GOAL_CACHED_MS = 10
+BUDGET_STUDY_TIME_MS = 100
+BUDGET_REVIEWED_GOAL_MS = 400
 
 
 def build() -> None:
@@ -101,6 +108,47 @@ def time_anki_page(reader: CollectionReader, deck_id: int | None) -> float:
     return (time.perf_counter() - started) * 1000
 
 
+def time_goal(
+    reader: CollectionReader, cache: ResultCache, deck_id: int, mode: str = "learned"
+) -> tuple[float, float]:
+    """One exam goal counted from a week of history, first without and then with the cache."""
+    today = AnkiCalendar(reader.day_cutoff).today
+    config = {
+        "kind": "exam",
+        "decks": [{"id": deck_id, "name": reader.deck_names()[deck_id]}],
+        "examDate": (today + timedelta(days=30)).isoformat(),
+        "bufferDays": 3,
+        "mode": mode,
+        "counts": "newAndDue",
+        "studyWeekdays": [0, 1, 2, 3, 4, 5],
+        "freeDates": [],
+    }
+    read = cache.wrap(
+        "goals.inputs",
+        lambda params, reader: collect(reader, params["config"], today - timedelta(days=7)),
+    )
+    timings: list[float] = []
+    for _ in range(2):
+        started = time.perf_counter()
+        plan(config, read({"config": config, "origin": "week"}, reader), None)
+        timings.append((time.perf_counter() - started) * 1000)
+    return timings[0], timings[1]
+
+
+def time_study_time(reader: CollectionReader) -> tuple[float, float, int]:
+    """The person's pace from 90 days of answers, first without and then with the cache."""
+    cache = ResultCache()
+    service = StudyTime(cache.wrap, None)
+    timings: list[float] = []
+    for _ in range(2):
+        started = time.perf_counter()
+        service.profile(reader)
+        timings.append((time.perf_counter() - started) * 1000)
+    since = (reader.day_cutoff - 90 * 86_400) * 1000
+    answers = int(reader.scalar("SELECT COUNT(*) FROM revlog WHERE id >= ?", since))
+    return timings[0], timings[1], answers
+
+
 def main() -> int:
     if not PATH.exists():
         print("Building the benchmark collection ...")
@@ -115,6 +163,11 @@ def main() -> int:
         one_deck = run_all(reader, cache, deck_id)
         anki_page = time_anki_page(reader, None)
         anki_page_deck = time_anki_page(reader, deck_id)
+        one = next(iter(k for k, v in reader.deck_names().items() if v == "Bench::Deck 00"))
+        goal_all = time_goal(reader, ResultCache(), deck_id)
+        goal_one = time_goal(reader, ResultCache(), one)
+        study_time = time_study_time(reader)
+        reviewed_all = time_goal(reader, ResultCache(), deck_id, "reviewed")
     finally:
         collection.close()
 
@@ -124,10 +177,21 @@ def main() -> int:
     cold_total, cached_total = sum(cold.values()), sum(cached.values())
     print(f"{'total ms':<28}{cold_total:>9.1f} {sum(one_deck.values()):>9.1f} {cached_total:>9.1f}")
     print(f"{'anki statistics page':<28}{anki_page:>9.1f} {anki_page_deck:>9.1f}")
+    print(f"{'goal over all decks':<28}{goal_all[0]:>9.1f} {'':>9} {goal_all[1]:>9.1f}")
+    print(f"{'goal over one deck':<28}{goal_one[0]:>9.1f} {'':>9} {goal_one[1]:>9.1f}")
+    print(
+        f"{'goal seen again, all decks':<28}{reviewed_all[0]:>9.1f} {'':>9} {reviewed_all[1]:>9.1f}"
+    )
+    print(f"{'study time profile':<28}{study_time[0]:>9.1f} {'':>9} {study_time[1]:>9.1f}")
+    print(f"  ({study_time[2]} answers in the last 90 days, the newest 25,000 read)")
     if (
         cold_total > BUDGET_COLD_MS
         or cached_total > BUDGET_CACHED_MS
         or max(anki_page, anki_page_deck) > BUDGET_COLD_MS
+        or max(goal_all[0], goal_one[0]) > BUDGET_GOAL_COLD_MS
+        or max(goal_all[1], goal_one[1]) > BUDGET_GOAL_CACHED_MS
+        or study_time[0] > BUDGET_STUDY_TIME_MS
+        or reviewed_all[0] > BUDGET_REVIEWED_GOAL_MS
     ):
         print("Over budget.")
         return 1

@@ -200,6 +200,35 @@ PROTOTYPE_SETTINGS: dict[str, Any] = {
 }
 
 
+def test_a_group_from_an_older_version_keeps_what_was_chosen(store: JsonStore) -> None:
+    """New shortcuts or wallpaper options must not cost anyone the ones they already set."""
+    store.write(
+        "settings",
+        {
+            "shortcuts": {
+                "dashboard": "Ctrl+1",
+                "settings": "",
+                "library": "",
+                "ankiStatistics": "",
+            },
+            "wallpaper": {
+                "enabled": True,
+                "source": "aero",
+                "blur": 3,
+                "overlay": 0,
+                "position": "top",
+                "textColor": "dark",
+            },
+        },
+    )
+    settings = SettingsService(store, Contract()).get()
+    assert settings["shortcuts"]["dashboard"] == "Ctrl+1"
+    assert settings["shortcuts"]["assistant"] == ""
+    assert settings["wallpaper"]["source"] == "aero"
+    assert settings["wallpaper"]["blur"] == 3
+    assert settings["wallpaper"]["deckOverview"] is True
+
+
 def test_one_setting_that_no_longer_fits_costs_only_that_setting(store: JsonStore) -> None:
     """Falling back to defaults here would wipe every choice with the next save."""
     settings = SettingsService(store, Contract())
@@ -247,3 +276,40 @@ def test_taking_over_happens_once(store: JsonStore) -> None:
 def test_unusable_old_settings_do_not_stop_statly(store: JsonStore) -> None:
     store.write("settings", {"schema_version": 2, "theme": 7, "dashboard_layout": {"widgets": [1]}})
     assert SettingsService(store, Contract()).get()["theme"] == "system"
+
+
+def test_built_in_widgets_never_contain_a_colon() -> None:
+    # A colon marks a widget that comes from a source and can disappear, see `is_stored`.
+    assert not [kind for kind in Contract().grid["widgets"] if ":" in kind]
+
+
+def test_every_source_keeps_its_own_widgets(dashboard: DashboardService) -> None:
+    custom = {"mine": {"minW": 2, "maxW": 6, "minH": 2, "maxH": 8}}
+    goals = {"exam-1:ring": {"minW": 3, "maxW": 8, "minH": 4, "maxH": 12}}
+    dashboard.add_source("custom:", lambda: custom)
+    dashboard.add_source("goal:", lambda: goals)
+    layout: Any = {
+        "widgets": [
+            {"id": "a", "type": "custom:mine", "x": 0, "y": 0, "w": 4, "h": 6},
+            {"id": "b", "type": "goal:exam-1:ring", "x": 4, "y": 0, "w": 4, "h": 6},
+            {"id": "c", "type": "due-cards", "x": 8, "y": 0, "w": 3, "h": 4},
+        ]
+    }
+    dashboard.store({"layout": layout})
+
+    goals.clear()
+
+    assert [widget["id"] for widget in dashboard.get()["widgets"]] == ["a", "c"]
+
+
+def test_a_widget_from_an_unknown_source_cannot_be_saved(dashboard: DashboardService) -> None:
+    ghost: Any = {"id": "a", "type": "goal:exam-1:ring", "x": 0, "y": 0, "w": 4, "h": 6}
+    with pytest.raises(InvalidParams):
+        dashboard.store({"layout": {"widgets": [ghost]}})
+
+
+@pytest.mark.parametrize("prefix", ["goal", "goal::", ":", "custom:"])
+def test_a_source_needs_one_new_prefix(dashboard: DashboardService, prefix: str) -> None:
+    dashboard.add_source("custom:", dict)
+    with pytest.raises(ValueError):
+        dashboard.add_source(prefix, dict)

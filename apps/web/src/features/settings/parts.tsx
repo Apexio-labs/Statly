@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+import { useTranslation } from "@statly/i18n";
+import { type KeyboardEvent, type ReactNode, useEffect, useState } from "react";
+
+const RESET_KEYS = new Set(["Delete", "Backspace"]);
 
 export function Panel({
   title,
@@ -78,5 +81,58 @@ export function Toggle({
         }`}
       />
     </button>
+  );
+}
+
+/**
+ * A color well. Like everywhere in Statly, pointing at it and pressing Delete or Backspace puts
+ * back its default, and so does pressing them while it has the focus.
+ */
+export function ColorField({
+  label,
+  value,
+  fallback,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  fallback: string;
+  onChange: (color: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [pointed, setPointed] = useState(false);
+
+  useEffect(() => {
+    if (!pointed) {
+      return;
+    }
+    function reset(event: globalThis.KeyboardEvent) {
+      const typing = event.target instanceof HTMLInputElement && event.target.type !== "color";
+      if (RESET_KEYS.has(event.key) && !typing && !(event.target instanceof HTMLTextAreaElement)) {
+        event.preventDefault();
+        onChange(fallback);
+      }
+    }
+    addEventListener("keydown", reset);
+    return () => removeEventListener("keydown", reset);
+  }, [pointed, fallback, onChange]);
+
+  return (
+    <input
+      type="color"
+      aria-label={label}
+      title={t("settings.colorResetHint")}
+      value={value.toLowerCase()}
+      onChange={(event) => onChange(event.target.value)}
+      onMouseEnter={() => setPointed(true)}
+      onMouseLeave={() => setPointed(false)}
+      onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+        if (!pointed && RESET_KEYS.has(event.key)) {
+          event.preventDefault();
+          onChange(fallback);
+        }
+      }}
+      className="h-7 w-12 shrink-0 cursor-pointer rounded border border-line bg-transparent"
+    />
   );
 }

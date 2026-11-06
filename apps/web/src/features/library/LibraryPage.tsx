@@ -1,9 +1,10 @@
 import { customWidgetPrefix, widgetKinds } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
-import { Check, Plus, Search, Star, X } from "lucide-react";
+import { Check, Search, Star, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "../../components/Button.tsx";
+import { AddIcon } from "../../components/icons.tsx";
 import { PageHeader } from "../../components/PageHeader.tsx";
 import { useAppearance } from "../../lib/appearance.tsx";
 import { useStatistic } from "../../lib/calls.ts";
@@ -119,7 +120,7 @@ function TileAction({ item }: { item: LibraryItem }) {
       onClick={() => save.mutate(addWidget(layout, type, rulesOfWidgets(widgets)))}
       className={`${look} border-line bg-control text-text hover:bg-hover`}
     >
-      <Plus size={14} />
+      <AddIcon size={14} />
     </button>
   );
 }
@@ -145,7 +146,7 @@ function FavoriteButton({ item }: { item: LibraryItem }) {
             : [...settings.favoriteWidgets, key],
         })
       }
-      className={`absolute top-2 left-2 grid size-7 cursor-pointer place-items-center rounded-control border border-line bg-control shadow-card hover:bg-hover ${
+      className={`statly-favorite absolute top-2 left-2 grid size-7 cursor-pointer place-items-center rounded-control border border-line bg-control shadow-card hover:bg-hover ${
         favorite ? "text-accent-strong" : "text-muted"
       }`}
     >
@@ -172,7 +173,7 @@ function Tile({
   return (
     <article
       {...data}
-      className="relative overflow-hidden rounded-card border border-line bg-card shadow-card transition-colors hover:border-accent"
+      className="statly-tile relative overflow-hidden rounded-card border border-line bg-card shadow-card transition-colors hover:border-accent"
     >
       <button
         type="button"
@@ -180,7 +181,7 @@ function Tile({
         onClick={onOpen}
         className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left text-text"
       >
-        <span className="block bg-page" style={{ height: PICTURE_HEIGHT }}>
+        <span className="statly-tile-picture block bg-page" style={{ height: PICTURE_HEIGHT }}>
           {item.kind === "statistic" ? <StatisticPicture type={item.type} /> : null}
           {item.kind === "custom" ? (
             <WidgetPicture widget={item.widget} scope={scope} height={PICTURE_HEIGHT} />
@@ -189,7 +190,7 @@ function Tile({
             <TemplatePicture templateKey={item.key} scope={scope} />
           ) : null}
         </span>
-        <span className="block px-3 py-2.5">
+        <span className="statly-tile-caption block px-3 py-2.5">
           <span className="block truncate text-[13px] font-bold">{item.title}</span>
           <span className="block truncate text-[11px] text-muted">{item.tag}</span>
         </span>
@@ -203,7 +204,7 @@ function Tile({
 export function LibraryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { theme, settings } = useAppearance();
+  const { paletteKey, settings } = useAppearance();
   const { importPackage } = useCustomWidgets();
   const today = useStatistic("statistics.today", {});
   const items = useLibraryItems();
@@ -218,10 +219,10 @@ export function LibraryPage() {
         ? {
             ...rangeOf({ preset: "last7", custom: null, today: date, firstReview: null }),
             deckId: null,
-            themeKey: theme,
+            themeKey: paletteKey,
           }
         : null,
-    [date, theme],
+    [date, paletteKey],
   );
 
   const favorites = settings.favoriteWidgets;
@@ -243,7 +244,7 @@ export function LibraryPage() {
         </Button>
       </PageHeader>
       <div className="px-4 pb-6">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="statly-library-tools mb-4 flex flex-wrap items-center gap-2">
           <label className="relative block min-w-[220px] flex-1 sm:max-w-[320px]">
             <Search
               size={15}
@@ -301,14 +302,14 @@ export function LibraryPage() {
             >
               {filter === "all" ? (
                 <div className="mb-2.5 flex items-baseline justify-between gap-4">
-                  <h2 className="m-0 text-[15px] font-bold">
+                  <h2 className="statly-group-title m-0 text-[15px] font-bold">
                     {t(`library.filters.${section.filter}`)}
                   </h2>
                   {shown.length < section.items.length ? (
                     <button
                       type="button"
                       onClick={() => setFilter(section.filter)}
-                      className="cursor-pointer border-0 bg-transparent p-0 text-xs font-semibold text-accent-strong"
+                      className="statly-link cursor-pointer border-0 bg-transparent p-0 text-xs font-semibold text-accent-strong"
                     >
                       {t("library.showAll", { count: section.items.length })}
                     </button>

@@ -19,6 +19,7 @@ from anki.collection import Collection
 
 from statly.core.contract import Contract
 from statly.core.errors import InvalidParams, NotAllowed
+from statly.core.permissions import Permissions
 from statly.core.reader import CollectionReader
 from statly.core.rpc import Router
 from statly.core.settings import SettingsService
@@ -45,10 +46,11 @@ from statly.modules.ai.providers import (
     check_base_url,
 )
 from statly.modules.ai.tools import Session
+from statly.modules.changes import phone_card as writer
 from statly.modules.dashboard import DashboardService
-from statly.modules.mobile import writer
+from statly.modules.permissions import PermissionService
 from statly.modules.widgets.storage import WidgetStore, size_rules
-from test_rpc import FakeRuntime, make_router
+from test_rpc import FakeRuntime, call, error_code, make_router
 
 KEY = "sk-test-0123456789abcdef"
 TOOL = ToolDefinition("get_today", "Today", {"type": "object", "properties": {}})
@@ -357,20 +359,51 @@ def wants(name: str, arguments: Any, call_id: str = "c1") -> Turn:
     )
 
 
+def _raise(error: Exception) -> None:
+    raise error
+
+
 class Setup:
     def __init__(self, collection: Collection | None = None) -> None:
         self.runtime = FakeRuntime(collection)
+        # Statly's dialog stays unanswered unless a test answers it, which counts as a no.
+        self.runtime.default_answer = None
         self.router: Router = make_router(self.runtime)
         self.assistant: Assistant = self._assistant()
         self.chat: Chat = self.assistant.chat
 
+    def allow(self, scope: str, allowed: bool = True) -> None:
+        """The settings switch: on asks in Statly's own dialog, answered with yes here."""
+        if allowed:
+            self.runtime.permission_answers.append("always")
+        self.assistant.set_permission(
+            {"scope": scope, "allowed": allowed}, lambda _status: None, _raise
+        )
+
+    def allow_external(self) -> None:
+        self.runtime.permission_answers.append("always")
+        self.assistant.set_external_permissions({"allowed": True}, lambda _status: None, _raise)
+
     def _assistant(self) -> Assistant:
         settings = SettingsService(JsonStore(self.runtime.data_folder), self.router.contract)
+        rules = self.router.contract.permissions["rules"]
+        self.permissions = PermissionService(
+            self.runtime,
+            Permissions(JsonStore(self.runtime.data_folder), rules),
+            rules,
+            lambda: "en",
+        )
         store = WidgetStore(
             self.runtime.data_folder,
             self.router.contract,
             self.runtime.media_folder,
             self.runtime.media_url,
+        )
+        dashboard = DashboardService(
+            JsonStore(self.runtime.data_folder), self.router.contract, settings
+        )
+        dashboard.add_source(
+            "custom:", lambda: {item["id"]: size_rules(item) for item in store.list()}
         )
         context: Any = type(
             "Ctx",
@@ -382,12 +415,8 @@ class Setup:
                 "router": self.router,
                 "services": {
                     "widgets": store,
-                    "dashboard": DashboardService(
-                        JsonStore(self.runtime.data_folder),
-                        self.router.contract,
-                        settings,
-                        lambda: {item["id"]: size_rules(item) for item in store.list()},
-                    ),
+                    "dashboard": dashboard,
+                    "permissions": self.permissions,
                 },
             },
         )()
@@ -766,7 +795,7 @@ def test_automatic_mode_cannot_run_away(tmp_path: Path) -> None:
 
 def test_tools_exist_only_for_the_contract_and_reach_nothing_else() -> None:
     tools = Contract().ai["tools"]
-    allowed = ("statistics.", "dashboard.get", "widgets.list", "cards.")
+    allowed = ("statistics.", "dashboard.get", "widgets.list", "cards.", "goals.overview")
     for name, tool in tools.items():
         if tool["method"] is not None:
             assert tool["method"].startswith(allowed), name
@@ -774,7 +803,7 @@ def test_tools_exist_only_for_the_contract_and_reach_nothing_else() -> None:
     for name, statistic in Contract().ai["statistics"].items():
         assert statistic["method"].startswith("statistics."), name
     proposing = {name for name, tool in tools.items() if tool["access"] == "propose"}
-    assert proposing == {"propose_widget", "propose_dashboard", "propose_settings"}
+    assert proposing == {"propose_widget", "propose_dashboard", "propose_settings", "propose_goal"}
     guarded = {name for name, tool in tools.items() if tool["permission"]}
     assert guarded == {"list_decks", "find_cards", "get_card"}
 
@@ -802,6 +831,19 @@ def test_one_tool_reads_every_statistic(setup: Setup) -> None:
             arguments["view"] = "true-retention"
         result, failed = propose(setup, "get_statistic", arguments)
         assert failed is False, (name, result)
+
+
+def test_the_charts_can_count_ratings_instead_of_reviews(setup: Setup) -> None:
+    span = {"start": "2026-01-01", "end": "2026-01-02", "deckId": None}
+    for name in ("decks", "timeline", "rhythm", "summary"):
+        result, failed = propose(
+            setup, "get_statistic", {"name": name, **span, "measure": "ratings"}
+        )
+        # The summary has both numbers and no such choice, so it is left out there.
+        assert failed is False, (name, result)
+    result, failed = propose(setup, "get_statistic", {"name": "heatmap", "measure": "ratings"})
+    assert failed is False, result
+    assert "total" in result["result"]
 
 
 def test_a_statistic_without_its_dates_asks_for_them(setup: Setup) -> None:
@@ -841,7 +883,7 @@ def test_settings_tool_shows_only_what_it_may_change(setup: Setup) -> None:
 def test_deck_names_stay_home_until_they_are_allowed(setup: Setup) -> None:
     masked, _failed = propose(setup, "list_decks", {})
     assert all(entry["name"].startswith("Deck ") for entry in masked["result"])
-    setup.assistant.set_permission({"scope": "decks", "allowed": True})
+    setup.allow("decks")
     named, _failed = propose(setup, "list_decks", {})
     assert any(entry["name"] == "Test" for entry in named["result"])
 
@@ -1092,8 +1134,8 @@ def test_external_suggestions_wait_and_cannot_accept_themselves(setup: Setup, ap
 
 def test_external_apps_get_statistics(setup: Setup, api: Api) -> None:
     answers: list[Any] = []
-    setup.assistant.set_permission({"scope": "decks", "allowed": True})
-    setup.assistant.set_external_permissions({"allowed": True})
+    setup.allow("decks")
+    setup.allow_external()
 
     def ask() -> None:
         answers.append(api.request("POST", "/v1/tools/list_decks", token=api.token, body={}))
@@ -1143,6 +1185,28 @@ def test_cards_need_permission_and_the_chat_waits_for_it(setup: Setup) -> None:
     assert found[0]["front"].startswith("front")
     permissions: Any = setup.assistant.status()["permissions"]
     assert permissions["cards"] is False
+    assert setup.runtime.prompts == []
+
+
+def test_the_chat_can_only_allow_itself(setup: Setup) -> None:
+    """For good is a switch in the settings, so the chat has no answer that keeps it."""
+    responses = call(setup.router, "ai.answerPermission", {"decision": "always"})
+    assert error_code(responses) == "invalid_params"
+    assert setup.assistant.status()["permissions"]["cards"] is False
+
+
+def test_allowing_for_good_in_the_settings_lets_the_waiting_chat_go_on(setup: Setup) -> None:
+    client = setup.script(wants("find_cards", {"query": "front", "limit": 5}), said("Found"))
+    setup.chat.send("Find my card")
+    setup.drain()
+
+    setup.allow("cards")
+    setup.drain()
+
+    assert setup.chat.conversation()["waiting"] is None
+    assert setup.chat.conversation()["messages"][-1]["text"] == "Found"
+    assert "front" in client.seen[1][-1]["content"]
+    assert setup.assistant.status()["permissions"]["cards"] is True
 
 
 def test_once_lasts_for_this_chat_and_always_lasts(setup: Setup) -> None:
@@ -1161,10 +1225,6 @@ def test_once_lasts_for_this_chat_and_always_lasts(setup: Setup) -> None:
     setup.chat.send("Third")
     setup.drain()
     assert setup.chat.conversation()["waiting"] is not None
-    setup.chat.answer_permission("always")
-    setup.drain()
-    permissions: Any = setup.assistant.status()["permissions"]
-    assert permissions["cards"] is True
 
 
 def test_a_declined_permission_reaches_the_model_and_shows_no_card(setup: Setup) -> None:
@@ -1178,7 +1238,7 @@ def test_a_declined_permission_reaches_the_model_and_shows_no_card(setup: Setup)
 
 
 def test_external_apps_cannot_ask_and_need_their_own_switch(setup: Setup, api: Api) -> None:
-    setup.assistant.set_permission({"scope": "cards", "allowed": True})
+    setup.allow("cards")
     arguments = {"query": "front", "limit": 5}
     _status, data = api.request("POST", "/v1/tools/find_cards", token=api.token, body=arguments)
     assert data["failed"] is True
@@ -1194,7 +1254,7 @@ def test_external_apps_do_not_get_the_chat_tools(api: Api) -> None:
 
 def test_card_text_cannot_steer_the_automatic_mode(setup: Setup) -> None:
     setup.assistant.set_auto_mode({"enabled": True, "acknowledged": True})
-    setup.assistant.set_permission({"scope": "cards", "allowed": True})
+    setup.allow("cards")
     settings = {"patch": {"theme": "dark"}, "summary": "Injected"}
     setup.script(
         wants("find_cards", {"query": "front", "limit": 5}),
@@ -1209,7 +1269,7 @@ def test_card_text_cannot_steer_the_automatic_mode(setup: Setup) -> None:
 
 def test_a_reopened_chat_remembers_that_it_read_a_card(setup: Setup) -> None:
     """The card text comes back with the chat, so it must not be trusted again."""
-    setup.assistant.set_permission({"scope": "cards", "allowed": True})
+    setup.allow("cards")
     setup.script(wants("find_cards", {"query": "front", "limit": 5}), said("Found it"))
     setup.chat.send("Read my cards")
     setup.drain()
@@ -1239,11 +1299,11 @@ def test_a_reopened_chat_without_cards_may_still_act_alone(setup: Setup) -> None
 def test_taking_a_permission_back_reaches_the_open_chat(setup: Setup) -> None:
     setup.script(wants("find_cards", {"query": "front", "limit": 5}), said("Found"))
     setup.chat.send("Read my cards")
-    setup.chat.answer_permission("always")
     setup.drain()
-    assert setup.assistant.status()["permissions"]["cards"] is True
+    setup.chat.answer_permission("once")
+    setup.drain()
 
-    setup.assistant.set_permission({"scope": "cards", "allowed": False})
+    setup.allow("cards", allowed=False)
     setup.script(wants("find_cards", {"query": "front", "limit": 5}), said("Again"))
     setup.chat.send("Read them again")
     setup.drain()
@@ -1482,3 +1542,30 @@ def test_a_finished_widget_replaces_the_suggestion(setup: Setup) -> None:
     changes.apply(result["id"], widget={**small_widget(), "name": "Mine now"})
     stored: Any = changes._widgets.get("mine")
     assert stored["name"] == "Mine now"
+
+
+def test_the_assistant_can_never_make_a_call_that_changes_anki() -> None:
+    """A second lock behind the contract's tool list: even a tool that named such a call stops."""
+    from statly.core.contract import Contract as AnyContract
+    from statly.modules.ai.tools import ToolBox
+
+    calls: list[str] = []
+
+    class Router:
+        def call(self, method: str, *_rest: Any) -> None:
+            calls.append(method)
+
+    toolbox = ToolBox(
+        AnyContract(),
+        Router(),  # type: ignore[arg-type]
+        None,  # type: ignore[arg-type]
+        None,  # type: ignore[arg-type]
+        lambda _scope, _source: True,
+        lambda _source: True,
+        lambda _target: None,
+    )
+    answers: list[tuple[Any, bool]] = []
+    for method in ("goals.raiseLimit", "changes.undo", "permissions.request", "goals.save"):
+        toolbox._read(method, {}, None, lambda result, failed: answers.append((result, failed)))  # type: ignore[arg-type]
+    assert calls == []
+    assert all(failed and "only read" in result["error"] for result, failed in answers)

@@ -14,6 +14,13 @@ export default defineConfig({
     outDir: resolve(import.meta.dirname, "../../addon/src/statly/web"),
     emptyOutDir: true,
     modulePreload: { polyfill: false },
+    rollupOptions: {
+      // prompt.html is Statly's own popup: a page of its own above the app, see src/prompt.
+      input: {
+        index: resolve(import.meta.dirname, "index.html"),
+        prompt: resolve(import.meta.dirname, "prompt.html"),
+      },
+    },
   },
   test: {
     environment: "jsdom",

@@ -32,18 +32,23 @@ library. Neither the password nor the data key is ever stored. The data key stay
 closes, the profile changes or someone presses "Lock now", and an API key is only opened for one answer.
 
 **Reach.** `packages/contract/src/aiTools.ts` is the complete list of what a model can do. Reading
-tools map to a fixed set of calls, three tools suggest changes, and two tools only guide inside the
+tools map to a fixed set of calls, four tools suggest changes, and two tools only guide inside the
 app. Tool definitions stay short so they fit into the small context of local models, but what comes
 back is checked against the full format. There is no tool that changes cards, notes or decks, and
-none for keys, the phone card, uninstalling or these switches. Settings go through an
+none for keys, the phone card, uninstalling or these switches. Nor can it raise a deck's limit of
+new cards for a study goal: behind the tool list, `ToolBox` refuses every call that changes Anki,
+allows something or saves a goal (`NEVER_CALLED`), even if a tool named one, and no file of the
+assistant names the door for changes. Settings go through an
 allow-list twice: the tool's schema and `ChangeBook` both refuse anything else. `addon/tests/test_ai.py`
 fails if a tool reaches for anything beyond this.
 
 **Permissions.** Deck names and card contents need a person's permission, enforced in `ToolBox`
-and not by what the model is told. The chat stops and asks, and an answer lasts for that chat or for
-good. Settings can take a permanent one back. External apps cannot ask, and what the chat may see
-reaches them only through a switch of its own. Reading cards goes through Anki's search and plain
-`SELECT` statements, so it cannot touch the undo history.
+and not by what the model is told. The chat stops and asks with buttons that allow only this chat.
+Allowing for good is a switch under Settings → AI, which asks in Statly's own popup, as described in
+[ADR 3](0003-permissions-and-changes.md). Settings → Privacy & Security shows and takes back every
+permission. External apps cannot ask, and what the chat may see reaches them only through a
+permission of its own. Reading cards goes through Anki's search and plain `SELECT` statements, so it
+cannot touch the undo history.
 
 Taking a permission back counts at once, also in the chat that was given it.
 
@@ -52,11 +57,25 @@ chat applies by itself anymore, even in the automatic mode. That stays true afte
 from its history, because the card text comes back with it.
 
 **Changes.** A suggestion waits until a person accepts it in the app. No tool and no route of the
-local API can accept one. Every applied change stores what it replaced and can be rolled back.
+local API can accept one. Every applied change stores what it replaced and can be rolled back. A
+change the assistant suggests for Anki itself goes through the gate in `modules/changes` and asks in
+Statly's dialog every time, even when the person allowed such changes for good.
 
 **Automatic mode.** It is off by default and sits under Advanced behind a warning that has to be
 confirmed. External apps need a second switch on top. Even then, at most five changes per minute
 apply on their own, and every one lands in the same log.
+
+**Study goals.** `get_goals` reads a short overview of every goal: today's numbers, the streak,
+the minutes left and the kinds of notices, through the read-only call `goals.overview`. A goal's
+name is mostly a deck's name, so without permission for deck names both become numbers ("Goal 1",
+"Deck 1"), like every other deck name the assistant reads. `propose_goal` suggests a goal or a
+change to one, checked against the goal format before it becomes a suggestion. A suggested goal is
+never saved by the assistant, by its card or by the automatic mode: its card only opens the setup
+page with the suggestion filled in, marked as one, and the goal exists only once the person saves
+it there through the normal call. Only then does `ai.applyProposal` record it, and only for the goal
+that really was saved; rolling it back removes the new goal or puts the earlier settings back. This
+matters because a goal can lead Statly to raise a deck's limit of new cards when the person allowed
+that for good, and such a change needs a person every time an assistant is involved.
 
 **The bridge** answers only the app's own page. Every call is open to that page, so a foreign page
 that somehow ended up in the window would otherwise get all of them, including what sends a key.

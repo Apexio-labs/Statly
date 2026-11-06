@@ -6,6 +6,7 @@ import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router";
 import { bridge } from "../../bridge/index.ts";
 import { Button } from "../../components/Button.tsx";
+import { spotlight } from "../../lib/spotlight.ts";
 import { ANKIWEB_URL } from "../onboarding/RatingDialog.tsx";
 import { type Choice, trailingChoices } from "./choices.ts";
 import { Markdown } from "./Markdown.tsx";
@@ -123,8 +124,13 @@ function Message({
   );
 }
 
+/**
+ * The chat's own buttons only ever allow this chat. "Always allow" is a switch in the settings,
+ * and the button leads there and frames it. Switching it on lets the waiting chat go on.
+ */
 function PermissionRequest({ waiting }: { waiting: Extract<AiWaiting, { kind: "permission" }> }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const answer = useAiCall("ai.answerPermission");
   return (
     <section
@@ -138,16 +144,23 @@ function PermissionRequest({ waiting }: { waiting: Extract<AiWaiting, { kind: "p
       </h3>
       <p className="m-0 text-xs text-muted">{t(`ai.permission.${waiting.scope}.body`)}</p>
       <div className="flex flex-wrap gap-1.5">
-        <Button primary className="h-8" onClick={() => answer.mutate({ decision: "always" })}>
-          {t("ai.permission.always")}
-        </Button>
-        <Button className="h-8" onClick={() => answer.mutate({ decision: "once" })}>
+        <Button primary className="h-8" onClick={() => answer.mutate({ decision: "once" })}>
           {t("ai.permission.once")}
+        </Button>
+        <Button
+          className="h-8"
+          onClick={() => {
+            void navigate("/settings/ai");
+            spotlight(`ai-permission-${waiting.scope}`);
+          }}
+        >
+          {t("ai.permission.always")}
         </Button>
         <Button className="h-8" onClick={() => answer.mutate({ decision: "deny" })}>
           {t("ai.permission.deny")}
         </Button>
       </div>
+      <p className="m-0 text-[11px] text-muted">{t("ai.permission.alwaysNote")}</p>
     </section>
   );
 }

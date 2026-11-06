@@ -33,12 +33,19 @@ class WidgetsModule:
     def register(self, context: Context) -> None:
         host, router, events = context.host, context.router, context.events
 
-        def backgrounds() -> set[str]:
-            chosen: dict[str, Any] = cast(Any, context.settings.get()["dashboardBackgrounds"])
-            return {asset["id"] for asset in chosen.values() if asset is not None}
+        def media_in_settings() -> set[str]:
+            current = context.settings.get()
+            chosen: dict[str, Any] = cast(Any, current["dashboardBackgrounds"])
+            wallpaper = current["wallpaper"]
+            assets = [*chosen.values(), wallpaper["asset"], *wallpaper["history"]]
+            return {asset["id"] for asset in assets if asset is not None}
 
         store = WidgetStore(
-            host.data_folder, context.contract, host.media_folder, host.media_url, backgrounds
+            host.data_folder,
+            context.contract,
+            host.media_folder,
+            host.media_url,
+            media_in_settings,
         )
         self.store = store
         context.services["widgets"] = store

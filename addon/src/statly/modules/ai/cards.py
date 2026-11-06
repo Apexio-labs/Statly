@@ -92,7 +92,7 @@ def details(params: Any, reader: CollectionReader) -> dict[str, Any]:
         "tags": tags.split(),
         "state": _QUEUE_STATES.get(queue, "new"),
         "intervalDays": max(0, interval),
-        "reviews": reps,
+        "ratings": reps,
         "lapses": lapses,
         "lastReview": history[0]["date"] if history else None,
         "recent": history,

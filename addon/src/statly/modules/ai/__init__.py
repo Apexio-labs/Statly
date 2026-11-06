@@ -13,6 +13,7 @@ from ...contract.types import AiModelsResult, AiStatusResult
 from ...core.errors import InvalidParams, NotAllowed
 from ...core.module import Context
 from ...core.storage import JsonStore
+from ..permissions import Cleanup, PermissionService
 from . import cards
 from .changes import ChangeBook
 from .chat import Chat
@@ -72,6 +73,8 @@ class Assistant:
         self._host = context.host
         self._providers: dict[str, Any] = context.contract.ai["providers"]
         self._config = AiConfig(JsonStore(context.host.data_folder))
+        self._permissions: PermissionService = context.services["permissions"]
+        self._grants = self._permissions.grants
         self.keys = KeyVault(context.host.secrets, context.host.profile_key, list(self._providers))
         self.changes = ChangeBook(
             JsonStore(context.host.data_folder),
@@ -81,6 +84,7 @@ class Assistant:
             context.services["widgets"],
             context.host.monotonic,
             lambda: context.host.emit("ai.applied", {}),
+            context.services.get("goals"),
         )
         self.toolbox = ToolBox(
             context.contract,
@@ -99,9 +103,9 @@ class Assistant:
             self.changes,
             self.history,
             lambda: self._config.get()["keepChats"],
-            self._remember_permission,
             self._review_due,
         )
+        self._grants.subscribe(self._permission_changed)
         self.api = LocalApi(
             lambda: self._config.get()["externalHash"],
             self._tool_list,
@@ -111,12 +115,38 @@ class Assistant:
 
     def _permitted(self, scope: str, source: str) -> bool:
         """What the chat was allowed stays away from external apps unless opened up for them."""
-        config = self._config.get()
-        return config["permissions"][scope] and (source == "chat" or config["externalPermissions"])
+        permission = f"ai.{scope}"
+        permitted = self._grants.allowed(permission) and (
+            source == "chat" or self._grants.allowed("ai.external")
+        )
+        if permitted:
+            self._grants.used(permission)
+        return permitted
 
-    def _remember_permission(self, scope: str) -> None:
-        permissions = {**self._config.get()["permissions"], scope: True}
-        self._config.update(permissions=permissions)
+    def _permission_changed(self, permission: str, granted: bool) -> None:
+        if permission in ("ai.decks", "ai.cards"):
+            self.chat.permission_changed(permission.removeprefix("ai."), granted)
+
+    def migrate_permissions(self) -> None:
+        """Older versions kept these switches here. They now live with every other permission."""
+        config = self._config.get()
+        allowed = [f"ai.{scope}" for scope, on in config["permissions"].items() if on]
+        if config["externalPermissions"]:
+            allowed.append("ai.external")
+        self._grants.migrate("ai", allowed)
+        if allowed:
+            self._config.update(
+                permissions={"decks": False, "cards": False}, externalPermissions=False
+            )
+
+    def forget_chat_grants(self, scope: str) -> Cleanup:
+        """Taking a permission back also ends what a chat was allowed "only this time"."""
+
+        def cleanup(finish: Callable[[], None], _fail: Callable[[Exception], None]) -> None:
+            self.chat.revoke(scope)
+            finish()
+
+        return cleanup
 
     def _review_due(self, provider: str) -> bool:
         """Nobody here can test services in beta, so a working one is worth hearing about."""
@@ -125,16 +155,27 @@ class Assistant:
     def answer_review(self, _params: Any) -> None:
         self._config.update(reviewAnswered=True)
 
-    def set_permission(self, params: Any) -> AiStatusResult:
-        permissions = {**self._config.get()["permissions"], params["scope"]: params["allowed"]}
-        self._config.update(permissions=permissions)
-        if not params["allowed"]:
-            self.chat.revoke(params["scope"])
-        return self.status()
+    def _switch(self, permission: str, allowed: bool, finish: _Finish, fail: _Fail) -> None:
+        """Switching on opens Statly's own dialog. Switching off needs no question."""
+        if allowed:
+            if self._grants.allowed(permission):
+                finish(self.status())
+            else:
+                self._permissions.ask(
+                    permission, lambda _answer: finish(self.status()), modes=("always",)
+                )
+        else:
+            # The open chat may have been allowed "only this time", which ends here as well.
+            self.chat.revoke(permission.removeprefix("ai."))
+            self._permissions.revoke(
+                {"id": permission}, lambda _states: finish(self.status()), fail
+            )
 
-    def set_external_permissions(self, params: Any) -> AiStatusResult:
-        self._config.update(externalPermissions=params["allowed"])
-        return self.status()
+    def set_permission(self, params: Any, finish: _Finish, fail: _Fail) -> None:
+        self._switch(f"ai.{params['scope']}", params["allowed"], finish, fail)
+
+    def set_external_permissions(self, params: Any, finish: _Finish, fail: _Fail) -> None:
+        self._switch("ai.external", params["allowed"], finish, fail)
 
     def set_keep_chats(self, params: Any) -> AiStatusResult:
         self._config.update(keepChats=params["keep"])
@@ -160,8 +201,11 @@ class Assistant:
                 "keyStorage": "system" if self._host.secrets.persistent else "session",
                 "keyLock": self.keys.lock_state(),
                 "consented": self._is_consented(config),
-                "permissions": config["permissions"],
-                "externalPermissions": config["externalPermissions"],
+                "permissions": {
+                    "decks": self._grants.allowed("ai.decks"),
+                    "cards": self._grants.allowed("ai.cards"),
+                },
+                "externalPermissions": self._grants.allowed("ai.external"),
                 "keepChats": config["keepChats"],
                 "autoMode": config["autoMode"],
                 "autoExternal": config["autoExternal"],
@@ -324,8 +368,7 @@ class Assistant:
             self._host.emit("ai.changed", {})
             answer(result, failed)
 
-        config = self._config.get()
-        session = Session("external", trusted=not config["externalPermissions"])
+        session = Session("external", trusted=not self._grants.allowed("ai.external"))
         self.toolbox.run(name, arguments, session, answered)
 
     def start_external(self) -> None:
@@ -367,6 +410,13 @@ class AiModule:
         assistant = Assistant(context)
         router, host = context.router, context.host
         chat, changes = assistant.chat, assistant.changes
+        permissions: PermissionService = context.services["permissions"]
+        assistant.migrate_permissions()
+        for scope in ("decks", "cards"):
+            permissions.offer(
+                f"ai.{scope}", requestable=True, on_revoke=assistant.forget_chat_grants(scope)
+            )
+        permissions.offer("ai.external", requestable=True)
 
         def after_change(work: Callable[[Any], None]) -> Callable[[Any], None]:
             def run(params: Any) -> None:
@@ -376,7 +426,7 @@ class AiModule:
             return run
 
         def apply(params: Any) -> None:
-            changes.apply(params["id"], widget=params.get("widget"))
+            changes.apply(params["id"], widget=params.get("widget"), goal=params.get("goal"))
 
         def reject(params: Any) -> None:
             changes.reject(params["id"])
@@ -411,8 +461,8 @@ class AiModule:
             "ai.answerPermission", lambda params: chat.answer_permission(params["decision"])
         )
         router.local("ai.answerQuestion", lambda params: chat.answer_question(params["text"]))
-        router.local("ai.setPermission", assistant.set_permission)
-        router.local("ai.setExternalPermissions", assistant.set_external_permissions)
+        router.deferred("ai.setPermission", assistant.set_permission)
+        router.deferred("ai.setExternalPermissions", assistant.set_external_permissions)
         router.local("ai.setKeepChats", assistant.set_keep_chats)
         router.local("ai.chats", lambda _params: assistant.history.list())
         router.local("ai.openChat", lambda params: chat.open_chat(params["id"]))

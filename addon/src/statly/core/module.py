@@ -28,8 +28,60 @@ class SecretStore(Protocol):
     def delete(self, account: str) -> None: ...
 
 
+@dataclass(frozen=True)
+class PermissionPrompt:
+    """A question only the person can answer, in a popup of Statly's own.
+
+    It is used for permissions and for other questions that must not be answered by the page,
+    such as uninstalling. All text comes from Python. Values such as deck names are shown as plain
+    text, so nothing in them can turn into a link or a button. The first choice is the safe one:
+    Escape and closing pick it. "danger" marks the last choice as one that removes something.
+    """
+
+    title: str
+    body: str
+    details: tuple[str, ...]
+    choices: tuple[tuple[str, str], ...]
+    tone: str = "question"
+
+
+@dataclass(frozen=True)
+class ShownCard:
+    """A card whose question the reviewer just showed, as it was before the answer."""
+
+    card_id: int
+    deck_id: int
+    """The card's home deck: for a card borrowed by a filtered deck, the deck it came from."""
+    card_type: int
+    """0 new, 1 learning, 2 review, 3 relearning."""
+    queue: int
+    """Where Anki keeps it today: 0 new, 1 and 3 learning, 2 review, negative when held back."""
+
+
 class Host(Protocol):
     """What modules may ask of Anki. Only ``host/`` implements this."""
+
+    def ask_permission(
+        self, prompt: PermissionPrompt, answered: Callable[[str | None], None]
+    ) -> None:
+        """Show Statly's own popup and return at once. ``answered`` gets the chosen answer later,
+        or None if it was closed. Nothing may wait for it: a web page cannot run its scripts
+        while a call from it is still being handled."""
+        ...
+
+    def is_reviewing(self) -> bool:
+        """Whether a review session is on screen, when nothing may slow down answering."""
+        ...
+
+    def run_collection_op(
+        self,
+        work: Callable[[Any], Any],
+        done: Callable[[Any], None],
+        failed: Callable[[Exception], None],
+    ) -> None:
+        """Run an undoable change on Anki's worker. ``work`` returns Anki's ``OpChanges``, so
+        Anki's own screens refresh and its Edit menu can undo the step."""
+        ...
 
     def info(self) -> SystemInfoResult: ...
 
@@ -70,6 +122,10 @@ class Host(Protocol):
         """The address of a file in the media folder, as seen from the web app."""
         ...
 
+    def shared_media_url(self, file_name: str) -> str:
+        """The same file's address for Anki's own pages, which live somewhere else."""
+        ...
+
     def save_binary(self, name: str, content: bytes, file_filter: str) -> bool:
         """Ask where to save and write the file. Returns False if the user cancels."""
         ...
@@ -82,12 +138,16 @@ class Host(Protocol):
 
     def set_auto_update(self, enabled: bool) -> None: ...
 
-    def uninstall(self) -> bool:
-        """Ask for confirmation, then remove Statly through Anki."""
+    def uninstall(self, done: Callable[[bool], None]) -> None:
+        """Ask for confirmation, then remove Statly through Anki. ``done`` says whether it did."""
         ...
 
-    def choose_wallpaper(self, destination: Path) -> bool:
-        """Ask for an image and store it at ``destination``."""
+    def take_dropped_file(self) -> Path | None:
+        """The file last dropped onto the page. Only Qt knows its path, and only once."""
+        ...
+
+    def share(self, text: str, url: str, anchor: Mapping[str, float]) -> bool:
+        """Open the system's share sheet, or fill the clipboard. True if a sheet opened."""
         ...
 
     def shortcut_conflict(self, action: str, keys: str) -> str | None: ...
@@ -153,6 +213,58 @@ class Host(Protocol):
         ...
 
     def monotonic(self) -> float: ...
+
+    def wall_clock(self) -> float:
+        """Seconds since 1970, for moments that are stored. Durations use ``monotonic``."""
+        ...
+
+    def on_state_changed(self, callback: Callable[[str, str], None]) -> None:
+        """Anki moved between screens, such as "deckBrowser", "overview" and "review"."""
+        ...
+
+    def on_question_shown(self, callback: Callable[[ShownCard], None]) -> None:
+        """The reviewer shows a question. Keep the callback to a few lines: the person waits."""
+        ...
+
+    def on_will_answer(self, callback: Callable[[int, int], None]) -> None:
+        """A card is about to be answered: its id and the button, 1 to 4.
+
+        The answer always goes ahead unchanged, also when the callback fails. Statly never listens
+        for the answer itself, because Anki then loads the card again after every answer.
+        """
+        ...
+
+    def on_answer_undone(self, callback: Callable[[], None]) -> None:
+        """An answer was taken back with Anki's undo. Other undo steps do not call it."""
+        ...
+
+    def on_app_active(self, callback: Callable[[bool], None]) -> None:
+        """Anki came to the front (True) or went to the background (False)."""
+        ...
+
+    def later(self, work: Callable[[], None]) -> None:
+        """Run ``work`` on the main thread once Qt has handled what waits, such as the next card."""
+        ...
+
+    def card_state(self, card_id: int) -> tuple[int, int] | None:
+        """A card's type and queue right now, read on the main thread.
+
+        Only for one card just after it was answered, never in a loop and never while a query of
+        Statly's runs. None if the card is gone or no collection is open.
+        """
+        ...
+
+    def show_tooltip(self, text: str) -> None:
+        """A short note in Anki's own style that goes away by itself, also over the reviewer."""
+        ...
+
+    def current_deck_id(self) -> int | None:
+        """The deck Anki has selected, as on its overview before studying."""
+        ...
+
+    def open_deck_options(self, deck_id: int) -> None:
+        """Anki's own options for a normal deck. Opening them changes nothing by itself."""
+        ...
 
     def on_deck_overview(self, callback: Callable[[], None]) -> None: ...
 

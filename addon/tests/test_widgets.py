@@ -265,9 +265,8 @@ def test_widget_on_the_dashboard_disappears_with_the_widget(tmp_path: Path) -> N
     contract = Contract()
     json_store = JsonStore(lambda: tmp_path)
     custom = {"goal": {"minW": 2, "maxW": 6, "minH": 2, "maxH": 8}}
-    service = DashboardService(
-        json_store, contract, SettingsService(json_store, contract), lambda: custom
-    )
+    service = DashboardService(json_store, contract, SettingsService(json_store, contract))
+    service.add_source("custom:", lambda: custom)
     built_in: Any = {"id": "due-1", "type": "due-cards", "x": 0, "y": 0, "w": 3, "h": 4}
     mine: Any = {"id": "mine", "type": "custom:goal", "x": 3, "y": 0, "w": 4, "h": 6}
     service.store({"layout": {"widgets": [built_in, mine]}})
@@ -282,9 +281,8 @@ def test_a_widget_follows_new_size_limits(tmp_path: Path) -> None:
     contract = Contract()
     json_store = JsonStore(lambda: tmp_path)
     rules = {"goal": {"minW": 2, "maxW": 12, "minH": 2, "maxH": 16}}
-    service = DashboardService(
-        json_store, contract, SettingsService(json_store, contract), lambda: rules
-    )
+    service = DashboardService(json_store, contract, SettingsService(json_store, contract))
+    service.add_source("custom:", lambda: rules)
     mine: Any = {"id": "mine", "type": "custom:goal", "x": 0, "y": 0, "w": 10, "h": 10}
     service.store({"layout": {"widgets": [mine]}})
 

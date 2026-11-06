@@ -6,7 +6,15 @@ import { z } from "zod";
 import { aiErrorCodes, aiPages, aiProviderDefaults, aiSettingKeys } from "../src/ai.ts";
 import { aiStatistics, aiTools, aiWidgetGuide } from "../src/aiTools.ts";
 import { builtinWidgets, defaultLayout, defaultSettings } from "../src/dashboard.ts";
+import {
+  goalViews,
+  goalWidgetPrefix,
+  goalWidgetSizes,
+  maxGoals,
+  streakMilestones,
+} from "../src/goals.ts";
 import { deviceColumns, gridColumns, widgetSizeLimits } from "../src/limits.ts";
+import { maxChanges, permissionRules } from "../src/permissions.ts";
 import { errorCodes, events, methods } from "../src/rpc.ts";
 
 type JsonSchema = {
@@ -39,16 +47,21 @@ function pascalCase(name: string): string {
 
 const declarations: string[] = [];
 
+/** A value as Python writes it in a `Literal`: booleans are `True` and `False` there. */
+function pythonLiteral(value: unknown): string {
+  return typeof value === "boolean" ? (value ? "True" : "False") : JSON.stringify(value);
+}
+
 function pythonType(schema: JsonSchema, name: string): string {
   const options = schema.anyOf ?? schema.oneOf;
   if (options) {
     return options.map((option, index) => pythonType(option, `${name}Option${index}`)).join(" | ");
   }
   if (schema.enum) {
-    return `Literal[${schema.enum.map((value) => JSON.stringify(value)).join(", ")}]`;
+    return `Literal[${schema.enum.map(pythonLiteral).join(", ")}]`;
   }
   if (schema.const !== undefined) {
-    return `Literal[${JSON.stringify(schema.const)}]`;
+    return `Literal[${pythonLiteral(schema.const)}]`;
   }
   switch (schema.type) {
     case "string":
@@ -99,6 +112,14 @@ const rpc = {
     defaultLayout,
   },
   defaultSettings,
+  permissions: { rules: permissionRules, maxChanges },
+  goals: {
+    prefix: goalWidgetPrefix,
+    views: goalViews,
+    sizes: goalWidgetSizes,
+    maxGoals,
+    milestones: streakMilestones,
+  },
   ai: {
     providers: aiProviderDefaults,
     settingKeys: aiSettingKeys,

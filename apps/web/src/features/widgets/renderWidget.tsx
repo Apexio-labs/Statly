@@ -14,6 +14,9 @@ import {
 } from "@statly/widget-runtime";
 import type { ReactNode } from "react";
 import { type WidgetScope, widgetComponents } from "../dashboard/widgets.tsx";
+import { parseGoalWidget } from "../goals/goalLogic.ts";
+import { useGoals } from "../goals/useGoals.ts";
+import { GoalWidgetView } from "../goals/widget/GoalWidget.tsx";
 import { ElementView } from "./ElementView.tsx";
 import { useCustomWidgets } from "./useCustomWidgets.ts";
 import { WidgetFrame } from "./WidgetFrame.tsx";
@@ -65,6 +68,10 @@ export function renderWidget(widget: DashboardWidget, scope: WidgetScope): React
       />
     );
   }
+  const goal = parseGoalWidget(widget.type);
+  if (goal) {
+    return <GoalWidgetView goalId={goal.id} view={goal.view} />;
+  }
   const Builtin = widgetComponents[widget.type as keyof typeof widgetComponents];
   if (!Builtin) {
     throw new Error(`Unknown widget: ${widget.type}`);
@@ -74,7 +81,12 @@ export function renderWidget(widget: DashboardWidget, scope: WidgetScope): React
 
 export function useWidgetTitle(customWidgets: CustomWidget[]) {
   const { t } = useTranslation();
+  const goals = useGoals().data ?? [];
   return (type: string): string => {
+    const goal = parseGoalWidget(type);
+    if (goal) {
+      return goals.find((item) => item.id === goal.id)?.name ?? t("goals.title");
+    }
     if (type.startsWith(customWidgetPrefix)) {
       const id = type.slice(customWidgetPrefix.length);
       return customWidgets.find((widget) => widget.id === id)?.name ?? "";

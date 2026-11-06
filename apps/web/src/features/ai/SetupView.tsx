@@ -8,12 +8,11 @@ import {
 } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
 import { useMutation } from "@tanstack/react-query";
-import { ChevronDown, KeyRound, ShieldCheck } from "lucide-react";
+import { KeyRound, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { bridge } from "../../bridge/index.ts";
 import { Button } from "../../components/Button.tsx";
 import { Select } from "../../components/Select.tsx";
-import { AdvancedView } from "./AdvancedView.tsx";
 import { UnlockForm } from "./KeyLock.tsx";
 import { useAiSetting } from "./useAi.ts";
 
@@ -220,7 +219,6 @@ export function SetupView({ status }: { status: AiStatus }) {
   const provider = status.provider;
   const defaults = provider ? aiProviderDefaults[provider] : null;
   const [address, setAddress] = useState(status.baseUrl);
-  const [advanced, setAdvanced] = useState(false);
 
   useEffect(() => setAddress(status.baseUrl), [status.baseUrl]);
 
@@ -244,7 +242,7 @@ export function SetupView({ status }: { status: AiStatus }) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3 statly-scroll">
+    <div className="flex flex-col gap-4">
       <section className={SECTION}>
         <h3 className={LABEL}>{t("ai.setup.provider")}</h3>
         <div role="radiogroup" aria-label={t("ai.setup.provider")} className="grid gap-1.5">
@@ -312,18 +310,6 @@ export function SetupView({ status }: { status: AiStatus }) {
       {defaults?.needsKey || provider === "custom" ? <KeySection status={status} /> : null}
       {provider ? <ModelSection status={status} onModel={(model) => change({ model })} /> : null}
       {provider ? <Consent status={status} /> : null}
-      <section className="border-t border-line pt-3">
-        <button
-          type="button"
-          aria-expanded={advanced}
-          onClick={() => setAdvanced(!advanced)}
-          className="flex w-full cursor-pointer items-center justify-between border-0 bg-transparent p-0 text-xs font-semibold text-muted"
-        >
-          {t("ai.advanced.title")}
-          <ChevronDown size={14} className={advanced ? "rotate-180" : ""} />
-        </button>
-        {advanced ? <AdvancedView status={status} /> : null}
-      </section>
     </div>
   );
 }

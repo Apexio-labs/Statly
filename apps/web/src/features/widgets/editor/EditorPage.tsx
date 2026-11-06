@@ -13,6 +13,7 @@ import { createPortal } from "react-dom";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { bridge } from "../../../bridge/index.ts";
 import { Button } from "../../../components/Button.tsx";
+import { LibraryIcon } from "../../../components/icons.tsx";
 import { PageHeader } from "../../../components/PageHeader.tsx";
 import { useAppearance } from "../../../lib/appearance.tsx";
 import { useStatistic } from "../../../lib/calls.ts";
@@ -285,7 +286,10 @@ function Editor({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title={widget.name || t("editor.newWidget")}>
+      <PageHeader
+        title={widget.name || t("editor.newWidget")}
+        trail={[{ label: t("nav.library"), to: "/library", icon: <LibraryIcon size={14} /> }]}
+      >
         <Button
           aria-label={t("editor.undo")}
           disabled={history.past.length === 0}

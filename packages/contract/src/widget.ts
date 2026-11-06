@@ -10,6 +10,7 @@ export const paint = z.union([z.enum(["text", "muted", "accent", "card"]), color
 
 export const metricSources = [
   "reviews",
+  "ratings",
   "studyTime",
   "successRate",
   "retention",
@@ -22,6 +23,7 @@ export const metricSources = [
 
 export const seriesSources = [
   "timeline",
+  "ratingTimeline",
   "answerButtons",
   "deckActivity",
   "forecast",

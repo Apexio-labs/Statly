@@ -17,7 +17,7 @@ export function WidgetFrame({
   const video = media?.asset.type.startsWith("video/");
   return (
     <section
-      className="relative h-full w-full overflow-hidden rounded-card border border-line shadow-card [container-type:size]"
+      className="statly-widget-frame relative h-full w-full overflow-hidden rounded-card border border-line shadow-card [container-type:size]"
       style={backgroundStyle(background, url)}
     >
       {media && video && url ? (

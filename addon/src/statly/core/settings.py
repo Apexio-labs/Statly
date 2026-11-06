@@ -41,8 +41,17 @@ class SettingsService:
             except (OSError, KeyError, TypeError, AttributeError, ValueError):
                 logger.exception("Statly could not take over earlier settings")
                 stored = None
-        merged = cast(SettingsGetResult, {**self.defaults, **(stored or {})})
+        merged = cast(SettingsGetResult, self._with_defaults(stored or {}))
         return merged if self._fits(merged) else self._salvaged(stored)
+
+    def _with_defaults(self, stored: dict[str, Any]) -> dict[str, Any]:
+        """Fills in what an older file lacks, also inside a group like the shortcuts."""
+        merged: dict[str, Any] = {**self.defaults, **stored}
+        for key, default in self.defaults.items():
+            value = merged[key]
+            if isinstance(default, dict) and isinstance(value, dict):
+                merged[key] = {**default, **value}
+        return merged
 
     def _fits(self, settings: Any) -> bool:
         try:

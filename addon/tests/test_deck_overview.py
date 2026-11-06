@@ -4,13 +4,18 @@ from datetime import date
 from typing import Any, cast
 
 from anki.collection import Collection
+from anki.scheduler.v3 import CardAnswer
 
 from statly.contract.types import SettingsGetResult
 from statly.core.contract import Contract
 from statly.core.reader import CollectionReader
 from statly.modules.deck_overview import heatmap_grid, heatmap_payload
 from statly.modules.deck_overview.heatmap_html import render_heatmap_markup
-from statly.modules.deck_overview.styles import counter_styles, wallpaper_styles
+from statly.modules.deck_overview.styles import (
+    counter_styles,
+    wallpaper_styles,
+    wallpaper_video,
+)
 
 
 def settings(**changes: Any) -> SettingsGetResult:
@@ -54,11 +59,31 @@ def test_wallpaper_applies_the_chosen_look() -> None:
 
 
 def test_sample_wallpaper_needs_no_file() -> None:
-    assert "radial-gradient" in wallpaper_styles(settings(wallpaper=wallpaper(source="aero")), None)
+    css = wallpaper_styles(settings(wallpaper=wallpaper(source="aero")), None)
+    assert 'url("data:image/jpeg;base64,' in css
+
+
+def test_the_deck_overview_can_keep_its_own_look() -> None:
+    choice = wallpaper(source="aero", deckOverview=False)
+    assert wallpaper_styles(settings(wallpaper=choice), None) == ""
+
+
+def test_a_video_plays_behind_the_page_with_the_chosen_look() -> None:
+    choice = wallpaper(source="image", blur=4, overlay=50, position="top", loop=True)
+    html = wallpaper_video(settings(wallpaper=choice), "/_addons/statly/video.webm")
+    assert '<video src="/_addons/statly/video.webm" autoplay muted playsinline loop>' in html
+    assert "filter:blur(4px)" in html
+    assert "rgba(0,0,0,0.5)" in html
+    assert "object-position:center top" in html
+
+
+def test_a_video_can_play_once() -> None:
+    choice = wallpaper(source="image", loop=False)
+    assert " loop" not in wallpaper_video(settings(wallpaper=choice), "/video.webm")
 
 
 def test_heatmap_grid_covers_whole_weeks_from_monday() -> None:
-    grid = heatmap_grid(2026, [{"date": "2026-03-01", "reviews": 5}])
+    grid = heatmap_grid(2026, [{"date": "2026-03-01", "count": 5}])
     assert len(grid) % 7 == 0
     assert date.fromisoformat(grid[0]["date"]).weekday() == 0
     assert date.fromisoformat(grid[-1]["date"]).weekday() == 6
@@ -66,6 +91,11 @@ def test_heatmap_grid_covers_whole_weeks_from_monday() -> None:
 
 
 def test_heatmap_markup_from_a_real_collection(collection: Collection) -> None:
+    # The fixture's card is still in its steps, so only the card answered Easy is a review.
+    scheduler: Any = collection.sched
+    card = scheduler.getCard()
+    states = collection._backend.get_scheduling_states(card.id)
+    scheduler.answer_card(scheduler.build_answer(card=card, states=states, rating=CardAnswer.EASY))
     payload = heatmap_payload(CollectionReader(collection))
     assert payload["todayReviews"] == 1
     html = render_heatmap_markup(payload, "de")

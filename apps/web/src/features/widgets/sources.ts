@@ -41,6 +41,8 @@ export function useMetricValue(
   switch (source) {
     case "reviews":
       return summary.data?.reviews;
+    case "ratings":
+      return summary.data?.ratings;
     case "studyTime":
       return summary.data?.studyTimeMs;
     case "successRate":
@@ -92,7 +94,12 @@ export function useSeries(source: SeriesSource, range: WidgetRange, scope: Widge
   const locale = i18n.language;
   const params = useElementRange(range, scope);
   const usesRhythm = source === "weekdays" || source === "hours";
-  const timeline = useStatistic("statistics.timeline", params, source === "timeline");
+  const timelineMeasure = source === "ratingTimeline" ? "ratings" : "reviews";
+  const timeline = useStatistic(
+    "statistics.timeline",
+    { ...params, measure: timelineMeasure },
+    source === "timeline" || source === "ratingTimeline",
+  );
   const buttons = useStatistic("statistics.answerButtons", params, source === "answerButtons");
   const decks = useStatistic("statistics.deckActivity", params, source === "deckActivity");
   const forecast = useStatistic(
@@ -109,9 +116,10 @@ export function useSeries(source: SeriesSource, range: WidgetRange, scope: Widge
 
   switch (source) {
     case "timeline":
+    case "ratingTimeline":
       return (timeline.data?.items ?? []).map((item) => ({
         label: shortDate(item.date, locale),
-        value: item.reviews,
+        value: item.count,
       }));
     case "answerButtons": {
       const data = buttons.data;
@@ -123,7 +131,7 @@ export function useSeries(source: SeriesSource, range: WidgetRange, scope: Widge
     case "deckActivity":
       return (decks.data ?? []).slice(0, 8).map((entry) => ({
         label: entry.name?.split("::").at(-1) ?? t("widgets.deck-activity.deleted"),
-        value: entry.reviews,
+        value: entry.count,
       }));
     case "forecast":
       return (forecast.data ?? []).map((day) => ({

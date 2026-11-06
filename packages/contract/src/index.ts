@@ -2,6 +2,8 @@ export * from "./ai.ts";
 export * from "./aiTools.ts";
 export * from "./ankiStats.ts";
 export * from "./dashboard.ts";
+export * from "./goals.ts";
 export * from "./limits.ts";
+export * from "./permissions.ts";
 export * from "./rpc.ts";
 export * from "./widget.ts";

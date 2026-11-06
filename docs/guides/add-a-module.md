@@ -10,11 +10,11 @@ A module is a class with a `register` method, in a folder of its own under
 `addon/src/statly/modules/`:
 
 ```python
-class FlashcardGoalsModule:
+class TimerModule:
     def register(self, context: Context) -> None:
-        goals = Goals(JsonStore(context.host.data_folder))
-        context.router.local("goals.list", lambda _params: goals.list())
-        context.router.query("goals.progress", goals.progress)
+        timers = Timers(JsonStore(context.host.data_folder))
+        context.router.local("timers.list", lambda _params: timers.list())
+        context.router.query("timers.progress", timers.progress)
 ```
 
 Add it to `MODULES` in `modules/__init__.py`. Order matters only if a module uses another's service.
@@ -36,8 +36,10 @@ Add it to `MODULES` in `modules/__init__.py`. Order matters only if a module use
 
 - Calls go in `packages/contract` first. Run `pnpm contract`, and a test makes sure every call has a
   handler.
-- Read the collection through `CollectionReader`. A module cannot write to it: only
-  `modules/mobile` may, and tests enforce that. If your idea needs to write, open an issue first.
+- Read the collection through `CollectionReader`. A module cannot write to it itself: every write
+  is a kind of change in `modules/changes`, with a permission the person grants in Statly's own
+  dialog, and tests enforce that. If your idea needs to write, open an issue first and read
+  [ADR 3](../adr/0003-permissions-and-changes.md).
 - Store your own data with `JsonStore`. It writes atomically into the profile folder.
 - A hook must never be able to break Anki. `host.on_*` wraps callbacks for you.
 - A page for your module goes in `apps/web/src/features/<name>`, with a route in the app's router.

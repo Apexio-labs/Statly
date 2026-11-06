@@ -93,6 +93,13 @@ export function useDeviceDraft() {
     }
   }
 
+  /** Puts the default back on every device. Like any other change, it waits for Save. */
+  async function resetTo(desktop: DashboardLayout) {
+    if (draft) {
+      setDraft(await refreshed({ ...draft, desktop, tablet: null, phone: null }));
+    }
+  }
+
   function close() {
     setDraft(null);
     setSaved(null);
@@ -101,7 +108,7 @@ export function useDeviceDraft() {
 
   const dirty = draft !== null && JSON.stringify(devicesAndDesktop(draft)) !== saved;
 
-  return { draft, setDraft, device, begin, switchTo, followDesktop, close, dirty };
+  return { draft, setDraft, device, begin, switchTo, followDesktop, resetTo, close, dirty };
 }
 
 function devicesAndDesktop(draft: Draft) {

@@ -1,4 +1,15 @@
-"""The statistics themselves. Each returns plain data; the web app words and formats it."""
+"""The statistics themselves. Each returns plain data; the web app words and formats it.
+
+Two ways of counting run through this file:
+
+- A **review** is a card moved to a later day: an answer that gave it an interval of at least a
+  day (``r.ivl > 0``; steps within the day are negative, previews 0). Each card counts at most once
+  a day, however often it came up. A card still in its steps at the end of the day counts on the
+  day it finally moves on.
+- A **rating** is every press of Again, Hard, Good or Easy, the number Anki calls reviews.
+
+The charts take ``measure`` to choose one. Reviews is the default.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +19,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from ...contract import types
-from ...core.reader import CollectionReader
+from ...core.reader import STATLY_DECK_NAME, CollectionReader
 from .calendar import DAY_SECONDS, AnkiCalendar
 from .scope import (
     ANSWERED,
@@ -33,6 +44,10 @@ REVIEW_LEARNING = 0
 REVIEW_REVIEW = 1
 REVIEW_RELEARNING = 2
 
+MEASURES = ("reviews", "ratings")
+MOVED_ON = "r.ivl > 0"
+"""An answer that moved the card to a later day."""
+
 LONG_INTERVAL_DAYS = 21
 FORECAST_DAYS = 7
 BUCKET_MS = 15 * 60 * 1000
@@ -45,6 +60,16 @@ def _calendar(reader: CollectionReader) -> AnkiCalendar:
 
 def _ratio(part: int, whole: int) -> float | None:
     return part / whole if whole else None
+
+
+def _measure(params: Any) -> str:
+    measure = params.get("measure") or "reviews"
+    return measure if measure in MEASURES else "reviews"
+
+
+def _day_of(start_seconds: int) -> str:
+    """The SQL for a review's day within a period, counted from the period's first day."""
+    return f"(r.id / 1000 - {int(start_seconds)}) / {DAY_SECONDS}"
 
 
 def today(_params: Any, reader: CollectionReader) -> types.StatisticsTodayResult:
@@ -61,6 +86,7 @@ def decks(_params: Any, reader: CollectionReader) -> list[types.StatisticsDecksR
     return [
         {"id": identifier, "name": name}
         for identifier, name in sorted(reader.deck_names().items(), key=lambda item: item[1])
+        if name != STATLY_DECK_NAME
     ]
 
 
@@ -86,11 +112,21 @@ def summary(params: Any, reader: CollectionReader) -> types.StatisticsSummaryRes
         DAY_SECONDS,
         *parameters,
     )
-    reviews, elapsed_ms, successes, mature, mature_successes, active_days = rows[0]
+    ratings, elapsed_ms, successes, mature, mature_successes, active_days = rows[0]
+    # Summing each day's distinct cards is cheaper than collecting distinct (card, day) pairs.
+    reviews = reader.scalar(
+        f"""
+        SELECT SUM(cards) FROM (SELECT COUNT(DISTINCT r.cid) AS cards FROM revlog AS r
+                                WHERE {conditions} AND {MOVED_ON}
+                                GROUP BY {_day_of(period.start_seconds)})
+        """,
+        *parameters,
+    )
     return {
-        "reviews": reviews,
+        "reviews": int(reviews or 0),
+        "ratings": ratings,
         "studyTimeMs": elapsed_ms,
-        "successRate": _ratio(successes, reviews),
+        "successRate": _ratio(successes, ratings),
         "retention": _ratio(mature_successes, mature),
         "activeDays": active_days,
     }
@@ -101,27 +137,27 @@ def categories(params: Any, reader: CollectionReader) -> types.StatisticsCategor
     conditions, parameters = review_filter(
         period, deck_ids(reader, params["deckId"]), reader.excluded_cards
     )
+    # One row per card first, then the join: far cheaper than eight distinct counts over every
+    # answer joined to its card.
     rows = reader.rows(
         f"""
-        SELECT COUNT(DISTINCT r.cid),
-               COUNT(DISTINCT CASE WHEN r.ease = 1 THEN r.cid END),
-               COUNT(DISTINCT CASE WHEN r.type = ? THEN r.cid END),
-               COUNT(DISTINCT CASE WHEN r.type = ? THEN r.cid END),
-               COUNT(DISTINCT CASE WHEN r.type = ? THEN r.cid END),
-               COUNT(DISTINCT CASE WHEN r.ivl >= ? THEN r.cid END),
-               COUNT(DISTINCT CASE WHEN c.queue = ? THEN r.cid END),
-               COUNT(DISTINCT CASE WHEN c.queue IN (?, ?) THEN r.cid END)
-        FROM revlog AS r
-        LEFT JOIN cards AS c ON c.id = r.cid
-        WHERE {conditions}
+        SELECT COUNT(*), COALESCE(SUM(per_card.failed), 0), COALESCE(SUM(per_card.new), 0),
+               COALESCE(SUM(per_card.reviewed), 0), COALESCE(SUM(per_card.relearned), 0),
+               COALESCE(SUM(per_card.long_interval), 0), COALESCE(SUM(c.queue = ?), 0),
+               COALESCE(SUM(c.queue IN (?, ?)), 0)
+        FROM (SELECT r.cid AS cid, MAX(r.ease = 1) AS failed, MAX(r.type = ?) AS new,
+                     MAX(r.type = ?) AS reviewed, MAX(r.type = ?) AS relearned,
+                     MAX(r.ivl >= ?) AS long_interval
+              FROM revlog AS r WHERE {conditions} GROUP BY r.cid) AS per_card
+        LEFT JOIN cards AS c ON c.id = per_card.cid
         """,
+        QUEUE_SUSPENDED,
+        QUEUE_BURIED_SIBLING,
+        QUEUE_BURIED_MANUAL,
         REVIEW_LEARNING,
         REVIEW_REVIEW,
         REVIEW_RELEARNING,
         LONG_INTERVAL_DAYS,
-        QUEUE_SUSPENDED,
-        QUEUE_BURIED_SIBLING,
-        QUEUE_BURIED_MANUAL,
         *parameters,
     )
     total, failed, new, reviewed, relearned, long_interval, suspended, buried = rows[0]
@@ -145,45 +181,52 @@ def deck_activity(
         period, deck_ids(reader, params["deckId"]), reader.excluded_cards
     )
     names = reader.deck_names()
+    per_card = (
+        f"COUNT(DISTINCT {_day_of(period.start_seconds)})"
+        if _measure(params) == "reviews"
+        else "COUNT(*)"
+    )
+    moved_on = f" AND {MOVED_ON}" if _measure(params) == "reviews" else ""
     # Counting per card first and then joining is far cheaper than joining every review.
     rows = reader.rows(
         f"""
-        SELECT CASE WHEN c.odid != 0 THEN c.odid ELSE c.did END, SUM(reviewed.reviews)
-        FROM (SELECT r.cid AS cid, COUNT(*) AS reviews FROM revlog AS r
-              WHERE {conditions} GROUP BY r.cid) AS reviewed
-        LEFT JOIN cards AS c ON c.id = reviewed.cid
+        SELECT CASE WHEN c.odid != 0 THEN c.odid ELSE c.did END, SUM(counted.number)
+        FROM (SELECT r.cid AS cid, {per_card} AS number FROM revlog AS r
+              WHERE {conditions}{moved_on} GROUP BY r.cid) AS counted
+        LEFT JOIN cards AS c ON c.id = counted.cid
         GROUP BY 1
         """,
         *parameters,
     )
     totals: Counter[int | None] = Counter()
-    for deck_id, reviews in rows:
+    for deck_id, number in rows:
         # A review can outlive its card or deck. Such rows are kept under one unknown entry.
-        totals[deck_id if deck_id in names else None] += reviews
+        totals[deck_id if deck_id in names else None] += number
     activity: list[types.StatisticsDeckActivityResultItem] = [
-        {"deckId": deck_id, "name": names.get(deck_id) if deck_id else None, "reviews": reviews}
-        for deck_id, reviews in totals.items()
+        {"deckId": deck_id, "name": names.get(deck_id) if deck_id else None, "count": number}
+        for deck_id, number in totals.items()
     ]
-    activity.sort(key=lambda item: (-item["reviews"], item["name"] or ""))
+    activity.sort(key=lambda item: (-item["count"], item["name"] or ""))
     return activity
 
 
-def _daily_reviews(
-    reader: CollectionReader, period: Period, decks: tuple[int, ...] | None
+def _daily(
+    reader: CollectionReader, period: Period, decks: tuple[int, ...] | None, measure: str
 ) -> dict[date, int]:
+    """Reviews or ratings per day. Days without any are left out."""
     conditions, parameters = review_filter(period, decks, reader.excluded_cards)
+    counted = "COUNT(DISTINCT r.cid)" if measure == "reviews" else "COUNT(*)"
+    moved_on = f" AND {MOVED_ON}" if measure == "reviews" else ""
     rows = reader.rows(
         f"""
-        SELECT (r.id / 1000 - ?) / ?, COUNT(*)
+        SELECT {_day_of(period.start_seconds)}, {counted}
         FROM revlog AS r
-        WHERE {conditions}
+        WHERE {conditions}{moved_on}
         GROUP BY 1
         """,
-        period.start_seconds,
-        DAY_SECONDS,
         *parameters,
     )
-    return {period.first_day + timedelta(days=offset): reviews for offset, reviews in rows}
+    return {period.first_day + timedelta(days=offset): number for offset, number in rows}
 
 
 def _timeline_bucket(day: date, granularity: str) -> date:
@@ -196,7 +239,7 @@ def _timeline_bucket(day: date, granularity: str) -> date:
 
 def timeline(params: Any, reader: CollectionReader) -> types.StatisticsTimelineResult:
     period = period_from_params(params, _calendar(reader))
-    daily = _daily_reviews(reader, period, deck_ids(reader, params["deckId"]))
+    daily = _daily(reader, period, deck_ids(reader, params["deckId"]), _measure(params))
     if period.days <= 31:
         granularity = "day"
     elif period.days <= 180:
@@ -212,12 +255,12 @@ def timeline(params: Any, reader: CollectionReader) -> types.StatisticsTimelineR
 
     items: list[types.StatisticsTimelineResultItemsItem] = []
     running_total = 0
-    for index, (bucket, reviews) in enumerate(buckets.items(), start=1):
-        running_total += reviews
+    for index, (bucket, number) in enumerate(buckets.items(), start=1):
+        running_total += number
         items.append(
             {
                 "date": bucket.isoformat(),
-                "reviews": reviews,
+                "count": number,
                 "runningAverage": running_total / index,
             }
         )
@@ -248,9 +291,14 @@ def rhythm(params: Any, reader: CollectionReader) -> types.StatisticsRhythmResul
         period, deck_ids(reader, params["deckId"]), reader.excluded_cards
     )
     # Converting to local time in SQL takes most of this query's time. Doing it once per
-    # quarter hour in Python keeps daylight saving correct at a fraction of the cost.
+    # quarter hour in Python keeps daylight saving correct at a fraction of the cost. A review
+    # lands in the quarter hour of the answer that moved the card on.
+    if _measure(params) == "reviews":
+        counted, conditions = "COUNT(DISTINCT r.cid)", f"{conditions} AND {MOVED_ON}"
+    else:
+        counted = "COUNT(*)"
     rows = reader.rows(
-        f"SELECT r.id / ?, COUNT(*) FROM revlog AS r WHERE {conditions} GROUP BY 1",
+        f"SELECT r.id / ?, {counted} FROM revlog AS r WHERE {conditions} GROUP BY 1",
         BUCKET_MS,
         *parameters,
     )
@@ -296,16 +344,27 @@ def heatmap(params: Any, reader: CollectionReader) -> types.StatisticsHeatmapRes
         if first_review is None
         else min(current_day, calendar.day_of(first_review // 1000))
     )
-    history = _daily_reviews(reader, make_period(calendar, first_day, current_day), decks_in_scope)
+    # Any answer makes a study day, so a day spent only on learning steps keeps the streak.
+    history = _daily(
+        reader, make_period(calendar, first_day, current_day), decks_in_scope, "ratings"
+    )
     longest, current = _streaks(history, current_day)
 
     year = params["year"] or current_day.year
     year_start = date(year, 1, 1)
     period_end = min(date(year, 12, 31), current_day)
     elapsed_days = max((period_end - year_start).days + 1, 0)
-    in_year = {day: reviews for day, reviews in history.items() if day.year == year}
+    studied = sum(1 for day in history if day.year == year)
+    if _measure(params) == "ratings":
+        in_year = {day: number for day, number in history.items() if day.year == year}
+    elif year_start <= period_end:
+        # Reviews only for the year shown: counting cards once a day costs more than ratings.
+        span = make_period(calendar, max(year_start, first_day), period_end)
+        in_year = _daily(reader, span, decks_in_scope, "reviews")
+    else:
+        in_year = {}
     days: list[types.StatisticsHeatmapResultDaysItem] = [
-        {"date": day.isoformat(), "reviews": reviews} for day, reviews in sorted(in_year.items())
+        {"date": day.isoformat(), "count": number} for day, number in sorted(in_year.items())
     ]
     total = sum(in_year.values())
     return {
@@ -314,9 +373,9 @@ def heatmap(params: Any, reader: CollectionReader) -> types.StatisticsHeatmapRes
         "lastYear": current_day.year,
         "today": current_day.isoformat(),
         "days": days,
-        "totalReviews": total,
+        "total": total,
         "dailyAverage": total / elapsed_days if elapsed_days else 0,
-        "daysLearned": len(in_year) / elapsed_days if elapsed_days else 0,
+        "daysLearned": studied / elapsed_days if elapsed_days else 0,
         "longestStreak": longest,
         "currentStreak": current,
     }

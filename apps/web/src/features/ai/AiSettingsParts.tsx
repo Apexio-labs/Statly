@@ -1,11 +1,11 @@
 import { type AiStatus, aiPermissionScopes } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { bridge } from "../../bridge/index.ts";
 import { Button } from "../../components/Button.tsx";
-import { KeyLockSection } from "./KeyLock.tsx";
+import { PERMISSIONS_KEY } from "../privacy/usePrivacy.ts";
 import { SwitchRow } from "./SwitchRow.tsx";
 import { useAiSetting } from "./useAi.ts";
 
@@ -84,13 +84,14 @@ function RiskySwitch({
   );
 }
 
-function ExternalApps({ status }: { status: AiStatus }) {
+export function ExternalApps({ status }: { status: AiStatus }) {
   const { t } = useTranslation();
   const setExternal = useAiSetting("ai.setExternal");
   const newCode = useMutation({ mutationFn: () => bridge.call("ai.newExternalCode", {}) });
   const save = useMutation({ mutationFn: () => bridge.call("ai.saveBridge", {}) });
   const refresh = useAiSetting("ai.setExternal");
   const share = useAiSetting("ai.setExternalPermissions");
+  const client = useQueryClient();
   const code = newCode.data?.code;
 
   return (
@@ -149,7 +150,12 @@ function ExternalApps({ status }: { status: AiStatus }) {
             title={t("ai.external.permissions")}
             note={t("ai.external.permissionsNote")}
             checked={status.externalPermissions}
-            onChange={(allowed) => share.mutate({ allowed })}
+            onChange={(allowed) =>
+              share.mutate(
+                { allowed },
+                { onSuccess: () => client.invalidateQueries({ queryKey: PERMISSIONS_KEY }) },
+              )
+            }
           />
           <p className="m-0 text-[11px] text-muted">{t("ai.external.limits")}</p>
         </div>
@@ -158,36 +164,52 @@ function ExternalApps({ status }: { status: AiStatus }) {
   );
 }
 
-export function AdvancedView({ status }: { status: AiStatus }) {
+/** Statly asks in its own popup before switching one on. The chat's "Always allow" leads here. */
+export function PermissionSwitches({ status }: { status: AiStatus }) {
   const { t } = useTranslation();
+  const client = useQueryClient();
   const setPermission = useAiSetting("ai.setPermission");
-  const setKeepChats = useAiSetting("ai.setKeepChats");
-  const setAuto = useAiSetting("ai.setAutoMode");
-  const setAutoExternal = useAiSetting("ai.setAutoExternal");
-  const warning = [t("ai.auto.warning1"), t("ai.auto.warning2"), t("ai.auto.warning3")];
-
   return (
-    <div className="mt-3 flex flex-col gap-4">
-      <section className="flex flex-col gap-3">
-        <h4 className="m-0 text-xs font-bold">{t("ai.advanced.permissions")}</h4>
-        {aiPermissionScopes.map((scope) => (
+    <div className="flex flex-col gap-3">
+      {aiPermissionScopes.map((scope) => (
+        <div key={scope} data-highlight={`ai-permission-${scope}`} className="rounded-control">
           <SwitchRow
-            key={scope}
             title={t(`ai.permission.${scope}.setting`)}
             note={t(`ai.permission.${scope}.settingNote`)}
             checked={status.permissions[scope]}
-            onChange={(allowed) => setPermission.mutate({ scope, allowed })}
+            onChange={(allowed) =>
+              setPermission.mutate(
+                { scope, allowed },
+                { onSuccess: () => client.invalidateQueries({ queryKey: PERMISSIONS_KEY }) },
+              )
+            }
           />
-        ))}
-      </section>
-      <KeyLockSection status={status} />
-      <SwitchRow
-        title={t("ai.advanced.keepChats")}
-        note={t("ai.advanced.keepChatsNote")}
-        checked={status.keepChats}
-        onChange={(keep) => setKeepChats.mutate({ keep })}
-      />
-      <ExternalApps status={status} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function ChatStorage({ status }: { status: AiStatus }) {
+  const { t } = useTranslation();
+  const setKeepChats = useAiSetting("ai.setKeepChats");
+  return (
+    <SwitchRow
+      title={t("ai.advanced.keepChats")}
+      note={t("ai.advanced.keepChatsNote")}
+      checked={status.keepChats}
+      onChange={(keep) => setKeepChats.mutate({ keep })}
+    />
+  );
+}
+
+export function AutoMode({ status }: { status: AiStatus }) {
+  const { t } = useTranslation();
+  const setAuto = useAiSetting("ai.setAutoMode");
+  const setAutoExternal = useAiSetting("ai.setAutoExternal");
+  const warning = [t("ai.auto.warning1"), t("ai.auto.warning2"), t("ai.auto.warning3")];
+  return (
+    <div className="flex flex-col gap-4">
       <RiskySwitch
         title={t("ai.auto.title")}
         note={t("ai.auto.note")}

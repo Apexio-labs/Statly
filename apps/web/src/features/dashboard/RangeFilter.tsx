@@ -1,37 +1,25 @@
 import * as Popover from "@radix-ui/react-popover";
 import { useTranslation } from "@statly/i18n";
-import { ArrowRight, CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { type PointerEvent, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/Button.tsx";
-import { fullDate, weekdayName } from "../../lib/format.ts";
 import {
   addMonths,
   clickDay,
   formatDay,
-  monthGrid,
   monthOf,
-  parseDay,
   type Selection,
   selectBetween,
-  typedDay,
-} from "./calendar.ts";
+} from "../../components/calendar/calendar.ts";
+import { DayField } from "../../components/calendar/DayField.tsx";
+import { dayAt, type Month, MonthCalendar } from "../../components/calendar/MonthCalendar.tsx";
+import { CalendarIcon } from "../../components/icons.tsx";
 import {
   type DashboardFilters,
   type RangePreset,
   rangeOf,
   rangePresets,
 } from "./useDashboardFilters.ts";
-
-const FIELD =
-  "h-9 w-full rounded-control border border-line bg-control px-3 text-[13px] text-text outline-none focus-visible:ring-2 focus-visible:ring-accent/40";
-const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
-
-type Month = { year: number; month: number };
-
-function dayAt(x: number, y: number): string | null {
-  const button = document.elementFromPoint(x, y)?.closest<HTMLButtonElement>("[data-date]");
-  return button && !button.disabled ? (button.dataset.date ?? null) : null;
-}
 
 /** Days of the neighboring month stay plain, or a range would show up twice. */
 function dayClass(date: string, selection: Selection, outside: boolean): string {
@@ -45,103 +33,6 @@ function dayClass(date: string, selection: Selection, outside: boolean): string 
     return "bg-selected text-text";
   }
   return "bg-transparent text-text hover:bg-hover";
-}
-
-function Calendar({
-  value,
-  selection,
-  today,
-  locale,
-}: {
-  value: Month;
-  selection: Selection;
-  today: string;
-  locale: string;
-}) {
-  const heading = new Intl.DateTimeFormat(locale, {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(value.year, value.month, 1)));
-  return (
-    <section className="w-[252px]">
-      <h3 className="m-0 mb-3 h-5 text-center text-[13px] font-bold">{heading}</h3>
-      {/* biome-ignore lint/a11y/useSemanticElements: days are buttons in a seven-column layout. */}
-      <div role="grid" aria-label={heading} className="grid grid-cols-7 gap-y-0.5 text-center">
-        {WEEKDAYS.map((day) => (
-          <span key={day} className="h-7 text-[11px] leading-7 text-muted">
-            {weekdayName(day, locale)}
-          </span>
-        ))}
-        {monthGrid(value.year, value.month).map(({ date, outside }) => (
-          <button
-            key={date}
-            type="button"
-            data-date={date}
-            disabled={date > today}
-            aria-label={`${Number(date.slice(8))} ${fullDate(date, locale)}`}
-            aria-current={date === today ? "date" : undefined}
-            className={`h-8 cursor-pointer rounded-control border-0 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-default disabled:opacity-30 ${dayClass(date, selection, outside)}`}
-          >
-            {Number(date.slice(8))}
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function DayField({
-  label,
-  value,
-  invalidNote,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  invalidNote: (shown: boolean) => void;
-  onChange: (date: string) => void;
-}) {
-  const [text, setText] = useState<string | null>(null);
-  const invalid = text !== null && text.length === 10 && parseDay(text) === null;
-
-  function confirm() {
-    if (text !== null) {
-      const parsed = parseDay(text);
-      invalidNote(parsed === null);
-      if (parsed) {
-        onChange(parsed);
-        setText(null);
-      }
-    }
-  }
-
-  return (
-    <input
-      aria-label={label}
-      aria-invalid={invalid}
-      inputMode="numeric"
-      maxLength={10}
-      placeholder="tt.mm.jjjj"
-      value={text ?? formatDay(value)}
-      className={`${FIELD} ${invalid ? "border-danger" : ""}`}
-      onChange={(event) => {
-        const typed = typedDay(event.target.value);
-        setText(typed);
-        const parsed = parseDay(typed);
-        if (parsed) {
-          invalidNote(false);
-          onChange(parsed);
-        }
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          confirm();
-        }
-      }}
-      onBlur={confirm}
-    />
-  );
 }
 
 export function RangeFilter({
@@ -261,7 +152,7 @@ export function RangeFilter({
         aria-label={t("dashboard.range")}
         className="flex h-10 cursor-pointer items-center gap-2 rounded-control border border-line bg-control px-3 text-[13px] font-semibold text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-accent/40"
       >
-        <CalendarDays size={15} />
+        <CalendarIcon size={15} />
         {label}
         <ChevronDown
           size={14}
@@ -327,18 +218,20 @@ export function RangeFilter({
                 >
                   <ChevronLeft size={15} />
                 </button>
-                <Calendar
+                <MonthCalendar
                   value={visible}
-                  selection={selection}
                   today={today}
                   locale={i18n.language}
+                  disabled={(date) => date > today}
+                  dayClass={(date, outside) => dayClass(date, selection, outside)}
                 />
                 <div className="w-px bg-line" />
-                <Calendar
+                <MonthCalendar
                   value={addMonths(visible, 1)}
-                  selection={selection}
                   today={today}
                   locale={i18n.language}
+                  disabled={(date) => date > today}
+                  dayClass={(date, outside) => dayClass(date, selection, outside)}
                 />
                 <button
                   type="button"

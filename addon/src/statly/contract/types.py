@@ -110,6 +110,7 @@ class StatisticsSummaryParams(TypedDict):
 
 class StatisticsSummaryResult(TypedDict):
     reviews: int
+    ratings: int
     studyTimeMs: int
     successRate: Any
     retention: Any
@@ -137,23 +138,25 @@ class StatisticsDeckActivityParams(TypedDict):
     start: str
     end: str
     deckId: int | None
+    measure: NotRequired[Literal["reviews", "ratings"]]
 
 
 class StatisticsDeckActivityResultItem(TypedDict):
     deckId: int | None
     name: Any
-    reviews: int
+    count: int
 
 
 class StatisticsTimelineParams(TypedDict):
     start: str
     end: str
     deckId: int | None
+    measure: NotRequired[Literal["reviews", "ratings"]]
 
 
 class StatisticsTimelineResultItemsItem(TypedDict):
     date: str
-    reviews: int
+    count: int
     runningAverage: float
 
 
@@ -179,6 +182,7 @@ class StatisticsRhythmParams(TypedDict):
     start: str
     end: str
     deckId: int | None
+    measure: NotRequired[Literal["reviews", "ratings"]]
 
 
 class StatisticsRhythmResult(TypedDict):
@@ -189,11 +193,12 @@ class StatisticsRhythmResult(TypedDict):
 class StatisticsHeatmapParams(TypedDict):
     year: int | None
     deckId: int | None
+    measure: NotRequired[Literal["reviews", "ratings"]]
 
 
 class StatisticsHeatmapResultDaysItem(TypedDict):
     date: str
-    reviews: int
+    count: int
 
 
 class StatisticsHeatmapResult(TypedDict):
@@ -202,7 +207,7 @@ class StatisticsHeatmapResult(TypedDict):
     lastYear: int
     today: str
     days: list[StatisticsHeatmapResultDaysItem]
-    totalReviews: int
+    total: int
     dailyAverage: float
     daysLearned: float
     longestStreak: int
@@ -602,9 +607,23 @@ class DashboardChooseBackgroundResultCounterColors(TypedDict):
     dark: DashboardChooseBackgroundResultCounterColorsDark
 
 
+class DashboardChooseBackgroundResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class DashboardChooseBackgroundResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
 class DashboardChooseBackgroundResultWallpaper(TypedDict):
     enabled: bool
     source: Literal["none", "image", "aero"]
+    asset: DashboardChooseBackgroundResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[DashboardChooseBackgroundResultWallpaperHistoryItem]
     blur: int
     overlay: int
     position: Literal["center", "top", "bottom"]
@@ -616,6 +635,14 @@ class DashboardChooseBackgroundResultShortcuts(TypedDict):
     settings: str
     library: str
     ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
 
 
 class DashboardChooseBackgroundResultOnboardingAnswers(TypedDict):
@@ -634,9 +661,11 @@ class DashboardChooseBackgroundResult(TypedDict):
     favoriteWidgets: list[str]
     counterColorsEnabled: bool
     counterColors: DashboardChooseBackgroundResultCounterColors
+    accentColor: str | None
     wallpaper: DashboardChooseBackgroundResultWallpaper
     deckHeatmap: bool
     brandAnimation: bool
+    goalToast: bool
     shortcuts: DashboardChooseBackgroundResultShortcuts
     onboardingDone: bool
     mobileSync: bool
@@ -685,9 +714,23 @@ class DashboardRemoveBackgroundResultCounterColors(TypedDict):
     dark: DashboardRemoveBackgroundResultCounterColorsDark
 
 
+class DashboardRemoveBackgroundResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class DashboardRemoveBackgroundResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
 class DashboardRemoveBackgroundResultWallpaper(TypedDict):
     enabled: bool
     source: Literal["none", "image", "aero"]
+    asset: DashboardRemoveBackgroundResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[DashboardRemoveBackgroundResultWallpaperHistoryItem]
     blur: int
     overlay: int
     position: Literal["center", "top", "bottom"]
@@ -699,6 +742,14 @@ class DashboardRemoveBackgroundResultShortcuts(TypedDict):
     settings: str
     library: str
     ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
 
 
 class DashboardRemoveBackgroundResultOnboardingAnswers(TypedDict):
@@ -717,9 +768,11 @@ class DashboardRemoveBackgroundResult(TypedDict):
     favoriteWidgets: list[str]
     counterColorsEnabled: bool
     counterColors: DashboardRemoveBackgroundResultCounterColors
+    accentColor: str | None
     wallpaper: DashboardRemoveBackgroundResultWallpaper
     deckHeatmap: bool
     brandAnimation: bool
+    goalToast: bool
     shortcuts: DashboardRemoveBackgroundResultShortcuts
     onboardingDone: bool
     mobileSync: bool
@@ -785,9 +838,23 @@ class SettingsGetResultCounterColors(TypedDict):
     dark: SettingsGetResultCounterColorsDark
 
 
+class SettingsGetResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class SettingsGetResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
 class SettingsGetResultWallpaper(TypedDict):
     enabled: bool
     source: Literal["none", "image", "aero"]
+    asset: SettingsGetResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[SettingsGetResultWallpaperHistoryItem]
     blur: int
     overlay: int
     position: Literal["center", "top", "bottom"]
@@ -799,6 +866,14 @@ class SettingsGetResultShortcuts(TypedDict):
     settings: str
     library: str
     ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
 
 
 class SettingsGetResultOnboardingAnswers(TypedDict):
@@ -817,9 +892,11 @@ class SettingsGetResult(TypedDict):
     favoriteWidgets: list[str]
     counterColorsEnabled: bool
     counterColors: SettingsGetResultCounterColors
+    accentColor: str | None
     wallpaper: SettingsGetResultWallpaper
     deckHeatmap: bool
     brandAnimation: bool
+    goalToast: bool
     shortcuts: SettingsGetResultShortcuts
     onboardingDone: bool
     mobileSync: bool
@@ -864,9 +941,23 @@ class SettingsUpdateParamsCounterColors(TypedDict):
     dark: SettingsUpdateParamsCounterColorsDark
 
 
+class SettingsUpdateParamsWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class SettingsUpdateParamsWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
 class SettingsUpdateParamsWallpaper(TypedDict):
     enabled: bool
     source: Literal["none", "image", "aero"]
+    asset: SettingsUpdateParamsWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[SettingsUpdateParamsWallpaperHistoryItem]
     blur: int
     overlay: int
     position: Literal["center", "top", "bottom"]
@@ -878,6 +969,14 @@ class SettingsUpdateParamsShortcuts(TypedDict):
     settings: str
     library: str
     ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
 
 
 class SettingsUpdateParamsOnboardingAnswers(TypedDict):
@@ -896,9 +995,11 @@ class SettingsUpdateParams(TypedDict):
     favoriteWidgets: NotRequired[list[str]]
     counterColorsEnabled: NotRequired[bool]
     counterColors: NotRequired[SettingsUpdateParamsCounterColors]
+    accentColor: NotRequired[str | None]
     wallpaper: NotRequired[SettingsUpdateParamsWallpaper]
     deckHeatmap: NotRequired[bool]
     brandAnimation: NotRequired[bool]
+    goalToast: NotRequired[bool]
     shortcuts: NotRequired[SettingsUpdateParamsShortcuts]
     onboardingDone: NotRequired[bool]
     mobileSync: NotRequired[bool]
@@ -943,9 +1044,23 @@ class SettingsUpdateResultCounterColors(TypedDict):
     dark: SettingsUpdateResultCounterColorsDark
 
 
+class SettingsUpdateResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class SettingsUpdateResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
 class SettingsUpdateResultWallpaper(TypedDict):
     enabled: bool
     source: Literal["none", "image", "aero"]
+    asset: SettingsUpdateResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[SettingsUpdateResultWallpaperHistoryItem]
     blur: int
     overlay: int
     position: Literal["center", "top", "bottom"]
@@ -957,6 +1072,14 @@ class SettingsUpdateResultShortcuts(TypedDict):
     settings: str
     library: str
     ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
 
 
 class SettingsUpdateResultOnboardingAnswers(TypedDict):
@@ -975,9 +1098,11 @@ class SettingsUpdateResult(TypedDict):
     favoriteWidgets: list[str]
     counterColorsEnabled: bool
     counterColors: SettingsUpdateResultCounterColors
+    accentColor: str | None
     wallpaper: SettingsUpdateResultWallpaper
     deckHeatmap: bool
     brandAnimation: bool
+    goalToast: bool
     shortcuts: SettingsUpdateResultShortcuts
     onboardingDone: bool
     mobileSync: bool
@@ -990,10 +1115,32 @@ class FeedbackVisitParams(TypedDict):
 
 class FeedbackVisitResult(TypedDict):
     askRating: bool
+    askShare: bool
 
 
 class FeedbackAnswerParams(TypedDict):
     choice: Literal["rate", "later", "never"]
+
+
+class FeedbackAnswerShareParams(TypedDict):
+    choice: Literal["share", "later", "never"]
+
+
+class SystemShareParamsAnchor(TypedDict):
+    x: float
+    y: float
+    width: float
+    height: float
+
+
+class SystemShareParams(TypedDict):
+    text: str
+    url: str
+    anchor: SystemShareParamsAnchor
+
+
+class SystemShareResult(TypedDict):
+    method: Literal["sheet", "clipboard"]
 
 
 class WidgetsListParams(TypedDict):
@@ -1099,7 +1246,7 @@ class WidgetsListResultItemElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -1128,7 +1275,7 @@ class WidgetsListResultItemElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsListResultItemElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsListResultItemElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
     chart: Literal["bar", "line"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
@@ -1159,7 +1306,7 @@ class WidgetsListResultItemElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsListResultItemElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsListResultItemElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -1367,7 +1514,7 @@ class WidgetsSaveParamsWidgetElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -1396,7 +1543,7 @@ class WidgetsSaveParamsWidgetElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsSaveParamsWidgetElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsSaveParamsWidgetElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
     chart: Literal["bar", "line"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
@@ -1427,7 +1574,7 @@ class WidgetsSaveParamsWidgetElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsSaveParamsWidgetElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsSaveParamsWidgetElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -1639,7 +1786,7 @@ class WidgetsSaveResultElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -1668,7 +1815,7 @@ class WidgetsSaveResultElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsSaveResultElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsSaveResultElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
     chart: Literal["bar", "line"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
@@ -1699,7 +1846,7 @@ class WidgetsSaveResultElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsSaveResultElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsSaveResultElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -1954,7 +2101,7 @@ class WidgetsImportResultWidgetOption0ElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -1983,7 +2130,7 @@ class WidgetsImportResultWidgetOption0ElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsImportResultWidgetOption0ElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsImportResultWidgetOption0ElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
     chart: Literal["bar", "line"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
@@ -2014,7 +2161,7 @@ class WidgetsImportResultWidgetOption0ElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsImportResultWidgetOption0ElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsImportResultWidgetOption0ElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -2159,7 +2306,7 @@ class CardsGetResult(TypedDict):
     tags: list[str]
     state: Literal["new", "learning", "review", "suspended", "buried"]
     intervalDays: int
-    reviews: int
+    ratings: int
     lapses: int
     lastReview: str | None
     recent: list[CardsGetResultRecentItem]
@@ -2769,7 +2916,7 @@ class AiConversationResultProposalsItemWidgetElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -2798,7 +2945,7 @@ class AiConversationResultProposalsItemWidgetElementsItemOption2(TypedDict):
     showFrom: NotRequired[AiConversationResultProposalsItemWidgetElementsItemOption2ShowFrom]
     layouts: NotRequired[list[AiConversationResultProposalsItemWidgetElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
     chart: Literal["bar", "line"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
@@ -2829,7 +2976,7 @@ class AiConversationResultProposalsItemWidgetElementsItemOption3(TypedDict):
     showFrom: NotRequired[AiConversationResultProposalsItemWidgetElementsItemOption3ShowFrom]
     layouts: NotRequired[list[AiConversationResultProposalsItemWidgetElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -2968,9 +3115,23 @@ class AiConversationResultProposalsItemPatchCounterColors(TypedDict):
     dark: AiConversationResultProposalsItemPatchCounterColorsDark
 
 
+class AiConversationResultProposalsItemPatchWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class AiConversationResultProposalsItemPatchWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
 class AiConversationResultProposalsItemPatchWallpaper(TypedDict):
     enabled: bool
     source: Literal["none", "image", "aero"]
+    asset: AiConversationResultProposalsItemPatchWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[AiConversationResultProposalsItemPatchWallpaperHistoryItem]
     blur: int
     overlay: int
     position: Literal["center", "top", "bottom"]
@@ -2987,9 +3148,32 @@ class AiConversationResultProposalsItemPatch(TypedDict):
     brandAnimation: NotRequired[bool]
 
 
+class AiConversationResultProposalsItemGoalConfigOption0DecksItem(TypedDict):
+    id: int
+    name: str
+
+
+class AiConversationResultProposalsItemGoalConfigOption0(TypedDict):
+    kind: Literal["exam"]
+    decks: list[AiConversationResultProposalsItemGoalConfigOption0DecksItem]
+    examDate: str
+    bufferDays: int
+    mode: Literal["learned", "reviewed"]
+    counts: Literal["newAndDue", "newOnly"]
+    studyWeekdays: list[int]
+    freeDates: list[str]
+
+
+class AiConversationResultProposalsItemGoal(TypedDict):
+    id: str | None
+    name: str
+    archived: bool
+    config: AiConversationResultProposalsItemGoalConfigOption0
+
+
 class AiConversationResultProposalsItem(TypedDict):
     id: str
-    kind: Literal["widget", "dashboard", "settings"]
+    kind: Literal["widget", "dashboard", "settings", "goal"]
     summary: str
     source: Literal["chat", "external"]
     createdAt: str
@@ -2998,6 +3182,7 @@ class AiConversationResultProposalsItem(TypedDict):
     addToDashboard: NotRequired[bool]
     layout: NotRequired[AiConversationResultProposalsItemLayout]
     patch: NotRequired[AiConversationResultProposalsItemPatch]
+    goal: NotRequired[AiConversationResultProposalsItemGoal]
 
 
 class AiConversationResultErrorOption0(TypedDict):
@@ -3127,7 +3312,7 @@ class AiApplyProposalParamsWidgetElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -3156,7 +3341,7 @@ class AiApplyProposalParamsWidgetElementsItemOption2(TypedDict):
     showFrom: NotRequired[AiApplyProposalParamsWidgetElementsItemOption2ShowFrom]
     layouts: NotRequired[list[AiApplyProposalParamsWidgetElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
     chart: Literal["bar", "line"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
@@ -3187,7 +3372,7 @@ class AiApplyProposalParamsWidgetElementsItemOption3(TypedDict):
     showFrom: NotRequired[AiApplyProposalParamsWidgetElementsItemOption3ShowFrom]
     layouts: NotRequired[list[AiApplyProposalParamsWidgetElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -3296,9 +3481,36 @@ class AiApplyProposalParamsWidget(TypedDict):
     elements: list[AiApplyProposalParamsWidgetElementsItemOption0 | AiApplyProposalParamsWidgetElementsItemOption1 | AiApplyProposalParamsWidgetElementsItemOption2 | AiApplyProposalParamsWidgetElementsItemOption3 | AiApplyProposalParamsWidgetElementsItemOption4 | AiApplyProposalParamsWidgetElementsItemOption5 | AiApplyProposalParamsWidgetElementsItemOption6]
 
 
+class AiApplyProposalParamsGoalConfigOption0DecksItem(TypedDict):
+    id: int
+    name: str
+
+
+class AiApplyProposalParamsGoalConfigOption0(TypedDict):
+    kind: Literal["exam"]
+    decks: list[AiApplyProposalParamsGoalConfigOption0DecksItem]
+    examDate: str
+    bufferDays: int
+    mode: Literal["learned", "reviewed"]
+    counts: Literal["newAndDue", "newOnly"]
+    studyWeekdays: list[int]
+    freeDates: list[str]
+
+
+class AiApplyProposalParamsGoal(TypedDict):
+    id: str
+    version: Literal[1]
+    name: str
+    createdDay: str
+    updatedAt: int
+    archived: bool
+    config: AiApplyProposalParamsGoalConfigOption0
+
+
 class AiApplyProposalParams(TypedDict):
     id: str
     widget: NotRequired[AiApplyProposalParamsWidget]
+    goal: NotRequired[AiApplyProposalParamsGoal]
 
 
 class AiRejectProposalParams(TypedDict):
@@ -3312,7 +3524,7 @@ class AiChangesParams(TypedDict):
 class AiChangesResultItem(TypedDict):
     id: str
     at: str
-    kind: Literal["widget", "dashboard", "settings"]
+    kind: Literal["widget", "dashboard", "settings", "goal"]
     summary: str
     source: Literal["chat", "external"]
     mode: Literal["approved", "auto"]
@@ -3324,7 +3536,7 @@ class AiRollbackParams(TypedDict):
 
 
 class AiAnswerPermissionParams(TypedDict):
-    decision: Literal["once", "always", "deny"]
+    decision: Literal["once", "deny"]
 
 
 class AiAnswerQuestionParams(TypedDict):
@@ -3564,28 +3776,539 @@ class AiSaveBridgeResult(TypedDict):
     saved: bool
 
 
-class WallpaperPreviewParams(TypedDict):
-    pass
-
-
-class WallpaperPreviewResult(TypedDict):
-    image: Any
-
-
 class WallpaperChooseParams(TypedDict):
     pass
 
 
+class WallpaperChooseResultDashboardBackgroundsDesktopOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperChooseResultDashboardBackgroundsTabletOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperChooseResultDashboardBackgroundsPhoneOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperChooseResultDashboardBackgrounds(TypedDict):
+    desktop: WallpaperChooseResultDashboardBackgroundsDesktopOption0 | None
+    tablet: WallpaperChooseResultDashboardBackgroundsTabletOption0 | None
+    phone: WallpaperChooseResultDashboardBackgroundsPhoneOption0 | None
+
+
+class WallpaperChooseResultCounterColorsLight(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperChooseResultCounterColorsDark(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperChooseResultCounterColors(TypedDict):
+    light: WallpaperChooseResultCounterColorsLight
+    dark: WallpaperChooseResultCounterColorsDark
+
+
+class WallpaperChooseResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperChooseResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperChooseResultWallpaper(TypedDict):
+    enabled: bool
+    source: Literal["none", "image", "aero"]
+    asset: WallpaperChooseResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[WallpaperChooseResultWallpaperHistoryItem]
+    blur: int
+    overlay: int
+    position: Literal["center", "top", "bottom"]
+    textColor: Literal["dark", "light"]
+
+
+class WallpaperChooseResultShortcuts(TypedDict):
+    dashboard: str
+    settings: str
+    library: str
+    ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
+
+
+class WallpaperChooseResultOnboardingAnswers(TypedDict):
+    role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
+    discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
+
+
 class WallpaperChooseResult(TypedDict):
-    image: Any
+    theme: Literal["system", "light", "dark", "frutiger-aero"]
+    language: Literal["auto", "en", "de"]
+    sidebarWidth: int
+    widgetRailWidth: int
+    aiPanelWidth: int
+    openFullscreen: bool
+    dashboardBackgrounds: WallpaperChooseResultDashboardBackgrounds
+    favoriteWidgets: list[str]
+    counterColorsEnabled: bool
+    counterColors: WallpaperChooseResultCounterColors
+    accentColor: str | None
+    wallpaper: WallpaperChooseResultWallpaper
+    deckHeatmap: bool
+    brandAnimation: bool
+    goalToast: bool
+    shortcuts: WallpaperChooseResultShortcuts
+    onboardingDone: bool
+    mobileSync: bool
+    onboardingAnswers: WallpaperChooseResultOnboardingAnswers
+
+
+class WallpaperDroppedParams(TypedDict):
+    pass
+
+
+class WallpaperDroppedResultDashboardBackgroundsDesktopOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperDroppedResultDashboardBackgroundsTabletOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperDroppedResultDashboardBackgroundsPhoneOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperDroppedResultDashboardBackgrounds(TypedDict):
+    desktop: WallpaperDroppedResultDashboardBackgroundsDesktopOption0 | None
+    tablet: WallpaperDroppedResultDashboardBackgroundsTabletOption0 | None
+    phone: WallpaperDroppedResultDashboardBackgroundsPhoneOption0 | None
+
+
+class WallpaperDroppedResultCounterColorsLight(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperDroppedResultCounterColorsDark(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperDroppedResultCounterColors(TypedDict):
+    light: WallpaperDroppedResultCounterColorsLight
+    dark: WallpaperDroppedResultCounterColorsDark
+
+
+class WallpaperDroppedResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperDroppedResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperDroppedResultWallpaper(TypedDict):
+    enabled: bool
+    source: Literal["none", "image", "aero"]
+    asset: WallpaperDroppedResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[WallpaperDroppedResultWallpaperHistoryItem]
+    blur: int
+    overlay: int
+    position: Literal["center", "top", "bottom"]
+    textColor: Literal["dark", "light"]
+
+
+class WallpaperDroppedResultShortcuts(TypedDict):
+    dashboard: str
+    settings: str
+    library: str
+    ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
+
+
+class WallpaperDroppedResultOnboardingAnswers(TypedDict):
+    role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
+    discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
+
+
+class WallpaperDroppedResult(TypedDict):
+    theme: Literal["system", "light", "dark", "frutiger-aero"]
+    language: Literal["auto", "en", "de"]
+    sidebarWidth: int
+    widgetRailWidth: int
+    aiPanelWidth: int
+    openFullscreen: bool
+    dashboardBackgrounds: WallpaperDroppedResultDashboardBackgrounds
+    favoriteWidgets: list[str]
+    counterColorsEnabled: bool
+    counterColors: WallpaperDroppedResultCounterColors
+    accentColor: str | None
+    wallpaper: WallpaperDroppedResultWallpaper
+    deckHeatmap: bool
+    brandAnimation: bool
+    goalToast: bool
+    shortcuts: WallpaperDroppedResultShortcuts
+    onboardingDone: bool
+    mobileSync: bool
+    onboardingAnswers: WallpaperDroppedResultOnboardingAnswers
 
 
 class WallpaperRemoveParams(TypedDict):
     pass
 
 
+class WallpaperRemoveResultDashboardBackgroundsDesktopOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperRemoveResultDashboardBackgroundsTabletOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperRemoveResultDashboardBackgroundsPhoneOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperRemoveResultDashboardBackgrounds(TypedDict):
+    desktop: WallpaperRemoveResultDashboardBackgroundsDesktopOption0 | None
+    tablet: WallpaperRemoveResultDashboardBackgroundsTabletOption0 | None
+    phone: WallpaperRemoveResultDashboardBackgroundsPhoneOption0 | None
+
+
+class WallpaperRemoveResultCounterColorsLight(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperRemoveResultCounterColorsDark(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperRemoveResultCounterColors(TypedDict):
+    light: WallpaperRemoveResultCounterColorsLight
+    dark: WallpaperRemoveResultCounterColorsDark
+
+
+class WallpaperRemoveResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperRemoveResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperRemoveResultWallpaper(TypedDict):
+    enabled: bool
+    source: Literal["none", "image", "aero"]
+    asset: WallpaperRemoveResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[WallpaperRemoveResultWallpaperHistoryItem]
+    blur: int
+    overlay: int
+    position: Literal["center", "top", "bottom"]
+    textColor: Literal["dark", "light"]
+
+
+class WallpaperRemoveResultShortcuts(TypedDict):
+    dashboard: str
+    settings: str
+    library: str
+    ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
+
+
+class WallpaperRemoveResultOnboardingAnswers(TypedDict):
+    role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
+    discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
+
+
 class WallpaperRemoveResult(TypedDict):
-    image: Any
+    theme: Literal["system", "light", "dark", "frutiger-aero"]
+    language: Literal["auto", "en", "de"]
+    sidebarWidth: int
+    widgetRailWidth: int
+    aiPanelWidth: int
+    openFullscreen: bool
+    dashboardBackgrounds: WallpaperRemoveResultDashboardBackgrounds
+    favoriteWidgets: list[str]
+    counterColorsEnabled: bool
+    counterColors: WallpaperRemoveResultCounterColors
+    accentColor: str | None
+    wallpaper: WallpaperRemoveResultWallpaper
+    deckHeatmap: bool
+    brandAnimation: bool
+    goalToast: bool
+    shortcuts: WallpaperRemoveResultShortcuts
+    onboardingDone: bool
+    mobileSync: bool
+    onboardingAnswers: WallpaperRemoveResultOnboardingAnswers
+
+
+class WallpaperUseParams(TypedDict):
+    id: str
+
+
+class WallpaperUseResultDashboardBackgroundsDesktopOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperUseResultDashboardBackgroundsTabletOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperUseResultDashboardBackgroundsPhoneOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperUseResultDashboardBackgrounds(TypedDict):
+    desktop: WallpaperUseResultDashboardBackgroundsDesktopOption0 | None
+    tablet: WallpaperUseResultDashboardBackgroundsTabletOption0 | None
+    phone: WallpaperUseResultDashboardBackgroundsPhoneOption0 | None
+
+
+class WallpaperUseResultCounterColorsLight(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperUseResultCounterColorsDark(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperUseResultCounterColors(TypedDict):
+    light: WallpaperUseResultCounterColorsLight
+    dark: WallpaperUseResultCounterColorsDark
+
+
+class WallpaperUseResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperUseResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperUseResultWallpaper(TypedDict):
+    enabled: bool
+    source: Literal["none", "image", "aero"]
+    asset: WallpaperUseResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[WallpaperUseResultWallpaperHistoryItem]
+    blur: int
+    overlay: int
+    position: Literal["center", "top", "bottom"]
+    textColor: Literal["dark", "light"]
+
+
+class WallpaperUseResultShortcuts(TypedDict):
+    dashboard: str
+    settings: str
+    library: str
+    ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
+
+
+class WallpaperUseResultOnboardingAnswers(TypedDict):
+    role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
+    discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
+
+
+class WallpaperUseResult(TypedDict):
+    theme: Literal["system", "light", "dark", "frutiger-aero"]
+    language: Literal["auto", "en", "de"]
+    sidebarWidth: int
+    widgetRailWidth: int
+    aiPanelWidth: int
+    openFullscreen: bool
+    dashboardBackgrounds: WallpaperUseResultDashboardBackgrounds
+    favoriteWidgets: list[str]
+    counterColorsEnabled: bool
+    counterColors: WallpaperUseResultCounterColors
+    accentColor: str | None
+    wallpaper: WallpaperUseResultWallpaper
+    deckHeatmap: bool
+    brandAnimation: bool
+    goalToast: bool
+    shortcuts: WallpaperUseResultShortcuts
+    onboardingDone: bool
+    mobileSync: bool
+    onboardingAnswers: WallpaperUseResultOnboardingAnswers
+
+
+class WallpaperForgetParams(TypedDict):
+    id: str
+
+
+class WallpaperForgetResultDashboardBackgroundsDesktopOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperForgetResultDashboardBackgroundsTabletOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperForgetResultDashboardBackgroundsPhoneOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperForgetResultDashboardBackgrounds(TypedDict):
+    desktop: WallpaperForgetResultDashboardBackgroundsDesktopOption0 | None
+    tablet: WallpaperForgetResultDashboardBackgroundsTabletOption0 | None
+    phone: WallpaperForgetResultDashboardBackgroundsPhoneOption0 | None
+
+
+class WallpaperForgetResultCounterColorsLight(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperForgetResultCounterColorsDark(TypedDict):
+    new: str
+    learning: str
+    due: str
+
+
+class WallpaperForgetResultCounterColors(TypedDict):
+    light: WallpaperForgetResultCounterColorsLight
+    dark: WallpaperForgetResultCounterColorsDark
+
+
+class WallpaperForgetResultWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperForgetResultWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class WallpaperForgetResultWallpaper(TypedDict):
+    enabled: bool
+    source: Literal["none", "image", "aero"]
+    asset: WallpaperForgetResultWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[WallpaperForgetResultWallpaperHistoryItem]
+    blur: int
+    overlay: int
+    position: Literal["center", "top", "bottom"]
+    textColor: Literal["dark", "light"]
+
+
+class WallpaperForgetResultShortcuts(TypedDict):
+    dashboard: str
+    settings: str
+    library: str
+    ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
+
+
+class WallpaperForgetResultOnboardingAnswers(TypedDict):
+    role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
+    discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
+
+
+class WallpaperForgetResult(TypedDict):
+    theme: Literal["system", "light", "dark", "frutiger-aero"]
+    language: Literal["auto", "en", "de"]
+    sidebarWidth: int
+    widgetRailWidth: int
+    aiPanelWidth: int
+    openFullscreen: bool
+    dashboardBackgrounds: WallpaperForgetResultDashboardBackgrounds
+    favoriteWidgets: list[str]
+    counterColorsEnabled: bool
+    counterColors: WallpaperForgetResultCounterColors
+    accentColor: str | None
+    wallpaper: WallpaperForgetResultWallpaper
+    deckHeatmap: bool
+    brandAnimation: bool
+    goalToast: bool
+    shortcuts: WallpaperForgetResultShortcuts
+    onboardingDone: bool
+    mobileSync: bool
+    onboardingAnswers: WallpaperForgetResultOnboardingAnswers
 
 
 class ShortcutsBeginRecordingParams(TypedDict):
@@ -3597,7 +4320,7 @@ class ShortcutsEndRecordingParams(TypedDict):
 
 
 class ShortcutsSetParams(TypedDict):
-    action: Literal["dashboard", "settings", "library", "ankiStatistics"]
+    action: Literal["dashboard", "library", "settings", "ankiStatistics", "appearance", "wallpaper", "editDashboard", "createWidget", "importDashboard", "assistant", "nextTheme", "fullscreen"]
     keys: str
 
 
@@ -3639,9 +4362,23 @@ class ShortcutsSetResultSettingsCounterColors(TypedDict):
     dark: ShortcutsSetResultSettingsCounterColorsDark
 
 
+class ShortcutsSetResultSettingsWallpaperAssetOption0(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
+class ShortcutsSetResultSettingsWallpaperHistoryItem(TypedDict):
+    id: str
+    type: Literal["image/png", "image/jpeg", "image/gif", "image/webp", "video/webm"]
+
+
 class ShortcutsSetResultSettingsWallpaper(TypedDict):
     enabled: bool
     source: Literal["none", "image", "aero"]
+    asset: ShortcutsSetResultSettingsWallpaperAssetOption0 | None
+    deckOverview: bool
+    loop: bool
+    history: list[ShortcutsSetResultSettingsWallpaperHistoryItem]
     blur: int
     overlay: int
     position: Literal["center", "top", "bottom"]
@@ -3653,6 +4390,14 @@ class ShortcutsSetResultSettingsShortcuts(TypedDict):
     settings: str
     library: str
     ankiStatistics: str
+    appearance: str
+    wallpaper: str
+    editDashboard: str
+    createWidget: str
+    importDashboard: str
+    assistant: str
+    nextTheme: str
+    fullscreen: str
 
 
 class ShortcutsSetResultSettingsOnboardingAnswers(TypedDict):
@@ -3671,9 +4416,11 @@ class ShortcutsSetResultSettings(TypedDict):
     favoriteWidgets: list[str]
     counterColorsEnabled: bool
     counterColors: ShortcutsSetResultSettingsCounterColors
+    accentColor: str | None
     wallpaper: ShortcutsSetResultSettingsWallpaper
     deckHeatmap: bool
     brandAnimation: bool
+    goalToast: bool
     shortcuts: ShortcutsSetResultSettingsShortcuts
     onboardingDone: bool
     mobileSync: bool
@@ -3685,11 +4432,582 @@ class ShortcutsSetResult(TypedDict):
     settings: ShortcutsSetResultSettings
 
 
+class PermissionsListParams(TypedDict):
+    pass
+
+
+class PermissionsListResultItem(TypedDict):
+    id: Literal["ai.decks", "ai.cards", "ai.external", "mobile.card", "goals.sync", "anki.deckLimits"]
+    granted: bool
+    grantedAt: str | None
+    source: Literal["dialog", "migrated"] | None
+    lastUsedAt: str | None
+    requestable: bool
+
+
+class PermissionsRequestParams(TypedDict):
+    id: Literal["ai.decks", "ai.cards", "ai.external", "mobile.card", "goals.sync", "anki.deckLimits"]
+
+
+class PermissionsRequestResultItem(TypedDict):
+    id: Literal["ai.decks", "ai.cards", "ai.external", "mobile.card", "goals.sync", "anki.deckLimits"]
+    granted: bool
+    grantedAt: str | None
+    source: Literal["dialog", "migrated"] | None
+    lastUsedAt: str | None
+    requestable: bool
+
+
+class PermissionsRevokeParams(TypedDict):
+    id: Literal["ai.decks", "ai.cards", "ai.external", "mobile.card", "goals.sync", "anki.deckLimits"]
+
+
+class PermissionsRevokeResultItem(TypedDict):
+    id: Literal["ai.decks", "ai.cards", "ai.external", "mobile.card", "goals.sync", "anki.deckLimits"]
+    granted: bool
+    grantedAt: str | None
+    source: Literal["dialog", "migrated"] | None
+    lastUsedAt: str | None
+    requestable: bool
+
+
+class GoalsRaiseLimitParams(TypedDict):
+    id: str
+
+
+class GoalsRaiseLimitResultOption0(TypedDict):
+    applied: Literal[True]
+    id: str
+
+
+class GoalsRaiseLimitResultOption1(TypedDict):
+    applied: Literal[False]
+    reason: Literal["denied", "postponed", "notNeeded"]
+
+
+class GoalsOverviewParams(TypedDict):
+    pass
+
+
+class GoalsOverviewResultItemToday(TypedDict):
+    target: int
+    done: int
+
+
+class GoalsOverviewResultItemStreak(TypedDict):
+    current: int
+    best: int
+
+
+class GoalsOverviewResultItem(TypedDict):
+    id: str
+    name: str
+    archived: bool
+    decks: list[str]
+    examDate: str
+    bufferDays: int
+    mode: Literal["learned", "reviewed"]
+    counts: Literal["newAndDue", "newOnly"]
+    state: Literal["active", "buffer", "finished", "over", "noDecks"]
+    today: GoalsOverviewResultItemToday
+    studyDaysLeft: int
+    streak: GoalsOverviewResultItemStreak
+    minutesLeft: int | None
+    warnings: list[str]
+
+
+class GoalsOpenDeckOptionsParams(TypedDict):
+    deckId: int
+
+
+class ChangesListParams(TypedDict):
+    pass
+
+
+class ChangesListResultItemDetailsOption0DecksItem(TypedDict):
+    deckId: int
+    deckName: str
+    before: int
+    after: int
+
+
+class ChangesListResultItemDetailsOption0(TypedDict):
+    kind: Literal["deckLimit"]
+    decks: list[ChangesListResultItemDetailsOption0DecksItem]
+
+
+class ChangesListResultItem(TypedDict):
+    id: str
+    at: str
+    source: Literal["user", "automatic", "ai"]
+    permission: Literal["ai.decks", "ai.cards", "ai.external", "mobile.card", "goals.sync", "anki.deckLimits"]
+    undone: bool
+    canUndo: bool
+    details: ChangesListResultItemDetailsOption0
+
+
+class ChangesUndoParams(TypedDict):
+    id: str
+
+
+class ChangesUndoResultItemDetailsOption0DecksItem(TypedDict):
+    deckId: int
+    deckName: str
+    before: int
+    after: int
+
+
+class ChangesUndoResultItemDetailsOption0(TypedDict):
+    kind: Literal["deckLimit"]
+    decks: list[ChangesUndoResultItemDetailsOption0DecksItem]
+
+
+class ChangesUndoResultItem(TypedDict):
+    id: str
+    at: str
+    source: Literal["user", "automatic", "ai"]
+    permission: Literal["ai.decks", "ai.cards", "ai.external", "mobile.card", "goals.sync", "anki.deckLimits"]
+    undone: bool
+    canUndo: bool
+    details: ChangesUndoResultItemDetailsOption0
+
+
+class GoalsListParams(TypedDict):
+    pass
+
+
+class GoalsListResultItemConfigOption0DecksItem(TypedDict):
+    id: int
+    name: str
+
+
+class GoalsListResultItemConfigOption0(TypedDict):
+    kind: Literal["exam"]
+    decks: list[GoalsListResultItemConfigOption0DecksItem]
+    examDate: str
+    bufferDays: int
+    mode: Literal["learned", "reviewed"]
+    counts: Literal["newAndDue", "newOnly"]
+    studyWeekdays: list[int]
+    freeDates: list[str]
+
+
+class GoalsListResultItem(TypedDict):
+    id: str
+    version: Literal[1]
+    name: str
+    createdDay: str
+    updatedAt: int
+    archived: bool
+    config: GoalsListResultItemConfigOption0
+
+
+class GoalsSaveParamsGoalConfigOption0DecksItem(TypedDict):
+    id: int
+    name: str
+
+
+class GoalsSaveParamsGoalConfigOption0(TypedDict):
+    kind: Literal["exam"]
+    decks: list[GoalsSaveParamsGoalConfigOption0DecksItem]
+    examDate: str
+    bufferDays: int
+    mode: Literal["learned", "reviewed"]
+    counts: Literal["newAndDue", "newOnly"]
+    studyWeekdays: list[int]
+    freeDates: list[str]
+
+
+class GoalsSaveParamsGoal(TypedDict):
+    id: str | None
+    name: str
+    archived: bool
+    config: GoalsSaveParamsGoalConfigOption0
+
+
+class GoalsSaveParams(TypedDict):
+    goal: GoalsSaveParamsGoal
+
+
+class GoalsSaveResultConfigOption0DecksItem(TypedDict):
+    id: int
+    name: str
+
+
+class GoalsSaveResultConfigOption0(TypedDict):
+    kind: Literal["exam"]
+    decks: list[GoalsSaveResultConfigOption0DecksItem]
+    examDate: str
+    bufferDays: int
+    mode: Literal["learned", "reviewed"]
+    counts: Literal["newAndDue", "newOnly"]
+    studyWeekdays: list[int]
+    freeDates: list[str]
+
+
+class GoalsSaveResult(TypedDict):
+    id: str
+    version: Literal[1]
+    name: str
+    createdDay: str
+    updatedAt: int
+    archived: bool
+    config: GoalsSaveResultConfigOption0
+
+
+class GoalsDeleteParams(TypedDict):
+    id: str
+
+
+class GoalsStatusParams(TypedDict):
+    id: str
+
+
+class GoalsStatusResultOption0NewCards(TypedDict):
+    target: int
+    done: int
+
+
+class GoalsStatusResultOption0Reviews(TypedDict):
+    target: int
+    done: int
+    counted: bool
+
+
+class GoalsStatusResultOption0Tomorrow(TypedDict):
+    ifMet: int
+    ifStopped: int
+    inBuffer: bool
+
+
+class GoalsStatusResultOption0Totals(TypedDict):
+    cards: int
+    learned: int
+    open: int
+    inProgress: int
+    finished: int | None
+    waiting: int | None
+
+
+class GoalsStatusResultOption0DecksItem(TypedDict):
+    deckId: int
+    parentId: int | None
+    name: str
+    open: int
+    inProgress: int
+    target: int
+    done: int
+
+
+class GoalsStatusResultOption0Streak(TypedDict):
+    current: int
+    best: int
+    atRisk: bool
+    milestone: int | None
+
+
+class GoalsStatusResultOption0HistoryItem(TypedDict):
+    date: str
+    target: int
+    done: int
+    result: Literal["met", "missed", "rest", "pending"]
+
+
+class GoalsStatusResultOption0PlanItem(TypedDict):
+    date: str
+    target: int
+    reviews: int
+    kind: Literal["study", "review", "rest", "buffer", "exam"]
+
+
+class GoalsStatusResultOption0WarningsItemOption0(TypedDict):
+    kind: Literal["deckMissing"]
+    name: str
+
+
+class GoalsStatusResultOption0WarningsItemOption1(TypedDict):
+    kind: Literal["suspended"]
+    cards: int
+
+
+class GoalsStatusResultOption0WarningsItemOption2(TypedDict):
+    kind: Literal["lateCards"]
+    cards: int
+
+
+class GoalsStatusResultOption0WarningsItemOption3(TypedDict):
+    kind: Literal["noTimeToReview"]
+    days: int
+
+
+class GoalsStatusResultOption0WarningsItemOption4(TypedDict):
+    kind: Literal["newLimit"]
+    deckId: int
+    name: str
+    limit: int
+    target: int
+
+
+class GoalsStatusResultOption0TimeOption0Left(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsStatusResultOption0TimeOption0Day(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsStatusResultOption0TimeOption0NewCards(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsStatusResultOption0TimeOption0Reviews(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsStatusResultOption0TimeOption0(TypedDict):
+    left: GoalsStatusResultOption0TimeOption0Left
+    day: GoalsStatusResultOption0TimeOption0Day
+    newCards: GoalsStatusResultOption0TimeOption0NewCards
+    reviews: GoalsStatusResultOption0TimeOption0Reviews
+    model: str
+
+
+class GoalsStatusResultOption0(TypedDict):
+    kind: Literal["exam"]
+    goalId: str
+    state: Literal["active", "buffer", "finished", "over", "noDecks"]
+    tone: Literal["done", "progress", "behind", "rest"]
+    today: str
+    deadline: str
+    examDate: str
+    studyDaysLeft: int
+    target: int
+    done: int
+    newCards: GoalsStatusResultOption0NewCards
+    reviews: GoalsStatusResultOption0Reviews
+    tomorrow: GoalsStatusResultOption0Tomorrow
+    totals: GoalsStatusResultOption0Totals
+    learnBy: str | None
+    firstGapDays: int | None
+    decks: list[GoalsStatusResultOption0DecksItem]
+    streak: GoalsStatusResultOption0Streak
+    history: list[GoalsStatusResultOption0HistoryItem]
+    plan: list[GoalsStatusResultOption0PlanItem]
+    warnings: list[GoalsStatusResultOption0WarningsItemOption0 | GoalsStatusResultOption0WarningsItemOption1 | GoalsStatusResultOption0WarningsItemOption2 | GoalsStatusResultOption0WarningsItemOption3 | GoalsStatusResultOption0WarningsItemOption4]
+    celebrate: bool
+    refreshAt: int
+    time: GoalsStatusResultOption0TimeOption0 | None
+    algorithm: str
+
+
+class GoalsPreviewParamsGoalConfigOption0DecksItem(TypedDict):
+    id: int
+    name: str
+
+
+class GoalsPreviewParamsGoalConfigOption0(TypedDict):
+    kind: Literal["exam"]
+    decks: list[GoalsPreviewParamsGoalConfigOption0DecksItem]
+    examDate: str
+    bufferDays: int
+    mode: Literal["learned", "reviewed"]
+    counts: Literal["newAndDue", "newOnly"]
+    studyWeekdays: list[int]
+    freeDates: list[str]
+
+
+class GoalsPreviewParamsGoal(TypedDict):
+    id: str | None
+    name: str
+    archived: bool
+    config: GoalsPreviewParamsGoalConfigOption0
+
+
+class GoalsPreviewParams(TypedDict):
+    goal: GoalsPreviewParamsGoal
+
+
+class GoalsPreviewResultOption0NewCards(TypedDict):
+    target: int
+    done: int
+
+
+class GoalsPreviewResultOption0Reviews(TypedDict):
+    target: int
+    done: int
+    counted: bool
+
+
+class GoalsPreviewResultOption0Tomorrow(TypedDict):
+    ifMet: int
+    ifStopped: int
+    inBuffer: bool
+
+
+class GoalsPreviewResultOption0Totals(TypedDict):
+    cards: int
+    learned: int
+    open: int
+    inProgress: int
+    finished: int | None
+    waiting: int | None
+
+
+class GoalsPreviewResultOption0DecksItem(TypedDict):
+    deckId: int
+    parentId: int | None
+    name: str
+    open: int
+    inProgress: int
+    target: int
+    done: int
+
+
+class GoalsPreviewResultOption0Streak(TypedDict):
+    current: int
+    best: int
+    atRisk: bool
+    milestone: int | None
+
+
+class GoalsPreviewResultOption0HistoryItem(TypedDict):
+    date: str
+    target: int
+    done: int
+    result: Literal["met", "missed", "rest", "pending"]
+
+
+class GoalsPreviewResultOption0PlanItem(TypedDict):
+    date: str
+    target: int
+    reviews: int
+    kind: Literal["study", "review", "rest", "buffer", "exam"]
+
+
+class GoalsPreviewResultOption0WarningsItemOption0(TypedDict):
+    kind: Literal["deckMissing"]
+    name: str
+
+
+class GoalsPreviewResultOption0WarningsItemOption1(TypedDict):
+    kind: Literal["suspended"]
+    cards: int
+
+
+class GoalsPreviewResultOption0WarningsItemOption2(TypedDict):
+    kind: Literal["lateCards"]
+    cards: int
+
+
+class GoalsPreviewResultOption0WarningsItemOption3(TypedDict):
+    kind: Literal["noTimeToReview"]
+    days: int
+
+
+class GoalsPreviewResultOption0WarningsItemOption4(TypedDict):
+    kind: Literal["newLimit"]
+    deckId: int
+    name: str
+    limit: int
+    target: int
+
+
+class GoalsPreviewResultOption0TimeOption0Left(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsPreviewResultOption0TimeOption0Day(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsPreviewResultOption0TimeOption0NewCards(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsPreviewResultOption0TimeOption0Reviews(TypedDict):
+    seconds: int
+    low: int
+    high: int
+
+
+class GoalsPreviewResultOption0TimeOption0(TypedDict):
+    left: GoalsPreviewResultOption0TimeOption0Left
+    day: GoalsPreviewResultOption0TimeOption0Day
+    newCards: GoalsPreviewResultOption0TimeOption0NewCards
+    reviews: GoalsPreviewResultOption0TimeOption0Reviews
+    model: str
+
+
+class GoalsPreviewResultOption0(TypedDict):
+    kind: Literal["exam"]
+    goalId: str
+    state: Literal["active", "buffer", "finished", "over", "noDecks"]
+    tone: Literal["done", "progress", "behind", "rest"]
+    today: str
+    deadline: str
+    examDate: str
+    studyDaysLeft: int
+    target: int
+    done: int
+    newCards: GoalsPreviewResultOption0NewCards
+    reviews: GoalsPreviewResultOption0Reviews
+    tomorrow: GoalsPreviewResultOption0Tomorrow
+    totals: GoalsPreviewResultOption0Totals
+    learnBy: str | None
+    firstGapDays: int | None
+    decks: list[GoalsPreviewResultOption0DecksItem]
+    streak: GoalsPreviewResultOption0Streak
+    history: list[GoalsPreviewResultOption0HistoryItem]
+    plan: list[GoalsPreviewResultOption0PlanItem]
+    warnings: list[GoalsPreviewResultOption0WarningsItemOption0 | GoalsPreviewResultOption0WarningsItemOption1 | GoalsPreviewResultOption0WarningsItemOption2 | GoalsPreviewResultOption0WarningsItemOption3 | GoalsPreviewResultOption0WarningsItemOption4]
+    celebrate: bool
+    refreshAt: int
+    time: GoalsPreviewResultOption0TimeOption0 | None
+    algorithm: str
+
+
+class GoalsDecksParams(TypedDict):
+    pass
+
+
+class GoalsDecksResultItem(TypedDict):
+    id: int
+    name: str
+    cards: int
+    open: int
+
+
+class GoalsAcknowledgeParams(TypedDict):
+    id: str
+
+
 class HostThemeChangedPayload(TypedDict):
     nightMode: bool
 
 
 class StatisticsChangedPayload(TypedDict):
+    pass
+
+
+class HostToggleAssistantPayload(TypedDict):
+    pass
+
+
+class SettingsChangedPayload(TypedDict):
     pass
 
 
@@ -3712,4 +5030,16 @@ class AiChangedPayload(TypedDict):
 
 
 class AiAppliedPayload(TypedDict):
+    pass
+
+
+class PermissionsChangedPayload(TypedDict):
+    pass
+
+
+class ChangesAppliedPayload(TypedDict):
+    id: str
+
+
+class GoalsChangedPayload(TypedDict):
     pass

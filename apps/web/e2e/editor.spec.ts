@@ -122,6 +122,7 @@ test("a saved widget goes onto the dashboard and can be edited and deleted", asy
   await expect(page.getByTestId("dashboard-grid")).toContainText("Streak");
 
   await page.getByRole("button", { name: "Edit dashboard", exact: true }).click();
+  await page.getByRole("button", { name: /^Custom widgets/ }).click();
   await expect(page.getByRole("button", { name: "Add My streak" })).toBeVisible();
   await button(page, "Cancel").click();
 
@@ -295,6 +296,21 @@ test("unsaved work asks before leaving, and saved work does not", async ({ page 
   await expect(page.getByTestId("dashboard-grid")).toBeVisible();
   await page.getByRole("link", { name: "Widget Library" }).click();
   await expect(page.locator('[data-custom-widget="Kept"]')).toBeVisible();
+});
+
+test("the arrow back and the title menu ask first as well", async ({ page }) => {
+  await button(page, "Text").click();
+  const dialog = page.getByRole("alertdialog", { name: "Save your changes?" });
+  await page.getByRole("link", { name: "Back to Widget Library" }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Keep editing" }).click();
+  await expect(canvas(page)).toBeVisible();
+
+  await page.getByRole("button", { name: "New widget", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Statly" }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Discard" }).click();
+  await expect(page.getByTestId("dashboard-grid")).toBeVisible();
 });
 
 test("an untouched editor can simply be left", async ({ page }) => {

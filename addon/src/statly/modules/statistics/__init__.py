@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
-from ...core.module import Context
+from ...core.module import Context, Events
 from ...core.reader import CollectionReader
+from ..review import ANSWERED, UNDONE
 from . import anki_stats, metrics
 from .cache import ResultCache
 
@@ -30,6 +32,8 @@ class StatisticsModule:
         self.cache = ResultCache()
 
     def register(self, context: Context) -> None:
+        # Other modules cache their reads here too, so one sync clears everything at once.
+        context.services["cache"] = self.cache
         for name, handler in _METRICS.items():
             context.router.query(name, self.cache.wrap(name, handler))
         graphs = self.cache.wrap("anki.graphs", anki_stats.load)
@@ -39,3 +43,15 @@ class StatisticsModule:
 
         context.router.query("statistics.ankiView", anki_view)
         context.host.on_data_replaced(self.cache.clear)
+        tell_after_answers(context.events, lambda: context.host.emit("statistics.changed", {}))
+
+
+def tell_after_answers(events: Events, changed: Callable[[], None]) -> None:
+    """The window counts again after every answer and undo while someone studies.
+
+    The review module announces an answer only once the next card is on screen, so the new
+    numbers are read while the person looks at that card. The window bundles what arrives
+    while it is still counting, so at most one round of queries is ever queued.
+    """
+    events.subscribe(ANSWERED, lambda _attempt: changed())
+    events.subscribe(UNDONE, lambda _attempt: changed())

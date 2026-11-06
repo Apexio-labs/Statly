@@ -11,8 +11,9 @@ from ...contract.types import MobileStatusResult
 from ...core.module import Context
 from ...core.reader import CollectionReader
 from ...core.storage import JsonStore
-from . import writer
-from .snapshot import build_snapshot, content_hash, encode_snapshot, filled
+from ..changes import ChangeGate, phone_card
+from ..permissions import PermissionService
+from .snapshot import STAND, build_snapshot, content_hash, encode_snapshot, filled
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,11 @@ class MobileSync:
     def __init__(self, context: Context) -> None:
         self._host = context.host
         self._settings = context.settings
+        self._permissions: PermissionService = context.services["permissions"]
+        self._gate: ChangeGate = context.services["changes"]
         self._dashboard: Any = context.services["dashboard"]
         self._widgets: Any = context.services["widgets"]
+        self._goals: Any = context.services.get("goals")
         self._thumbnails: dict[tuple[str, int], str] = {}
         self._store = JsonStore(context.host.data_folder)
         self._saw_first_sync = False
@@ -41,9 +45,12 @@ class MobileSync:
         stored: Any = self._store.read(_FILE)
         return cast(dict[str, Any], stored) if isinstance(stored, dict) else {}
 
+    def _allowed(self) -> bool:
+        return self._permissions.grants.allowed(phone_card.PERMISSION)
+
     def status(self) -> MobileStatusResult:
         return {
-            "enabled": self._settings.get()["mobileSync"],
+            "enabled": self._settings.get()["mobileSync"] and self._allowed(),
             "updated": self._state().get("updated"),
         }
 
@@ -76,13 +83,20 @@ class MobileSync:
         return self._shrunk(asset, _BACKGROUND_SIDE) if asset else None
 
     def _snapshot(self, reader: CollectionReader, devices: dict[str, list[Any]]) -> dict[str, Any]:
+        language = self._language()
+        goals = self._goals
+
+        def goal_block(kind: str) -> dict[str, Any] | None:
+            return goals.phone_block(kind, reader, language, STAND) if goals else None
+
         return build_snapshot(
             reader,
             devices,
-            self._language(),
+            language,
             self._custom_widgets(),
             lambda asset: self._shrunk(asset, _PICTURE_SIDE),
             self._backgrounds(),
+            goal_block,
         )
 
     def preview(self, params: Any, reader: CollectionReader) -> dict[str, Any]:
@@ -95,11 +109,11 @@ class MobileSync:
         snapshot = self._snapshot(CollectionReader(collection), self._devices())
         digest = content_hash(snapshot)
         state = self._state()
-        if not force and state.get("hash") == digest and not writer.needs_repair(collection):
+        if not force and state.get("hash") == digest and not phone_card.needs_repair(collection):
             return False
         now = datetime.now()
         payload = encode_snapshot(snapshot, now, language)
-        if not writer.write_snapshot(collection, payload):
+        if not phone_card.write_snapshot(collection, payload):
             return False
         updated = now.isoformat(timespec="minutes")
         self._store.write(_FILE, {**state, "hash": digest, "updated": updated})
@@ -107,17 +121,33 @@ class MobileSync:
 
     def _ready(self) -> bool:
         """Before the first sync of a session the collection may be behind another device."""
-        return self._settings.get()["mobileSync"] and (
-            self._saw_first_sync or not self._host.syncs_on_start()
+        return (
+            self._settings.get()["mobileSync"]
+            and self._allowed()
+            and (self._saw_first_sync or not self._host.syncs_on_start())
         )
 
     def enable(
         self, _params: Any, finish: Callable[[Any], None], fail: Callable[[Exception], None]
     ) -> None:
+        """Asks in Statly's own popup first. Without a yes there, nothing is written."""
+        if not self._allowed():
+
+            def answered(answer: str | None) -> None:
+                if answer is None:
+                    finish(self.status())
+                else:
+                    self.enable(_params, finish, fail)
+
+            self._permissions.ask(phone_card.PERMISSION, answered, modes=("always",))
+            return
+
         def work(collection: Any) -> None:
             self._host.create_backup()
             snapshot = self._snapshot(CollectionReader(collection), self._devices())
-            writer.set_up(collection, encode_snapshot(snapshot, datetime.now(), self._language()))
+            phone_card.set_up(
+                collection, encode_snapshot(snapshot, datetime.now(), self._language())
+            )
             self._store.write(
                 _FILE,
                 {
@@ -131,26 +161,39 @@ class MobileSync:
             self._saw_first_sync = True
             finish(self.status())
 
-        self._host.run_collection_write(work, done, fail)
+        self._gate.run(phone_card.PERMISSION, work, done, fail)
 
-    def disable(
-        self, _params: Any, finish: Callable[[Any], None], fail: Callable[[Exception], None]
-    ) -> None:
+    def remove_card(self, finished: Callable[[], None], fail: Callable[[Exception], None]) -> None:
+        """Takes the card out of the collection, while the permission still covers it."""
+
         def work(collection: Any) -> None:
             self._host.create_backup()
-            writer.remove(collection)
+            phone_card.remove(collection)
 
         def done(_result: Any) -> None:
             self._settings.update({"mobileSync": False})
             self._store.write(_FILE, {})
-            finish(self.status())
+            finished()
 
-        self._host.run_collection_write(work, done, fail)
+        if self._allowed():
+            self._gate.run(phone_card.PERMISSION, work, done, fail)
+        else:
+            # Nothing may be written without the permission, so the card stays until it is back.
+            self._settings.update({"mobileSync": False})
+            finished()
+
+    def disable(
+        self, _params: Any, finish: Callable[[Any], None], fail: Callable[[Exception], None]
+    ) -> None:
+        self._permissions.revoke(
+            {"id": phone_card.PERMISSION}, lambda _states: finish(self.status()), fail
+        )
 
     def refresh_now(
         self, _params: Any, finish: Callable[[Any], None], fail: Callable[[Exception], None]
     ) -> None:
-        self._host.run_collection_write(
+        self._gate.run(
+            phone_card.PERMISSION,
             lambda collection: self._write(collection, True),
             lambda _result: finish(self.status()),
             fail,
@@ -160,8 +203,11 @@ class MobileSync:
         now = self._host.monotonic()
         if self._ready() and now - self._last_attempt >= _MIN_SECONDS_BETWEEN_WRITES:
             self._last_attempt = now
-            self._host.run_collection_write(
-                lambda collection: self._write(collection, False), lambda _result: None, _log
+            self._gate.run(
+                phone_card.PERMISSION,
+                lambda collection: self._write(collection, False),
+                lambda _result: None,
+                _log,
             )
 
     def on_dashboard_saved(self, _layout: Any) -> None:
@@ -170,7 +216,9 @@ class MobileSync:
 
     def on_sync_starting(self) -> None:
         if self._ready():
-            self._host.write_before_sync(lambda collection: self._write(collection, False))
+            self._gate.before_sync(
+                phone_card.PERMISSION, lambda collection: self._write(collection, False)
+            )
 
     def on_sync_finished(self) -> None:
         """A sync can bring a card damaged on a phone, so the next look does not wait a minute."""
@@ -186,6 +234,12 @@ class MobileModule:
     def register(self, context: Context) -> None:
         sync = MobileSync(context)
         router, host = context.router, context.host
+        permissions: PermissionService = context.services["permissions"]
+        # The phone card was switched on before permissions existed, so it stays allowed.
+        permissions.grants.migrate(
+            "mobile", [phone_card.PERMISSION] if context.settings.get()["mobileSync"] else []
+        )
+        permissions.offer(phone_card.PERMISSION, requestable=False, on_revoke=sync.remove_card)
         router.local("mobile.status", lambda _params: sync.status())
         router.deferred("mobile.enable", sync.enable)
         router.deferred("mobile.disable", sync.disable)

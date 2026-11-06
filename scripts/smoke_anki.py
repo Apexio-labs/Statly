@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / ".dev" / "smoke"
@@ -29,6 +29,20 @@ def prepare(collection: Path | None) -> None:
     shutil.copytree(ROOT / "addon/tests/smoke/driver", addons / "statly_smoke_driver")
 
 
+def popup_is_safe(shown: Any) -> bool:
+    """The safe answer has the focus, nothing in it is a link, and the app shows behind it."""
+    try:
+        answers = list(shown["answers"])
+        return (
+            bool(answers)
+            and shown["focused"] == answers[0]
+            and shown["links"] == 0
+            and shown["backdrop"] is True
+        )
+    except (KeyError, TypeError):
+        return False
+
+
 def check(result: dict[str, Any]) -> list[str]:
     problems: list[str] = []
     expectations = {
@@ -46,6 +60,10 @@ def check(result: dict[str, Any]) -> list[str]:
         "phone_card_cards": 1,
         "phone_backup": True,
         "phone_removed": True,
+        "refused_kept_off": True,
+        "collection_op_step": "Statly: smoke",
+        "collection_op_limit": 77,
+        "collection_op_undone": True,
         "widget_saved": True,
         "widget_exported": True,
         "widget_media": True,
@@ -64,6 +82,13 @@ def check(result: dict[str, Any]) -> list[str]:
         "key_lock_set": "unlocked",
         "key_lock_refused": "wrong_password",
         "key_lock_opened": "unlocked",
+        # The reviewer: a met goal is told, undo reaches the stopwatch, answers stay as quick.
+        "review_toast": True,
+        "review_undone": 1,
+        "review_latency_ok": True,
+        # Raising today's limit: asked in Statly's popup, one undo step, nothing else touched.
+        "limit_untouched": True,
+        "limit_undone": True,
     }
     if "STATLY_SMOKE_KEYRING" in os.environ:
         expectations["secret_store_roundtrip"] = True
@@ -89,6 +114,29 @@ def check(result: dict[str, Any]) -> list[str]:
     statistics = result.get("statistics")
     if not statistics or not all(response.get("ok") for response in statistics):
         problems.append(f"Statistics calls answered: {statistics}")
+    for key in ("phone_dialog", "refused_dialog"):
+        if not popup_is_safe(result.get(key)):
+            problems.append(f"Statly's own popup looked like this: {result.get(key)}")
+    if not isinstance(result.get("review_attempts"), int) or result["review_attempts"] < 7:
+        problems.append(f"The stopwatch kept {result.get('review_attempts')} answers.")
+    counted = result.get("review_counted")
+    if not isinstance(counted, int) or counted < 6:
+        problems.append(f"After studying, the goal counted {counted} new cards.")
+    raised = result.get("limit_raised")
+    if not isinstance(raised, int) or raised <= 2:
+        problems.append(f"Today's limit after raising it: {raised}")
+    if not str(result.get("limit_step") or "").startswith("Statly:"):
+        problems.append(f"The last undo step was: {result.get('limit_step')}")
+    asked: Any = result.get("sync_dialog")
+    title: str = str(cast(dict[str, Any], asked).get("title")) if isinstance(asked, dict) else ""
+    if not popup_is_safe(asked) or "AnkiWeb" not in title:
+        problems.append(f"The question about syncing goals looked like this: {asked}")
+    if not popup_is_safe(result.get("limit_dialog")):
+        problems.append(f"Statly's own popup looked like this: {result.get('limit_dialog')}")
+    if result.get("review_statly_hooks") != 3:
+        problems.append(
+            f"Statly listens in the reviewer {result.get('review_statly_hooks')} times."
+        )
     page = result.get("first_page")
     if not (isinstance(page, dict) and page.get("logoLoaded") is True):
         problems.append(f"Assets did not load: {page}")

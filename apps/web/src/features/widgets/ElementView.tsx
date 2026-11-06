@@ -141,11 +141,11 @@ function HeatmapView({ scope }: { scope: WidgetScope }) {
         days: data?.days ?? [],
         theme,
         locale: i18n.language,
-        format: (date, reviews) =>
+        format: (date, count) =>
           t("widgets.review-heatmap.tooltip", {
             date: fullDate(date, i18n.language),
-            count: reviews,
-            reviews,
+            count,
+            reviews: count,
           }),
       }),
     scope.themeKey,

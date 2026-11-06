@@ -1,5 +1,8 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
+// Wobbling cards never hold still, and Playwright waits for that before it clicks.
+test.use({ contextOptions: { reducedMotion: "reduce" } });
+
 const button = (page: Page, name: string) => page.getByRole("button", { name, exact: true });
 const grid = (page: Page) => page.getByTestId("dashboard-grid");
 const widget = (page: Page, title: string) =>
@@ -37,14 +40,21 @@ test("a tile too small for its note keeps everything inside the card", async ({ 
     element.style.width = "130px";
     element.style.height = "120px";
   });
-  const card = await box(widget.locator("section"));
   const note = widget.getByText("Ready to study now");
-  const shown = await box(note);
-  const room = await box(note.locator(".."));
-  const hidden = shown.x >= room.x + room.width;
-  expect(hidden || shown.y + shown.height <= room.y + room.height).toBe(true);
-  const value = await box(widget.locator("p").first());
-  expect(value.y + value.height).toBeLessThanOrEqual(card.y + card.height);
+  // The tile notices its new size a moment later, so the check waits for it to settle.
+  await expect
+    .poll(async () => {
+      const card = await box(widget.locator("section"));
+      const shown = await box(note);
+      const room = await box(note.locator(".."));
+      const value = await box(widget.locator("p").first());
+      const hidden = shown.x >= room.x + room.width;
+      return (
+        (hidden || shown.y + shown.height <= room.y + room.height) &&
+        value.y + value.height <= card.y + card.height
+      );
+    })
+    .toBe(true);
 });
 
 async function startEditing(page: Page) {
@@ -179,6 +189,30 @@ test("the widget panel adds and finds statistics", async ({ page }) => {
   await expect(button(page, "Add Due cards")).toHaveCount(0);
   await button(page, "Add Your study times").click();
   await expect(widget(page, "Your study times")).toBeVisible();
+});
+
+test("learned cards count each card once, unlike reviews", async ({ page }) => {
+  await button(page, "Edit dashboard").click();
+  await page.getByRole("button", { name: /^Learning progress/ }).click();
+  await button(page, "Add Learned cards").click();
+  await button(page, "Save").click();
+
+  const learned = widget(page, "Learned cards");
+  await expect(learned.getByText("318", { exact: true })).toBeVisible();
+  await expect(learned.getByText("Different cards, 37 of them new")).toBeVisible();
+  await expect(widget(page, "Reviews").getByText("412", { exact: true })).toBeVisible();
+});
+
+test("ratings count every answer, next to reviews", async ({ page }) => {
+  await button(page, "Edit dashboard").click();
+  await page.getByRole("button", { name: /^Learning progress/ }).click();
+  await button(page, "Add Ratings").click();
+  await button(page, "Save").click();
+
+  const ratings = widget(page, "Ratings");
+  await expect(ratings.getByText("556", { exact: true })).toBeVisible();
+  await expect(ratings.getByText("Every press of Again, Hard, Good or Easy")).toBeVisible();
+  await expect(widget(page, "Reviews").getByText("412", { exact: true })).toBeVisible();
 });
 
 test("a dashboard file can be imported as a draft", async ({ page }) => {
@@ -368,8 +402,8 @@ test("each device gets its own time range", async ({ page }) => {
   await page.getByRole("radio", { name: "Tablet" }).click();
   await expect(page.getByTestId("device-frame")).toHaveAttribute("data-device", "tablet");
   const tile = deviceTile(page, "review-summary");
-  const bounds = await box(tile);
-  await page.mouse.click(bounds.x + 30, bounds.y + 30);
+  // A locator click waits until the tile stands still, as the tablet view settles first.
+  await tile.click({ position: { x: 30, y: 30 } });
   await button(page, "Last 7 days").click();
   await expect(tile).toContainText("Last 7 days");
   await button(page, "Cancel").click();
@@ -378,6 +412,7 @@ test("each device gets its own time range", async ({ page }) => {
 test("statistics added on a phone stay on the phone", async ({ page }) => {
   await startEditing(page);
   await page.getByRole("radio", { name: "Phone" }).click();
+  await page.getByRole("button", { name: /^Study habits/ }).click();
   await button(page, "Add Your study times").click();
   await expect(deviceTile(page, "study-rhythm")).toHaveCount(1);
   await page.getByRole("radio", { name: "Desktop" }).click();
@@ -438,8 +473,74 @@ test("leaving the phone view offers to set up the card once", async ({ page }) =
 test("setting up the card from the phone view really sets it up", async ({ page }) => {
   await startEditing(page);
   await page.getByRole("radio", { name: "Tablet" }).click();
+  // The tablet's layout loads first; saving before that would save the desktop.
+  await expect(page.getByTestId("device-frame")).toHaveAttribute("data-device", "tablet");
   await button(page, "Save").click();
   await button(page, "Set up the card").click();
   await page.goto("/#/settings/mobile");
   await expect(page.getByText("Your dashboard card is active")).toBeVisible();
+});
+
+test("the widget panel starts folded, and searching opens what matches", async ({ page }) => {
+  await startEditing(page);
+  const progress = page.getByRole("button", { name: /^Learning progress/ });
+  await expect(progress).toHaveAttribute("aria-expanded", "false");
+  await expect(button(page, "Add Learned cards")).toBeHidden();
+  await progress.click();
+  await expect(button(page, "Add Learned cards")).toBeVisible();
+  await progress.click();
+  await expect(button(page, "Add Learned cards")).toBeHidden();
+
+  await page.getByRole("searchbox", { name: "Search widgets" }).fill("learned");
+  await expect(button(page, "Add Learned cards")).toBeVisible();
+  await button(page, "Cancel").click();
+});
+
+test("resetting the dashboard asks first and waits for Save", async ({ page }) => {
+  await startEditing(page);
+  await widget(page, "Reviews").getByRole("button", { name: "Remove from dashboard" }).click();
+  await expect(widget(page, "Reviews")).toHaveCount(0);
+
+  await button(page, "Reset dashboard").click();
+  const dialog = page.getByRole("alertdialog", { name: "Reset the dashboard?" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(widget(page, "Reviews")).toHaveCount(0);
+
+  await button(page, "Reset dashboard").click();
+  await dialog.getByRole("button", { name: "Reset" }).click();
+  await expect(widget(page, "Reviews")).toHaveCount(1);
+  // The default is what was stored before, so nothing is left to discard.
+  await button(page, "Cancel").click();
+  await expect(button(page, "Edit dashboard")).toBeVisible();
+  await expect(widget(page, "Reviews")).toHaveCount(1);
+});
+
+test("a shortcut in Anki starts editing without asking about unsaved changes", async ({ page }) => {
+  await page.goto("/#/?edit=1");
+  await expect(page.getByRole("heading", { name: "Widgets" })).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/edit=1/);
+  await button(page, "Cancel").click();
+});
+
+test("every card wobbles around its own middle, wherever it sits", async ({ page }) => {
+  await startEditing(page);
+  const offsets = await page.locator(".statly-editing").evaluateAll((cards) =>
+    cards.map((card) => {
+      const grid = card.parentElement?.getBoundingClientRect();
+      const box = card.getBoundingClientRect();
+      const [x = 0, y = 0] = getComputedStyle(card).transformOrigin.split(" ").map(parseFloat);
+      const left = box.left - (grid?.left ?? 0);
+      const top = box.top - (grid?.top ?? 0);
+      return Math.max(Math.abs(x - left - box.width / 2), Math.abs(y - top - box.height / 2));
+    }),
+  );
+  expect(offsets.length).toBeGreaterThan(3);
+  for (const offset of offsets) {
+    expect(offset).toBeLessThan(2);
+  }
+  await button(page, "Cancel").click();
 });

@@ -5,10 +5,14 @@ import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router";
 import { bridge } from "./bridge/index.ts";
 import { DashboardPage } from "./features/dashboard/DashboardPage.tsx";
+import { GoalDetailPage } from "./features/goals/GoalDetail.tsx";
+import { GoalSetupPage } from "./features/goals/GoalSetup.tsx";
+import { GoalsPage, NewGoalPage } from "./features/goals/GoalsPage.tsx";
 import { LibraryPage } from "./features/library/LibraryPage.tsx";
 import { SettingsPage } from "./features/settings/SettingsPage.tsx";
 import { EditorPage } from "./features/widgets/editor/EditorPage.tsx";
 import "./index.css";
+import "./aero.css";
 import { AppearanceProvider } from "./lib/appearance.tsx";
 import { ErrorPage } from "./pages/ErrorPage.tsx";
 import { Shell } from "./shell/Shell.tsx";
@@ -26,6 +30,11 @@ const router = createHashRouter([
       { path: "library", element: <LibraryPage /> },
       { path: "library/widgets/:id", element: <EditorPage /> },
       { path: "settings/:section?", element: <SettingsPage /> },
+      { path: "goals", element: <GoalsPage /> },
+      { path: "goals/new", element: <NewGoalPage /> },
+      { path: "goals/new/:kind", element: <GoalSetupPage /> },
+      { path: "goals/:id", element: <GoalDetailPage /> },
+      { path: "goals/:id/edit", element: <GoalSetupPage /> },
     ],
   },
 ]);

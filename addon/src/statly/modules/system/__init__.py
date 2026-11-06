@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -15,6 +16,8 @@ from ...contract.types import (
     SystemSaveFileParams,
     SystemSaveFileResult,
     SystemSetAutoUpdateParams,
+    SystemShareParams,
+    SystemShareResult,
     SystemUninstallResult,
 )
 from ...core.errors import NotAllowed
@@ -42,12 +45,22 @@ def open_external(host: Host, params: SystemOpenExternalParams) -> None:
     host.open_external(url)
 
 
+def share(host: Host, params: SystemShareParams) -> SystemShareResult:
+    if urlsplit(params["url"]).scheme.lower() not in _EXTERNAL_SCHEMES:
+        raise NotAllowed("Only web links can be shared.")
+    anchor = params["anchor"]
+    place = {key: float(anchor[key]) for key in ("x", "y", "width", "height")}
+    opened = host.share(params["text"], params["url"], place)
+    return {"method": "sheet" if opened else "clipboard"}
+
+
 class SystemModule:
     def register(self, context: Context) -> None:
         router, host = context.router, context.host
         router.local("system.ping", ping)
         router.local("system.info", lambda _params: host.info())
         router.local("system.openExternal", lambda params: open_external(host, params))
+        router.local("system.share", lambda params: share(host, params))
         router.local("system.setUnsaved", lambda params: host.set_unsaved(params["message"]))
         router.query("system.collectionSummary", collection_summary)
 
@@ -66,12 +79,16 @@ class SystemModule:
         def set_auto_update(params: SystemSetAutoUpdateParams) -> None:
             host.set_auto_update(params["enabled"])
 
-        def uninstall(_params: Any) -> SystemUninstallResult:
-            return {"uninstalled": host.uninstall()}
+        def uninstall(
+            _params: Any,
+            finish: Callable[[SystemUninstallResult], None],
+            _fail: Callable[[Exception], None],
+        ) -> None:
+            host.uninstall(lambda uninstalled: finish({"uninstalled": uninstalled}))
 
         router.local("system.openAnkiStatistics", open_anki_statistics)
         router.local("system.saveFile", save_file)
         router.local("system.openFile", open_file)
         router.local("system.addon", addon)
         router.local("system.setAutoUpdate", set_auto_update)
-        router.local("system.uninstall", uninstall)
+        router.deferred("system.uninstall", uninstall)

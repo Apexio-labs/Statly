@@ -50,6 +50,7 @@ const bundle = zipSync({
   "server/index.mjs": readFileSync(resolve(here, "../dist/index.mjs")),
   "icon.png": readFileSync(resolve(here, "../../ui/assets/Statly_Logo_Icon.png")),
   LICENSE: readFileSync(resolve(here, "../../../LICENSE")),
+  NOTICE: readFileSync(resolve(here, "../../../NOTICE")),
   "THIRD_PARTY_NOTICES.txt": readFileSync(resolve(here, "../dist/THIRD_PARTY_NOTICES.txt")),
 });
 

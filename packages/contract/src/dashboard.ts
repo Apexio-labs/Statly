@@ -16,20 +16,29 @@ const tile: Size = { minW: 2, maxW: 6, minH: 2, maxH: 8, w: 3, h: 4 };
 const chart: Size = { minW: 4, maxW: 12, minH: 6, maxH: 16, w: 6, h: 8 };
 const ankiChart: Size = { minW: 4, maxW: 12, minH: 8, maxH: 16, w: 6, h: 10 };
 
-/** The built-in statistics in library order, with the sizes they allow in grid cells. */
+/**
+ * The built-in statistics in library order, with the sizes they allow in grid cells. Widgets
+ * named `rating-…` are twins that count every answer instead of reviews, see `measures`.
+ */
 export const builtinWidgets = {
   "review-summary": tile,
+  "rating-summary": tile,
+  "learned-cards": tile,
   "review-breakdown": { ...chart, minH: 8 },
   "study-time": tile,
   "success-rate": tile,
   "due-cards": tile,
   "deck-activity": chart,
+  "deck-ratings": chart,
   "review-timeline": { ...chart, minH: 8, w: 8 },
+  "rating-timeline": { ...chart, minH: 8, w: 8 },
   "answer-buttons": { ...chart, minW: 3 },
   "due-forecast": chart,
   "card-states": chart,
   "study-rhythm": { ...chart, minW: 6, minH: 7, w: 8 },
+  "rating-rhythm": { ...chart, minW: 6, minH: 7, w: 8 },
   "review-heatmap": { ...chart, minW: 6, minH: 7, w: 12 },
+  "rating-heatmap": { ...chart, minW: 6, minH: 7, w: 12 },
   "anki-today": { minW: 3, maxW: 8, minH: 6, maxH: 12, w: 4, h: 8 },
   "anki-future-due": ankiChart,
   "anki-calendar": { ...chart, minW: 6, minH: 7, w: 12 },
@@ -53,15 +62,18 @@ export const widgetTypes = Object.keys(builtinWidgets) as [WidgetType, ...Widget
 export const widgetGroups = {
   progress: [
     "review-summary",
+    "rating-summary",
+    "learned-cards",
     "study-time",
     "success-rate",
     "due-cards",
     "review-breakdown",
     "review-timeline",
+    "rating-timeline",
     "answer-buttons",
   ],
-  collection: ["deck-activity", "due-forecast", "card-states"],
-  habits: ["study-rhythm", "review-heatmap"],
+  collection: ["deck-activity", "deck-ratings", "due-forecast", "card-states"],
+  habits: ["study-rhythm", "rating-rhythm", "review-heatmap", "rating-heatmap"],
   anki: [
     "anki-today",
     "anki-future-due",
@@ -84,17 +96,23 @@ export const widgetKinds: Record<
   "metric" | "chart" | "forecast" | "collection" | "heatmap"
 > = {
   "review-summary": "metric",
+  "rating-summary": "metric",
+  "learned-cards": "metric",
   "review-breakdown": "chart",
   "study-time": "metric",
   "success-rate": "metric",
   "due-cards": "metric",
   "deck-activity": "chart",
+  "deck-ratings": "chart",
   "review-timeline": "chart",
+  "rating-timeline": "chart",
   "answer-buttons": "chart",
   "due-forecast": "forecast",
   "card-states": "collection",
   "study-rhythm": "chart",
+  "rating-rhythm": "chart",
   "review-heatmap": "heatmap",
+  "rating-heatmap": "heatmap",
   "anki-today": "metric",
   "anki-future-due": "forecast",
   "anki-calendar": "heatmap",
@@ -137,8 +155,14 @@ export const deviceTimeless: readonly string[] = [
   ...widgetGroups.anki,
 ];
 
+/** Whether a time range means nothing for this widget, as for a study goal, which is about today. */
+export function isDeviceTimeless(type: string): boolean {
+  return deviceTimeless.includes(type) || type.startsWith("goal:");
+}
+
 const deviceTiles: readonly string[] = [
   "review-summary",
+  "learned-cards",
   "study-time",
   "success-rate",
   "due-cards",
@@ -208,13 +232,39 @@ export const languages = ["auto", "en", "de"] as const;
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const counterColors = z.object({ new: color, learning: color, due: color }).strict();
 
-export const shortcutActions = ["dashboard", "settings", "library", "ankiStatistics"] as const;
+export const shortcutActions = [
+  "dashboard",
+  "library",
+  "settings",
+  "ankiStatistics",
+  "appearance",
+  "wallpaper",
+  "editDashboard",
+  "createWidget",
+  "importDashboard",
+  "assistant",
+  "nextTheme",
+  "fullscreen",
+] as const;
 export type ShortcutAction = (typeof shortcutActions)[number];
 
+export const WALLPAPER_HISTORY = 8;
+
+/**
+ * The picture behind all of Statly. "aero" is the sky of the Frutiger Aero theme, "image" a file of
+ * the user's, which may also be a video. Without one, a theme shows its own background.
+ */
 export const wallpaper = z
   .object({
     enabled: z.boolean(),
     source: z.enum(["none", "image", "aero"]),
+    asset: mediaAsset.nullable(),
+    /** Whether Anki's deck overview shows it too. */
+    deckOverview: z.boolean(),
+    /** Only means something for a video or a GIF. */
+    loop: z.boolean(),
+    /** Files used before, newest first. Older ones are deleted beyond this limit. */
+    history: z.array(mediaAsset).max(WALLPAPER_HISTORY),
     blur: z.number().int().min(0).max(20),
     overlay: z.number().int().min(0).max(70),
     position: z.enum(["center", "top", "bottom"]),
@@ -261,15 +311,27 @@ export const settings = z
     favoriteWidgets: z.array(z.string().max(80)).max(300),
     counterColorsEnabled: z.boolean(),
     counterColors: z.object({ light: counterColors, dark: counterColors }).strict(),
+    /** Replaces the theme's accent everywhere, charts included. Null keeps the theme's own. */
+    accentColor: color.nullable(),
     wallpaper,
     deckHeatmap: z.boolean(),
     brandAnimation: z.boolean(),
+    /** A short note in Anki's reviewer the moment a study goal's day is met. */
+    goalToast: z.boolean(),
     shortcuts: z
       .object({
         dashboard: z.string().max(40),
         settings: z.string().max(40),
         library: z.string().max(40),
         ankiStatistics: z.string().max(40),
+        appearance: z.string().max(40),
+        wallpaper: z.string().max(40),
+        editDashboard: z.string().max(40),
+        createWidget: z.string().max(40),
+        importDashboard: z.string().max(40),
+        assistant: z.string().max(40),
+        nextTheme: z.string().max(40),
+        fullscreen: z.string().max(40),
       })
       .strict(),
     onboardingDone: z.boolean(),
@@ -297,6 +359,10 @@ export const defaultCounterColors: Settings["counterColors"] = {
 export const defaultWallpaper: Settings["wallpaper"] = {
   enabled: false,
   source: "none",
+  asset: null,
+  deckOverview: true,
+  loop: true,
+  history: [],
   blur: 0,
   overlay: 0,
   position: "center",
@@ -314,10 +380,25 @@ export const defaultSettings: Settings = {
   favoriteWidgets: [],
   counterColorsEnabled: false,
   counterColors: defaultCounterColors,
+  accentColor: null,
   wallpaper: defaultWallpaper,
   deckHeatmap: false,
   brandAnimation: true,
-  shortcuts: { dashboard: "Ctrl+Alt+D", settings: "", library: "", ankiStatistics: "" },
+  goalToast: true,
+  shortcuts: {
+    dashboard: "Ctrl+Alt+D",
+    library: "",
+    settings: "",
+    ankiStatistics: "",
+    appearance: "",
+    wallpaper: "",
+    editDashboard: "",
+    createWidget: "",
+    importDashboard: "",
+    assistant: "",
+    nextTheme: "",
+    fullscreen: "",
+  },
   onboardingDone: false,
   mobileSync: false,
   onboardingAnswers: { role: null, discovery: null },

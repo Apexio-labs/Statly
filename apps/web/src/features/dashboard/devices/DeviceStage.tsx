@@ -4,7 +4,7 @@ import {
   type DeviceKind,
   type DeviceWidget,
   deviceColumns,
-  deviceTimeless,
+  isDeviceTimeless,
   type MobileSnapshot,
   mobilePeriods,
 } from "@statly/contract";
@@ -188,7 +188,7 @@ export function DeviceStage({
         {widget ? (
           <div className="flex flex-col gap-3 border-t border-line pt-3">
             <h3 className="m-0 text-[13px] font-bold">{titleOf(widget.type)}</h3>
-            {deviceTimeless.includes(widget.type) ? null : (
+            {isDeviceTimeless(widget.type) ? null : (
               <div>
                 <h4 className="m-0 mb-1.5 text-xs font-semibold text-muted">
                   {t("devices.period")}

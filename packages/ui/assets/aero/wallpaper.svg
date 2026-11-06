@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" width="1920" height="1200">
+  <!-- The source of wallpaper.jpg. Browsers redraw filters this heavy, so the app shows the picture. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f8fe6"/>
+      <stop offset=".3" stop-color="#57bdf3"/>
+      <stop offset=".56" stop-color="#b4ecfc"/>
+      <stop offset=".72" stop-color="#ecfcff"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="1540" cy="170" r="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+      <stop offset=".08" stop-color="#fffbe0" stop-opacity=".95"/>
+      <stop offset=".24" stop-color="#d9f7ff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#bff0ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ribbonA" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#2fe0a0" stop-opacity="0"/>
+      <stop offset=".3" stop-color="#37e6b0" stop-opacity=".62"/>
+      <stop offset=".62" stop-color="#7ff5e0" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#7fe4ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ribbonB" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#14b8ff" stop-opacity="0"/>
+      <stop offset=".45" stop-color="#22c8ff" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#d9fff0" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a4e6df"/>
+      <stop offset=".5" stop-color="#6fd0b0"/>
+      <stop offset="1" stop-color="#46b890"/>
+    </linearGradient>
+    <linearGradient id="mid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d6f76a"/>
+      <stop offset=".22" stop-color="#8fe03a"/>
+      <stop offset=".7" stop-color="#3fb52c"/>
+      <stop offset="1" stop-color="#16853a"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2feff"/>
+      <stop offset=".22" stop-color="#9ee6fa"/>
+      <stop offset=".6" stop-color="#3fb6ec"/>
+      <stop offset="1" stop-color="#0a79c4"/>
+    </linearGradient>
+    <radialGradient id="bubble" cx=".38" cy=".3" r=".75">
+      <stop offset="0" stop-color="#fff" stop-opacity=".1"/>
+      <stop offset=".62" stop-color="#d8f7ff" stop-opacity=".08"/>
+      <stop offset=".86" stop-color="#9fe6ff" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".82"/>
+    </radialGradient>
+    <linearGradient id="bubbleShine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="flare">
+      <stop offset="0" stop-color="#fff" stop-opacity=".0"/>
+      <stop offset=".8" stop-color="#bff3ff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".34"/>
+    </radialGradient>
+    <filter id="clouds" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".0032 .0085" numOctaves="6" seed="11"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  3.4 0 0 0 -1.42"/>
+      <feGaussianBlur stdDeviation="2.4"/>
+    </filter>
+    <filter id="band" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="soft" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="softer" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="46"/></filter>
+    <filter id="grass" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".09 .6" numOctaves="4" seed="4"/>
+      <feColorMatrix values="0 0 0 0 .95  0 0 0 0 1  0 0 0 0 .4  0 0 0 2.4 -1.2"/>
+      <feGaussianBlur stdDeviation=".7"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <linearGradient id="cloudBand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset=".06" stop-color="#000"/>
+      <stop offset=".3" stop-color="#fff"/>
+      <stop offset=".6" stop-color="#fff"/>
+      <stop offset=".72" stop-color="#000"/>
+    </linearGradient>
+    <mask id="cloudMask"><rect width="1920" height="1200" fill="url(#cloudBand)"/></mask>
+  </defs>
+
+  <rect width="1920" height="1200" fill="url(#sky)"/>
+  <g mask="url(#cloudMask)"><rect width="1920" height="1200" filter="url(#clouds)" opacity=".95"/></g>
+  <rect width="1920" height="1200" fill="url(#sun)"/>
+
+  <!-- The ribbons of light behind the hills. -->
+  <g>
+    <path d="M-80 960C260 800 540 860 820 720S1340 340 2000 140L2000 300C1440 470 1220 700 880 830S300 930 -80 1060Z" fill="url(#ribbonA)" filter="url(#band)" opacity=".85"/>
+    <path d="M-80 1040C330 880 660 950 980 790S1520 450 2000 350L2000 430C1550 520 1270 730 1000 860S350 990 -80 1100Z" fill="url(#ribbonB)" filter="url(#band)" opacity=".8"/>
+    <path d="M-80 880C300 720 560 780 840 640S1380 260 2000 60L2000 120C1420 310 1170 540 870 690S270 810 -80 930Z" fill="url(#ribbonB)" filter="url(#soft)" opacity=".7"/>
+    <path d="M-80 960C260 800 540 860 820 720S1340 340 2000 140" fill="none" stroke="#fff" stroke-width="5" stroke-opacity=".5" filter="url(#band)"/>
+    <path d="M-80 1040C330 880 660 950 980 790S1520 450 2000 350" fill="none" stroke="#fff" stroke-width="4" stroke-opacity=".4" filter="url(#band)"/>
+  </g>
+
+  <!-- Lens flare from the sun. -->
+  <circle cx="1398" cy="330" r="58" fill="url(#flare)"/>
+  <circle cx="1270" cy="478" r="26" fill="url(#flare)"/>
+  <circle cx="1120" cy="646" r="92" fill="url(#flare)" opacity=".7"/>
+
+  <!-- Hills and a lake. -->
+  <path d="M0 860C200 800 380 830 560 806S980 760 1240 840S1660 830 1920 760V1200H0Z" fill="#b9ece8" opacity=".8"/>
+  <path d="M0 880C260 800 520 790 800 846S1360 900 1920 800V1200H0Z" fill="url(#far)"/>
+  <path d="M0 960H1920V1200H0Z" fill="url(#water)" opacity=".94"/>
+  <path d="M0 1006C420 980 700 1010 1100 1000S1700 984 1920 1004" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="3"/>
+  <path d="M0 1050C380 1030 820 1062 1240 1042S1720 1040 1920 1050" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="2"/>
+
+  <path d="M0 1010C230 990 430 1040 620 1092S860 1130 1000 1050S1180 900 1380 884S1800 900 1920 930V1200H0Z" fill="url(#mid)"/>
+  <path d="M0 1010C230 990 430 1040 620 1092S860 1130 1000 1050S1180 900 1380 884S1800 900 1920 930V1200H0Z" filter="url(#grass)" opacity=".34"/>
+  <path d="M1000 1050S1180 900 1380 884S1800 900 1920 930" fill="none" stroke="#f4ffb8" stroke-opacity=".8" stroke-width="4" filter="url(#soft)"/>
+
+  <!-- Bubbles. -->
+  <g id="bubbles">
+    <g transform="translate(1660 640)"><circle r="104" fill="url(#bubble)"/><ellipse cx="-22" cy="-52" rx="58" ry="32" fill="url(#bubbleShine)" transform="rotate(-20 -22 -52)"/><path d="M40 74A86 86 0 0 0 78 40" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-opacity=".7"/></g>
+    <g transform="translate(1810 480)"><circle r="56" fill="url(#bubble)"/><ellipse cx="-12" cy="-28" rx="30" ry="17" fill="url(#bubbleShine)" transform="rotate(-20 -12 -28)"/></g>
+    <g transform="translate(1500 770)"><circle r="40" fill="url(#bubble)"/><ellipse cx="-9" cy="-20" rx="22" ry="12" fill="url(#bubbleShine)" transform="rotate(-20 -9 -20)"/></g>
+    <g transform="translate(1250 860)"><circle r="66" fill="url(#bubble)"/><ellipse cx="-14" cy="-33" rx="36" ry="20" fill="url(#bubbleShine)" transform="rotate(-20 -14 -33)"/></g>
+    <g transform="translate(1786 790)"><circle r="30" fill="url(#bubble)"/><ellipse cx="-7" cy="-15" rx="16" ry="9" fill="url(#bubbleShine)" transform="rotate(-20 -7 -15)"/></g>
+    <g transform="translate(980 950)"><circle r="28" fill="url(#bubble)"/><ellipse cx="-6" cy="-14" rx="15" ry="8" fill="url(#bubbleShine)" transform="rotate(-20 -6 -14)"/></g>
+    <g transform="translate(1390 620)"><circle r="20" fill="url(#bubble)"/><ellipse cx="-4" cy="-10" rx="10" ry="6" fill="url(#bubbleShine)" transform="rotate(-20 -4 -10)"/></g>
+    <g transform="translate(1600 480)"><circle r="16" fill="url(#bubble)"/><ellipse cx="-3" cy="-8" rx="8" ry="5" fill="url(#bubbleShine)" transform="rotate(-20 -3 -8)"/></g>
+    <g transform="translate(760 1040)"><circle r="44" fill="url(#bubble)"/><ellipse cx="-10" cy="-22" rx="24" ry="13" fill="url(#bubbleShine)" transform="rotate(-20 -10 -22)"/></g>
+  </g>
+</svg>

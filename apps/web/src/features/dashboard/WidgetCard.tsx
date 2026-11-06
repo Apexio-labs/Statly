@@ -16,7 +16,7 @@ export function WidgetCard({
   children: ReactNode;
 }) {
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-line bg-card p-4 shadow-card">
+    <section className="statly-widget flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-line bg-card p-4 shadow-card">
       <header className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <h2 className="m-0 truncate text-[13px] font-bold text-text">{title}</h2>

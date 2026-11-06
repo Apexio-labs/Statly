@@ -18,7 +18,7 @@ from anki.scheduler.v3 import CardAnswer
 from statly.core.contract import Contract
 from statly.core.errors import InvalidParams
 from statly.core.reader import CollectionReader
-from statly.modules.mobile import writer
+from statly.modules.changes import phone_card as writer
 from statly.modules.statistics import _METRICS, anki_stats, metrics
 from statly.modules.statistics.cache import ResultCache
 from statly.modules.statistics.calendar import AnkiCalendar
@@ -108,7 +108,9 @@ def test_summary_counts_answers_and_ignores_manual_changes(log: Log) -> None:
 
     result = metrics.summary(range_of(log.collection), reader_for(log.collection))
 
-    assert result["reviews"] == 3
+    assert result["ratings"] == 3
+    # Three answers to one card on one day are one review.
+    assert result["reviews"] == 1
     assert result["studyTimeMs"] == 6000
     assert result["successRate"] == pytest.approx(2 / 3)
     assert result["activeDays"] == 1
@@ -130,11 +132,55 @@ def test_empty_range_has_no_rates(log: Log) -> None:
     result = metrics.summary(range_of(log.collection), reader_for(log.collection))
     assert result == {
         "reviews": 0,
+        "ratings": 0,
         "studyTimeMs": 0,
         "successRate": None,
         "retention": None,
         "activeDays": 0,
     }
+
+
+def test_a_review_is_a_card_moved_to_a_later_day_once_a_day(log: Log) -> None:
+    # A new card: Again and Good stay within the day, the last Good moves it to tomorrow.
+    log.review(card=0, kind=0, ease=1, interval=-60)
+    log.review(card=0, kind=0, ease=3, interval=-600)
+    log.review(card=0, kind=0, ease=3, interval=1)
+    # A due card that lapses and is still relearning when the day ends is no review yet.
+    log.review(card=1, kind=1, ease=1, interval=-600)
+    # The same card yesterday: moved on, a review on that day.
+    log.review(day=-1, card=1, kind=1, ease=3, interval=4)
+    # A one-day learning step moves a card on too, even though it is not learned yet.
+    log.review(card=2, kind=0, ease=3, interval=1)
+    # A preview in a filtered deck moves nothing.
+    log.review(card=999_999, kind=3, ease=3, interval=0)
+    reader = reader_for(log.collection)
+
+    today = anki_today(log.collection)
+    only_today = {"start": today.isoformat(), "end": today.isoformat(), "deckId": None}
+    summary = metrics.summary(only_today, reader)
+    assert summary["reviews"] == 2
+    assert summary["ratings"] == 6
+    assert metrics.summary(range_of(log.collection), reader)["reviews"] == 3
+
+    timeline = metrics.timeline(range_of(log.collection, days=2), reader)
+    assert [item["count"] for item in timeline["items"]] == [1, 2]
+    rated = metrics.timeline({**range_of(log.collection, days=2), "measure": "ratings"}, reader)
+    assert [item["count"] for item in rated["items"]] == [1, 6]
+
+    heatmap = metrics.heatmap({"year": None, "deckId": None}, reader)
+    assert {"date": today.isoformat(), "count": 2} in heatmap["days"]
+    rated_heatmap = metrics.heatmap({"year": None, "deckId": None, "measure": "ratings"}, reader)
+    assert {"date": today.isoformat(), "count": 6} in rated_heatmap["days"]
+
+
+def test_a_card_moved_on_twice_in_a_day_is_one_review(log: Log) -> None:
+    log.review(card=0, hour=8, interval=5)
+    log.review(card=0, hour=20, interval=9)
+    reader = reader_for(log.collection)
+    assert metrics.summary(range_of(log.collection), reader)["reviews"] == 1
+    assert metrics.deck_activity(range_of(log.collection), reader)[0]["count"] == 1
+    rated = metrics.deck_activity({**range_of(log.collection), "measure": "ratings"}, reader)
+    assert rated[0]["count"] == 2
 
 
 def test_rollover_decides_which_day_a_review_belongs_to(log: Log) -> None:
@@ -181,12 +227,13 @@ def test_a_missed_day_ends_the_current_streak_but_not_the_longest(log: Log) -> N
 
 def test_heatmap_reports_the_year_with_real_dates(log: Log) -> None:
     today = anki_today(log.collection)
-    log.review(day=0)
-    log.review(day=0)
+    log.review(day=0, card=0)
+    log.review(day=0, card=1)
     log.review(day=-370)
 
     result = metrics.heatmap({"year": None, "deckId": None}, reader_for(log.collection))
-    assert {"date": today.isoformat(), "reviews": 2} in result["days"]
+    assert {"date": today.isoformat(), "count": 2} in result["days"]
+    assert result["total"] == 2
     assert result["firstYear"] <= today.year - 1
     assert result["lastYear"] == today.year
     assert result["today"] == today.isoformat()
@@ -205,7 +252,7 @@ def test_deleted_cards_stay_in_the_history(log: Log) -> None:
     reader = reader_for(log.collection)
     assert metrics.summary(range_of(log.collection), reader)["reviews"] == 2
     activity = metrics.deck_activity(range_of(log.collection), reader)
-    assert {"deckId": None, "name": None, "reviews": 1} in activity
+    assert {"deckId": None, "name": None, "count": 1} in activity
 
 
 def test_orphaned_deck_does_not_break_activity(log: Log) -> None:
@@ -213,7 +260,7 @@ def test_orphaned_deck_does_not_break_activity(log: Log) -> None:
     log.review()
     log.database.execute("update cards set did = 424242 where id = ?", log.card_ids[0])
     activity = metrics.deck_activity(range_of(log.collection), reader_for(log.collection))
-    assert activity == [{"deckId": None, "name": None, "reviews": 1}]
+    assert activity == [{"deckId": None, "name": None, "count": 1}]
 
 
 def test_filtered_cards_count_for_their_home_deck(log: Log) -> None:
@@ -224,7 +271,7 @@ def test_filtered_cards_count_for_their_home_deck(log: Log) -> None:
 
     reader = reader_for(log.collection)
     activity = metrics.deck_activity(range_of(log.collection), reader)
-    assert activity == [{"deckId": home_id, "name": "Home", "reviews": 1}]
+    assert activity == [{"deckId": home_id, "name": "Home", "count": 1}]
     assert metrics.summary(range_of(log.collection, deck_id=home_id), reader)["reviews"] == 1
     assert metrics.card_states({"deckId": home_id}, reader)["new"] == 1
 
@@ -240,6 +287,14 @@ def test_deck_filter_includes_subdecks_only(log: Log) -> None:
         range_of(log.collection, deck_id=parent_id), reader_for(log.collection)
     )
     assert result["reviews"] == 2
+
+
+def test_the_phone_card_deck_is_no_choice(log: Log) -> None:
+    add_deck_card(log.collection, writer.DECK_NAME)
+    add_deck_card(log.collection, "Biology")
+    names = [deck["name"] for deck in metrics.decks({}, reader_for(log.collection))]
+    assert "Biology" in names
+    assert writer.DECK_NAME not in names
 
 
 def test_unknown_deck_is_reported(log: Log) -> None:
@@ -344,14 +399,19 @@ def test_answer_buttons(log: Log) -> None:
 
 def test_rhythm_uses_local_time(log: Log) -> None:
     moment = datetime.fromtimestamp(log.today_start + 6 * HOUR)
-    log.review(hour=6)
-    log.review(hour=6)
+    log.review(hour=6, card=0)
+    log.review(hour=6, card=1)
+    log.review(hour=6, card=1, interval=-600)
 
     result = metrics.rhythm(range_of(log.collection), reader_for(log.collection))
 
     assert result["hours"][moment.hour] == 2
     assert result["weekdays"][moment.weekday()] == 2
     assert sum(result["hours"]) == sum(result["weekdays"]) == 2
+    rated = metrics.rhythm(
+        {**range_of(log.collection), "measure": "ratings"}, reader_for(log.collection)
+    )
+    assert rated["hours"][moment.hour] == 3
 
 
 @pytest.mark.parametrize(
@@ -363,13 +423,13 @@ def test_timeline_chooses_its_granularity(log: Log, days: int, granularity: str)
 
 
 def test_timeline_fills_gaps_and_tracks_the_average(log: Log) -> None:
-    log.review(day=0)
-    log.review(day=0)
+    log.review(day=0, card=0)
+    log.review(day=0, card=1)
     log.review(day=-2)
 
     result = metrics.timeline(range_of(log.collection, days=3), reader_for(log.collection))
 
-    assert [item["reviews"] for item in result["items"]] == [1, 0, 2]
+    assert [item["count"] for item in result["items"]] == [1, 0, 2]
     assert result["items"][-1]["runningAverage"] == pytest.approx(1)
 
 

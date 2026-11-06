@@ -76,3 +76,35 @@ export function searchDecks(decks: Deck[], search: string): DeckMatch[] {
     .sort((a, b) => a.score - b.score || a.label.localeCompare(b.label))
     .map(({ score: _score, ...match }) => match);
 }
+
+function isInside(name: string, parent: string): boolean {
+  return name.startsWith(`${parent}${SEPARATOR}`);
+}
+
+/** The chosen deck that already covers this one, because it lies inside it. */
+export function coveringDeck(decks: Deck[], chosen: number[], id: number): number | null {
+  const names = new Map(decks.map((deck) => [deck.id, deck.name]));
+  const name = names.get(id);
+  if (name === undefined) {
+    return null;
+  }
+  return chosen.find((other) => other !== id && isInside(name, names.get(other) ?? "")) ?? null;
+}
+
+/** The chosen decks without the ones another chosen deck covers, and without decks that are gone. */
+export function normalizeRoots(decks: Deck[], chosen: number[]): number[] {
+  const known = new Set(decks.map((deck) => deck.id));
+  const kept = [...new Set(chosen)].filter((id) => known.has(id));
+  return kept.filter((id) => coveringDeck(decks, kept, id) === null);
+}
+
+/** Ticks or unticks a deck. A ticked parent covers its subdecks, so they leave the choice. */
+export function toggleDeck(decks: Deck[], chosen: number[], id: number): number[] {
+  if (chosen.includes(id)) {
+    return chosen.filter((other) => other !== id);
+  }
+  if (coveringDeck(decks, chosen, id) !== null) {
+    return chosen;
+  }
+  return normalizeRoots(decks, [...chosen, id]);
+}

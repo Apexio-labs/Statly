@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { deckLabel, deckTree, pathsTo, searchDecks } from "./deckTree.ts";
+import {
+  coveringDeck,
+  deckLabel,
+  deckTree,
+  normalizeRoots,
+  pathsTo,
+  searchDecks,
+  toggleDeck,
+} from "./deckTree.ts";
 
 const decks = [
   { id: 3, name: "Sprachen::Spanisch::Verben" },
@@ -45,5 +53,33 @@ describe("deck search", () => {
 
   it("finds nothing without a match", () => {
     expect(searchDecks(decks, "zzz")).toEqual([]);
+  });
+});
+
+describe("choosing several decks", () => {
+  const decks = [
+    { id: 1, name: "Medizin" },
+    { id: 2, name: "Medizin::Anatomie" },
+    { id: 3, name: "Medizin::Anatomie::Knochen" },
+    { id: 4, name: "Medizinball" },
+  ];
+
+  it("lets a ticked parent take its subdecks along", () => {
+    expect(toggleDeck(decks, [2, 4], 1)).toEqual([4, 1]);
+  });
+
+  it("keeps a subdeck out while its parent is ticked", () => {
+    expect(toggleDeck(decks, [1], 3)).toEqual([1]);
+    expect(coveringDeck(decks, [1], 3)).toBe(1);
+  });
+
+  it("does not take a deck with a similar name for a subdeck", () => {
+    expect(coveringDeck(decks, [1], 4)).toBeNull();
+    expect(toggleDeck(decks, [1], 4)).toEqual([1, 4]);
+  });
+
+  it("unticks and forgets decks that are gone", () => {
+    expect(toggleDeck(decks, [1, 4], 1)).toEqual([4]);
+    expect(normalizeRoots(decks, [99, 2, 2])).toEqual([2]);
   });
 });

@@ -5,16 +5,17 @@ import {
   MessageSquare,
   ScrollText,
   SlidersHorizontal,
-  Sparkles,
   X,
 } from "lucide-react";
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
+import { Button } from "../../components/Button.tsx";
+import { AiIcon } from "../../components/icons.tsx";
 import { useAppearance } from "../../lib/appearance.tsx";
 import { ChatList } from "./ChatList.tsx";
 import { ChatView } from "./ChatView.tsx";
 import { HistoryView } from "./HistoryView.tsx";
 import { LockedChat } from "./KeyLock.tsx";
-import { SetupView } from "./SetupView.tsx";
 import { useAiStatus } from "./useAi.ts";
 
 const MIN_WIDTH = 300;
@@ -23,14 +24,27 @@ const KEYBOARD_STEP = 16;
 const OVERLAY_BELOW = 860;
 const HANDLE = 7;
 
-type View = "chat" | "chats" | "history" | "setup";
+type View = "chat" | "chats" | "history";
 
 const VIEWS: [View, LucideIcon][] = [
   ["chat", MessageSquare],
   ["chats", History],
   ["history", ScrollText],
-  ["setup", SlidersHorizontal],
 ];
+
+/** The assistant's settings live under Settings, so this only points there. */
+function SetupPrompt({ onOpen }: { onOpen: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-1 flex-col items-start gap-3 p-4">
+      <h3 className="m-0 text-[13px] font-bold">{t("ai.settings.startTitle")}</h3>
+      <p className="m-0 text-[13px] text-muted">{t("ai.settings.startBody")}</p>
+      <Button primary onClick={onOpen}>
+        {t("ai.settings.start")}
+      </Button>
+    </div>
+  );
+}
 
 function clampWidth(width: number): number {
   return Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(width)));
@@ -48,7 +62,9 @@ export function AiPanel({
   const { t } = useTranslation();
   const { settings, update } = useAppearance();
   const status = useAiStatus();
+  const navigate = useNavigate();
   const [view, setView] = useState<View>("chat");
+  const openSettings = () => void navigate("/settings/ai");
   const [dragged, setDragged] = useState<number | null>(null);
   const [overlay, setOverlay] = useState(innerWidth < OVERLAY_BELOW);
   const drag = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null);
@@ -66,13 +82,6 @@ export function AiPanel({
     addEventListener("resize", check);
     return () => removeEventListener("resize", check);
   }, []);
-
-  // Someone who has not chosen a service yet can only start there.
-  useEffect(() => {
-    if (status.data && !status.data.provider) {
-      setView("setup");
-    }
-  }, [status.data]);
 
   function start(event: PointerEvent<HTMLDivElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -150,7 +159,7 @@ export function AiPanel({
         style={{ width: overlay ? `min(${width}px, calc(100vw - 6px))` : width }}
       >
         <header className="flex items-center gap-1 border-b border-line px-3 py-2.5">
-          <Sparkles size={16} className="shrink-0 text-accent" />
+          <AiIcon size={16} className="shrink-0 text-accent" />
           <h2 className="m-0 mr-auto truncate text-[13px] font-bold">{t("ai.title")}</h2>
           {VIEWS.map(([name, Icon]) => (
             <button
@@ -171,10 +180,19 @@ export function AiPanel({
           ))}
           <button
             type="button"
+            aria-label={t("ai.views.setup")}
+            title={t("ai.views.setup")}
+            onClick={openSettings}
+            className="grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover"
+          >
+            <SlidersHorizontal size={16} />
+          </button>
+          <button
+            type="button"
             aria-label={t("ai.close")}
             title={t("ai.close")}
             onClick={onClose}
-            className="grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover"
+            className="statly-close grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover"
           >
             <X size={16} />
           </button>
@@ -187,11 +205,16 @@ export function AiPanel({
             {t("ai.auto.active")}
           </p>
         ) : null}
-        {view === "chat" && locked ? <LockedChat /> : null}
-        {view === "chat" && !locked ? <ChatView onOpenSetup={() => setView("setup")} /> : null}
-        {view === "chats" ? <ChatList onOpened={() => setView("chat")} /> : null}
-        {view === "history" ? <HistoryView /> : null}
-        {view === "setup" && status.data ? <SetupView status={status.data} /> : null}
+        {status.data && !status.data.provider ? (
+          <SetupPrompt onOpen={openSettings} />
+        ) : (
+          <>
+            {view === "chat" && locked ? <LockedChat /> : null}
+            {view === "chat" && !locked ? <ChatView onOpenSetup={openSettings} /> : null}
+            {view === "chats" ? <ChatList onOpened={() => setView("chat")} /> : null}
+            {view === "history" ? <HistoryView /> : null}
+          </>
+        )}
       </aside>
     </div>
   );

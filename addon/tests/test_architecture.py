@@ -7,6 +7,9 @@ from pathlib import Path
 
 import pytest
 
+from statly.core.contract import Contract
+from statly.modules.ai.tools import NEVER_CALLED
+
 PACKAGE = Path(__file__).parent.parent / "src" / "statly"
 SOURCES = [
     path
@@ -15,10 +18,13 @@ SOURCES = [
     and path.relative_to(PACKAGE).parts[0] != "contract"
 ]
 UI_LAYER = {Path("__init__.py")}
-WRITE_LAYER = "mobile"
+# The one door through which Statly changes Anki. See docs/adr/0003-permissions-and-changes.md.
+WRITE_LAYER = ("modules", "changes")
+GATE = Path("modules/changes/__init__.py")
 
-# Anything that can change a user's collection. Only modules/mobile may use these.
+# Anything that can change a user's collection. Only modules/changes may use these.
 WRITE_CALLS = {
+    "add_custom_undo_entry",
     "add_note",
     "add_notes",
     "after_note_updates",
@@ -42,6 +48,7 @@ WRITE_CALLS = {
     "run_collection_write",
     "save",
     "schedule_cards_as_new",
+    "set_config",
     "set_deck",
     "set_due_date",
     "suspend_cards",
@@ -49,6 +56,7 @@ WRITE_CALLS = {
     "update_cards",
     "update_config",
     "update_deck",
+    "update_deck_configs",
     "update_dict",
     "update_note",
     "update_notes",
@@ -56,8 +64,25 @@ WRITE_CALLS = {
 }
 
 
+# Handing work to Anki's collection worker. Only the gate may, after checking the permission.
+WORKER_CALLS = {"run_collection_write", "write_before_sync", "run_collection_op"}
+
+
 def relative(path: Path) -> Path:
     return path.relative_to(PACKAGE)
+
+
+def in_write_layer(path: Path) -> bool:
+    return relative(path).parts[:2] == WRITE_LAYER
+
+
+def called_attributes(path: Path) -> set[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    return {
+        node.func.attr
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+    }
 
 
 def imported_modules(tree: ast.Module) -> set[str]:
@@ -81,23 +106,91 @@ def test_only_host_touches_anki_ui(path: Path) -> None:
     )
 
 
+# Statly's own SQLite file. It runs SQL, but only ever on statly.db in statly_data.
+LOCAL_DATABASE = Path("core/localdb.py")
+LOCAL_DATABASE_CALLS = {"execute", "executemany"}
+
+
 @pytest.mark.parametrize("path", SOURCES, ids=lambda path: str(relative(path)))
-def test_only_the_mobile_module_can_write(path: Path) -> None:
-    if WRITE_LAYER in relative(path).parts:
+def test_only_the_changes_module_can_write(path: Path) -> None:
+    if in_write_layer(path):
         return
-    tree = ast.parse(path.read_text(encoding="utf-8"))
-    calls = {
-        node.func.attr
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-    }
+    calls = called_attributes(path)
+    if relative(path) == LOCAL_DATABASE:
+        calls -= LOCAL_DATABASE_CALLS
     assert not calls & WRITE_CALLS, f"{relative(path)} calls {sorted(calls & WRITE_CALLS)}"
 
 
+def test_only_the_local_database_uses_sqlite() -> None:
+    """Everything else gets ``Tables``, which can only reach Statly's own file."""
+    for path in SOURCES:
+        if relative(path) == LOCAL_DATABASE:
+            continue
+        imports = imported_modules(ast.parse(path.read_text(encoding="utf-8")))
+        assert "sqlite3" not in imports, f"{relative(path)} imports sqlite3"
+
+
+def test_nothing_listens_for_answered_cards() -> None:
+    """With a listener there, Anki loads every answered card again, which slows reviewing."""
+    for path in SOURCES:
+        assert "reviewer_did_answer_card" not in path.read_text(encoding="utf-8"), relative(path)
+
+
 @pytest.mark.parametrize("path", SOURCES, ids=lambda path: str(relative(path)))
-def test_only_the_mobile_module_can_remove_decks_or_note_types(path: Path) -> None:
+def test_only_the_gate_hands_work_to_ankis_worker(path: Path) -> None:
+    """Anything else would skip the permission check right before the write."""
+    if relative(path) == GATE or relative(path).parts[0] == "host":
+        return
+    calls = called_attributes(path)
+    assert not calls & WORKER_CALLS, f"{relative(path)} calls {sorted(calls & WORKER_CALLS)}"
+
+
+def test_every_kind_of_change_names_its_permission() -> None:
+    known = set(Contract().permissions["rules"])
+    kinds = [
+        path
+        for path in (PACKAGE / "modules" / "changes").glob("*.py")
+        if path.name != "__init__.py"
+    ]
+    assert kinds
+    for path in kinds:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        declared = [
+            node.value.value
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "PERMISSION"
+                for target in node.targets
+            )
+            and isinstance(node.value, ast.Constant)
+        ]
+        assert declared and declared[0] in known, f"{path.name} needs PERMISSION from the contract"
+
+
+def test_no_assistant_tool_reaches_permissions_or_changes() -> None:
+    """Only the person may allow things, and changes to Anki go through the gate's dialog."""
+    contract = Contract()
+    reached = {tool["method"] for tool in contract.ai["tools"].values() if tool["method"]}
+    reached |= {statistic["method"] for statistic in contract.ai["statistics"].values()}
+    forbidden = (*NEVER_CALLED, "settings.update", "dashboard.save", "widgets.save")
+    assert not {method for method in reached if method.startswith(forbidden)}
+
+
+def test_the_assistant_cannot_reach_the_door_for_changes() -> None:
+    """No file of the assistant even names the gate or the deck limits. Its list of calls it never
+    makes names them on purpose, so that list is the one place allowed to."""
+    names = ("ChangeGate", "DeckLimitChange", "deck_limits", 'services["changes"]', "gate.apply")
+    for path in SOURCES:
+        if relative(path).parts[:2] == ("modules", "ai"):
+            text = path.read_text(encoding="utf-8")
+            assert not [name for name in names if name in text], relative(path)
+
+
+@pytest.mark.parametrize("path", SOURCES, ids=lambda path: str(relative(path)))
+def test_only_the_changes_module_can_remove_decks_or_note_types(path: Path) -> None:
     """Plain ``remove`` is everywhere, so these two are recognized by what they are called on."""
-    if WRITE_LAYER in relative(path).parts:
+    if in_write_layer(path):
         return
     for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):

@@ -8,8 +8,9 @@ import {
 } from "./ai.ts";
 import { ankiViews } from "./ankiStats.ts";
 import { dashboardLayout, languages, themeModes, widgetTypes } from "./dashboard.ts";
+import { goalDraft } from "./goals.ts";
 import { gridColumns, widgetSizeLimits } from "./limits.ts";
-import { type MethodName, methods } from "./rpc.ts";
+import { type MethodName, measures, methods } from "./rpc.ts";
 import {
   type CustomWidget,
   customWidget,
@@ -47,29 +48,29 @@ export const aiStatistics = {
   summary: {
     method: "statistics.summary",
     needs: "range",
-    about: "reviews, study time in ms, success rate, retention, active days",
+    about: "reviews, ratings, study time in ms, success rate, retention, active days",
   },
   categories: {
     method: "statistics.categories",
     needs: "range",
-    about: "reviews split into new, reviewed, relearned, failed",
+    about: "distinct cards as new, reviewed, relearned, failed",
   },
-  decks: { method: "statistics.deckActivity", needs: "range", about: "reviews per deck" },
+  decks: { method: "statistics.deckActivity", needs: "range", about: "count per deck" },
   timeline: {
     method: "statistics.timeline",
     needs: "range",
-    about: "reviews per day, week or month",
+    about: "count per day, week or month",
   },
   buttons: {
     method: "statistics.answerButtons",
     needs: "range",
-    about: "presses of Again, Hard, Good, Easy",
+    about: "ratings per button",
   },
-  rhythm: { method: "statistics.rhythm", needs: "range", about: "reviews per weekday and hour" },
+  rhythm: { method: "statistics.rhythm", needs: "range", about: "count per weekday and hour" },
   heatmap: {
     method: "statistics.heatmap",
     needs: "year",
-    about: "reviews per day of a year, with streaks",
+    about: "count per day of a year, with streaks",
   },
   due: { method: "statistics.due", needs: "deck", about: "cards ready now" },
   forecast: { method: "statistics.forecast", needs: "deck", about: "cards coming due" },
@@ -77,7 +78,7 @@ export const aiStatistics = {
   anki: {
     method: "statistics.ankiView",
     needs: "view",
-    about: `Anki's own statistics page, chosen with view: ${ankiViews.join(", ")}`,
+    about: `Anki's statistics page by view: ${ankiViews.join(", ")}`,
   },
 } as const satisfies Record<string, { method: MethodName; needs: string; about: string }>;
 
@@ -161,7 +162,7 @@ export const aiTools: Record<string, Tool> = {
   list_decks: reading("statistics.decks", "All decks with their ids.", "decks"),
   get_statistic: {
     access: "read",
-    description: `Read a statistic. ${statisticList}. summary to rhythm need start and end (YYYY-MM-DD, both included). heatmap takes year (null is this year). deckId null means all decks.`,
+    description: `Read a statistic. ${statisticList}. summary to rhythm need start and end (YYYY-MM-DD, both included). heatmap takes year (null is this year). deckId null means all decks. review: a card moved to a later day, once a day; rating: any button press. measure picks one for decks to heatmap.`,
     input: z
       .object({
         name: z.enum(statisticNames),
@@ -170,6 +171,19 @@ export const aiTools: Record<string, Tool> = {
         year: z.number().int().nullable().optional(),
         deckId: z.number().int().nullable().optional(),
         view: z.enum(ankiViews).optional(),
+        measure: z.enum(measures).optional(),
+      })
+      .strict(),
+    // The same without number limits and date patterns, which the description already gives.
+    shown: z
+      .object({
+        name: z.enum(statisticNames),
+        start: z.string().optional(),
+        end: z.string().optional(),
+        year: z.number().nullable().optional(),
+        deckId: z.number().nullable().optional(),
+        view: z.enum(ankiViews).optional(),
+        measure: z.enum(measures).optional(),
       })
       .strict(),
     method: null,
@@ -185,6 +199,10 @@ export const aiTools: Record<string, Tool> = {
     "cards",
   ),
   get_dashboard: reading("dashboard.get", "The widgets on the dashboard and where they sit."),
+  get_goals: reading(
+    "goals.overview",
+    "The person's study goals with today's progress, streak, minutes left and notices.",
+  ),
   list_custom_widgets: reading("widgets.list", "The widgets the user made, in full."),
   get_settings: {
     access: "read",
@@ -244,6 +262,14 @@ export const aiTools: Record<string, Tool> = {
     description: `Suggest a new dashboard: layout {widgets:[{id,type,x,y,w,h}]}, ${gridColumns} columns. Types: ${widgetTypes.join(", ")}, or custom:<id>.`,
     input: z.object({ layout: dashboardLayout, summary }).strict(),
     shown: z.object({ layout: z.object({}), summary }).strict(),
+    method: null,
+  },
+  propose_goal: {
+    access: "propose",
+    description:
+      'Suggest a study goal. The person checks it on the setup page and saves it there. goal: {id (null for a new one, or a goal\'s id to change it), name, archived:false, config:{kind:"exam", decks:[{id,name}] from list_decks, examDate YYYY-MM-DD, bufferDays 0-60, mode learned|reviewed, counts newAndDue|newOnly, studyWeekdays 0-6 with Monday 0, freeDates []}}.',
+    input: z.object({ goal: goalDraft, summary }).strict(),
+    shown: z.object({ goal: z.object({}), summary }).strict(),
     method: null,
   },
   propose_settings: {

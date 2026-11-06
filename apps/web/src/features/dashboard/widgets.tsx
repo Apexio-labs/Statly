@@ -1,5 +1,5 @@
 import { barOption, heatmapOption } from "@statly/charts";
-import type { WidgetType } from "@statly/contract";
+import type { Measure, WidgetType } from "@statly/contract";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "../../components/Button.tsx";
@@ -19,16 +19,48 @@ import { ChipGroup, Tile, useChartTheme, useFormatters, type WidgetProps } from 
 
 export type { WidgetScope } from "./widgetParts.tsx";
 
-function ReviewSummary({ scope }: WidgetProps) {
+/**
+ * The widgets that count reviews have a twin that counts ratings. Both share one component and
+ * differ in their texts, which live under their own widget id.
+ */
+type CountedProps = WidgetProps & { measure: Measure };
+
+function counted(
+  Component: (props: CountedProps) => ReactNode,
+  measure: Measure,
+): (props: WidgetProps) => ReactNode {
+  return (props) => <Component {...props} measure={measure} />;
+}
+
+function CountSummary({ scope, measure }: CountedProps) {
   const { t, number } = useFormatters();
   const { start, end, deckId } = scope;
+  const id = measure === "reviews" ? "review-summary" : "rating-summary";
   const summary = useStatistic("statistics.summary", { start, end, deckId });
   return (
-    <WidgetCard title={t("widgets.review-summary.title")}>
+    <WidgetCard title={t(`widgets.${id}.title`)}>
       <WidgetState status={summary} empty={false}>
         <Tile
-          value={summary.data ? number(summary.data.reviews) : null}
-          note={t("widgets.review-summary.note")}
+          value={summary.data ? number(summary.data[measure]) : null}
+          note={t(`widgets.${id}.note`)}
+        />
+      </WidgetState>
+    </WidgetCard>
+  );
+}
+
+/** One card counts once in the whole range, however often it came up. */
+function LearnedCards({ scope }: WidgetProps) {
+  const { t, number } = useFormatters();
+  const { start, end, deckId } = scope;
+  const categories = useStatistic("statistics.categories", { start, end, deckId });
+  const data = categories.data;
+  return (
+    <WidgetCard title={t("widgets.learned-cards.title")}>
+      <WidgetState status={categories} empty={false}>
+        <Tile
+          value={data ? number(data.total) : null}
+          note={t("widgets.learned-cards.note", { new: number(data?.new ?? 0) })}
         />
       </WidgetState>
     </WidgetCard>
@@ -108,18 +140,19 @@ function ReviewBreakdown({ scope }: WidgetProps) {
 
 const MAX_DECK_BARS = 10;
 
-function DeckActivity({ scope }: WidgetProps) {
+function DeckActivity({ scope, measure }: CountedProps) {
   const { t, number } = useFormatters();
   const { start, end, deckId } = scope;
-  const activity = useStatistic("statistics.deckActivity", { start, end, deckId });
+  const id = measure === "reviews" ? "deck-activity" : "deck-ratings";
+  const activity = useStatistic("statistics.deckActivity", { start, end, deckId, measure });
   const theme = useChartTheme(scope.themeKey);
   const bars = (activity.data ?? []).slice(0, MAX_DECK_BARS).map((entry) => ({
     label: entry.name?.split("::").at(-1) ?? t("widgets.deck-activity.deleted"),
-    value: entry.reviews,
+    value: entry.count,
   }));
-  const title = t("widgets.deck-activity.title");
+  const title = t(`widgets.${id}.title`);
   return (
-    <WidgetCard title={title} note={t("widgets.deck-activity.note")}>
+    <WidgetCard title={title} note={t(`widgets.${id}.note`)}>
       <WidgetState status={activity} empty={bars.length === 0}>
         <Chart
           option={barOption({ bars, theme, horizontal: true, format: number })}
@@ -133,17 +166,18 @@ function DeckActivity({ scope }: WidgetProps) {
 const TIMELINE_RANGES = { month: 30, threeMonths: 90, year: 365, selected: 0 } as const;
 type TimelineRange = keyof typeof TIMELINE_RANGES;
 
-function ReviewTimeline({ scope }: WidgetProps) {
+function CountTimeline({ scope, measure }: CountedProps) {
   const { t, number, locale } = useFormatters();
   const [range, setRange] = useState<TimelineRange>("month");
   const { end, deckId } = scope;
+  const id = measure === "reviews" ? "review-timeline" : "rating-timeline";
   const start = range === "selected" ? scope.start : addDays(end, 1 - TIMELINE_RANGES[range]);
-  const timeline = useStatistic("statistics.timeline", { start, end, deckId });
+  const timeline = useStatistic("statistics.timeline", { start, end, deckId, measure });
   const theme = useChartTheme(scope.themeKey);
   const items = timeline.data?.items ?? [];
   const label = timeline.data?.granularity === "month" ? monthName : shortDate;
-  const bars = items.map((item) => ({ label: label(item.date, locale), value: item.reviews }));
-  const title = t("widgets.review-timeline.title");
+  const bars = items.map((item) => ({ label: label(item.date, locale), value: item.count }));
+  const title = t(`widgets.${id}.title`);
   const option = barOption({
     bars,
     theme,
@@ -155,7 +189,7 @@ function ReviewTimeline({ scope }: WidgetProps) {
     },
   });
   return (
-    <WidgetCard title={title} note={t("widgets.review-timeline.note")}>
+    <WidgetCard title={title} note={t(`widgets.${id}.note`)}>
       <div className="flex h-full flex-col gap-2">
         <ChipGroup
           label={t("widgets.review-timeline.range")}
@@ -165,7 +199,7 @@ function ReviewTimeline({ scope }: WidgetProps) {
           nameOf={(key) => t(`widgets.review-timeline.ranges.${key}`)}
         />
         <div className="min-h-0 flex-1">
-          <WidgetState status={timeline} empty={items.every((item) => item.reviews === 0)}>
+          <WidgetState status={timeline} empty={items.every((item) => item.count === 0)}>
             <Chart option={option} label={title} />
           </WidgetState>
         </div>
@@ -234,10 +268,11 @@ function CardStates({ scope }: WidgetProps) {
   );
 }
 
-function StudyRhythm({ scope }: WidgetProps) {
+function StudyRhythm({ scope, measure }: CountedProps) {
   const { t, number, locale } = useFormatters();
   const { start, end, deckId } = scope;
-  const rhythm = useStatistic("statistics.rhythm", { start, end, deckId });
+  const id = measure === "reviews" ? "study-rhythm" : "rating-rhythm";
+  const rhythm = useStatistic("statistics.rhythm", { start, end, deckId, measure });
   const theme = useChartTheme(scope.themeKey);
   const weekdays = (rhythm.data?.weekdays ?? []).map((value, index) => ({
     label: weekdayName(index, locale),
@@ -247,18 +282,18 @@ function StudyRhythm({ scope }: WidgetProps) {
     label: String(hour),
     value,
   }));
-  const title = t("widgets.study-rhythm.title");
+  const title = t(`widgets.${id}.title`);
   return (
-    <WidgetCard title={title} note={t("widgets.study-rhythm.note")}>
+    <WidgetCard title={title} note={t(`widgets.${id}.note`)}>
       <WidgetState status={rhythm} empty={weekdays.every((bar) => bar.value === 0)}>
         <div className="grid h-full grid-cols-[2fr_3fr] gap-4">
           <Chart
             option={barOption({ bars: weekdays, theme, format: number })}
-            label={t("widgets.study-rhythm.weekdays")}
+            label={t(`widgets.${id}.weekdays`)}
           />
           <Chart
             option={barOption({ bars: hours, theme, format: number, labelInterval: 2 })}
-            label={t("widgets.study-rhythm.hours")}
+            label={t(`widgets.${id}.hours`)}
           />
         </div>
       </WidgetState>
@@ -266,10 +301,11 @@ function StudyRhythm({ scope }: WidgetProps) {
   );
 }
 
-function ReviewHeatmap({ scope }: WidgetProps) {
+function CountHeatmap({ scope, measure }: CountedProps) {
   const { t, number, locale } = useFormatters();
   const [year, setYear] = useState<number | null>(null);
-  const heatmap = useStatistic("statistics.heatmap", { year, deckId: scope.deckId });
+  const id = measure === "reviews" ? "review-heatmap" : "rating-heatmap";
+  const heatmap = useStatistic("statistics.heatmap", { year, deckId: scope.deckId, measure });
   const theme = useChartTheme(scope.themeKey);
   const data = heatmap.data;
   const shownYear = data?.year ?? new Date().getFullYear();
@@ -278,15 +314,15 @@ function ReviewHeatmap({ scope }: WidgetProps) {
     days: data?.days ?? [],
     theme,
     locale,
-    format: (date, reviews) =>
-      t("widgets.review-heatmap.tooltip", {
+    format: (date, count) =>
+      t(`widgets.${id}.tooltip`, {
         date: fullDate(date, locale),
-        count: reviews,
-        reviews: number(reviews),
+        count,
+        reviews: number(count),
       }),
   });
   const stats = data
-    ? t("widgets.review-heatmap.summary", {
+    ? t(`widgets.${id}.summary`, {
         current: number(data.currentStreak),
         longest: number(data.longestStreak),
         average: number(Math.round(data.dailyAverage)),
@@ -314,26 +350,32 @@ function ReviewHeatmap({ scope }: WidgetProps) {
     </div>
   ) : null;
   return (
-    <WidgetCard title={t("widgets.review-heatmap.title")} note={stats} actions={actions}>
+    <WidgetCard title={t(`widgets.${id}.title`)} note={stats} actions={actions}>
       <WidgetState status={heatmap} empty={false}>
-        <Chart option={option} label={t("widgets.review-heatmap.title")} />
+        <Chart option={option} label={t(`widgets.${id}.title`)} />
       </WidgetState>
     </WidgetCard>
   );
 }
 
 export const widgetComponents: Record<WidgetType, (props: WidgetProps) => ReactNode> = {
-  "review-summary": ReviewSummary,
+  "review-summary": counted(CountSummary, "reviews"),
+  "rating-summary": counted(CountSummary, "ratings"),
+  "learned-cards": LearnedCards,
   "study-time": StudyTime,
   "success-rate": SuccessRate,
   "due-cards": DueCards,
   "review-breakdown": ReviewBreakdown,
-  "deck-activity": DeckActivity,
-  "review-timeline": ReviewTimeline,
+  "deck-activity": counted(DeckActivity, "reviews"),
+  "deck-ratings": counted(DeckActivity, "ratings"),
+  "review-timeline": counted(CountTimeline, "reviews"),
+  "rating-timeline": counted(CountTimeline, "ratings"),
   "answer-buttons": AnswerButtons,
   "due-forecast": DueForecast,
   "card-states": CardStates,
-  "study-rhythm": StudyRhythm,
-  "review-heatmap": ReviewHeatmap,
+  "study-rhythm": counted(StudyRhythm, "reviews"),
+  "rating-rhythm": counted(StudyRhythm, "ratings"),
+  "review-heatmap": counted(CountHeatmap, "reviews"),
+  "rating-heatmap": counted(CountHeatmap, "ratings"),
   ...ankiWidgets,
 };

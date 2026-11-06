@@ -87,9 +87,9 @@ export function LibraryDetail({
         role="dialog"
         aria-modal="true"
         aria-label={item.title}
-        className="flex max-h-full w-full max-w-[720px] flex-col overflow-hidden rounded-popover bg-card text-text shadow-card"
+        className="statly-dialog flex max-h-full w-full max-w-[720px] flex-col overflow-hidden rounded-popover bg-card text-text shadow-card"
       >
-        <header className="flex items-start gap-3 border-b border-line p-5">
+        <header className="statly-dialog-header flex items-start gap-3 border-b border-line p-5">
           <div className="min-w-0 flex-1">
             <h2 className="m-0 text-lg font-bold">{item.title}</h2>
             <p className="m-0 mt-1 text-[13px] text-muted">{item.text}</p>
@@ -98,14 +98,14 @@ export function LibraryDetail({
             type="button"
             aria-label={t("library.close")}
             onClick={onClose}
-            className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover"
+            className="statly-close grid size-8 shrink-0 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover"
           >
             <X size={17} />
           </button>
         </header>
         <section
           aria-label={t("library.preview")}
-          className="shrink-0 bg-page p-4"
+          className="statly-dialog-body shrink-0 bg-page p-4"
           style={{ height: PREVIEW_HEIGHT }}
         >
           {item.kind === "statistic" && scope ? (
@@ -118,7 +118,7 @@ export function LibraryDetail({
             <WidgetPicture widget={template} scope={scope} height={PREVIEW_HEIGHT - 32} />
           ) : null}
         </section>
-        <footer className="flex flex-wrap items-center gap-2 border-t border-line p-4">
+        <footer className="statly-dialog-footer flex flex-wrap items-center gap-2 border-t border-line p-4">
           <span className="mr-auto text-xs text-muted">
             {item.tag}
             {size ? ` · ${t("library.standardSize", { w: size.w, h: size.h })}` : ""}
