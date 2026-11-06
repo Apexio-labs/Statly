@@ -148,6 +148,8 @@ test("the widget bar offers goals while the dashboard is edited", async ({ page 
   await chooseDeck(page, /Sprachen/);
   await page.getByRole("textbox", { name: "Name" }).fill("Spanish test");
   await page.getByRole("button", { name: "Save", exact: true }).click();
+  // Saving finishes before the page moves on. Leaving earlier would ask about unsaved changes.
+  await expect(page.locator("[data-goal]")).toContainText("Spanish test");
   await page.getByRole("link", { name: "Home" }).click();
   await page.getByRole("button", { name: "Edit dashboard" }).click();
   await page.getByRole("button", { name: "Study goals" }).click();
