@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.1
+
+- Statly starts again when Anki opens normally. In 2.1.0 it stopped while loading, because it
+  read the profile's settings before Anki had opened the profile, so the toolbar kept Anki's own
+  Stats link. Statly's own tests had started Anki with a chosen profile, which hid this
+- If one part of Statly fails to load, the rest and the toolbar link still work
+- The ring of a goal that counts new and due cards no longer says "Almost there: just 0" when
+  more new cards than planned were learned while reviews were still open. Each part now counts
+  up to its own target, and extra work shows once both are met
+
 ## 2.1.0
 
 - The dashboard follows along while you study: after every answer, as soon as the next card

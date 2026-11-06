@@ -13,9 +13,12 @@ from anki.collection import Collection
 
 from statly.core.contract import Contract
 from statly.core.errors import NotAllowed
-from statly.core.module import PermissionPrompt
+from statly.core.module import Context, PermissionPrompt
 from statly.core.permissions import Permissions
+from statly.core.rpc import Router
+from statly.core.settings import SettingsService
 from statly.core.storage import JsonStore
+from statly.modules import MODULES
 from statly.modules.changes import phone_card
 from statly.modules.permissions import DENY_PAUSE_SECONDS, PermissionService
 from test_rpc import FakeRuntime, call, error_code, make_context, make_router
@@ -292,3 +295,24 @@ def test_the_assistant_settings_switch_asks_first(collection: Collection) -> Non
     status = call(router, "ai.setPermission", {"scope": "cards", "allowed": False})[0]["result"]
     assert status["permissions"]["cards"] is False
     assert len(runtime.prompts) == 2
+
+
+def test_statly_starts_before_anki_opens_a_profile() -> None:
+    """Anki loads add-ons first and opens the profile later, unless it was started with -p.
+
+    Statly 2.1.0 read the profile's settings while loading, so a normal start stopped there and
+    the toolbar kept Anki's own Stats link.
+    """
+    runtime = FakeRuntime()
+    runtime.profile_open = False
+    router = Router(Contract(), runtime, check_results=True)
+    settings = SettingsService(JsonStore(runtime.data_folder), router.contract)
+    context = Context(router=router, host=runtime, contract=router.contract, settings=settings)
+
+    for module in MODULES:
+        module.register(context)
+
+    (runtime.folder / "settings.json").write_text(json.dumps({"mobileSync": True}))
+    runtime.profile_opened()
+    states = call(router, "permissions.list", {})[0]["result"]
+    assert {state["id"] for state in states if state["granted"]} == {"mobile.card"}

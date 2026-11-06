@@ -235,10 +235,14 @@ class MobileModule:
         sync = MobileSync(context)
         router, host = context.router, context.host
         permissions: PermissionService = context.services["permissions"]
-        # The phone card was switched on before permissions existed, so it stays allowed.
-        permissions.grants.migrate(
-            "mobile", [phone_card.PERMISSION] if context.settings.get()["mobileSync"] else []
-        )
+
+        def migrate() -> None:
+            # The phone card was switched on before permissions existed, so it stays allowed.
+            # Settings and grants live in the profile, which Anki opens only after add-ons load.
+            on = context.settings.get()["mobileSync"]
+            permissions.grants.migrate("mobile", [phone_card.PERMISSION] if on else [])
+
+        host.on_profile_opened(migrate)
         permissions.offer(phone_card.PERMISSION, requestable=False, on_revoke=sync.remove_card)
         router.local("mobile.status", lambda _params: sync.status())
         router.deferred("mobile.enable", sync.enable)

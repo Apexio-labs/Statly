@@ -37,7 +37,9 @@ def main() -> None:
     ProfileManager.setDefaultLang = lambda self, idx: self.setLang("en_US")  # type: ignore[method-assign]
 
     ignore_own_command_line()
-    sys.argv = ["Anki", "-b", str(base), "-p", "User 1"]
+    # No "-p": with it, Anki opens the profile before add-ons load, which no real start does.
+    # A folder with one profile opens it on its own after that, like Anki does for most people.
+    sys.argv = ["Anki", "-b", str(base)]
     aqt.run()
 
 

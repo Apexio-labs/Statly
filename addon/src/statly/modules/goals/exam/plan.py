@@ -128,7 +128,9 @@ class ExamPlan:
 
     @property
     def done(self) -> int:
-        return self.new_done + (self.review_done if self.reviews_counted else 0)
+        review_target = self.review_target if self.reviews_counted else 0
+        review_done = self.review_done if self.reviews_counted else 0
+        return day_done(self.new_target, self.new_done, review_target, review_done)
 
 
 def ceil_div(numerator: int, denominator: int) -> int:
@@ -144,6 +146,15 @@ def day_result(
     if new_done >= new_target and review_done >= review_target:
         return "met"
     return "pending" if is_today else "missed"
+
+
+def day_done(new_target: int, new_done: int, review_target: int, review_done: int) -> int:
+    """What the ring shows as done. Each part counts up to its own target, so extra new cards
+    cannot fill in for missing reviews, or the other way round. Once both are met, the extra
+    work counts too, so a good day can show more than it asked for."""
+    if new_done >= new_target and review_done >= review_target:
+        return new_done + review_done
+    return min(new_done, new_target) + min(review_done, review_target)
 
 
 def tone(new_target: int, new_done: int, review_target: int, review_done: int) -> str:

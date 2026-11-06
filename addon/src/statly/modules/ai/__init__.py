@@ -411,7 +411,9 @@ class AiModule:
         router, host = context.router, context.host
         chat, changes = assistant.chat, assistant.changes
         permissions: PermissionService = context.services["permissions"]
-        assistant.migrate_permissions()
+        # Before start_external below, which needs the carried-over grants. The profile holds
+        # them, and Anki opens it only after add-ons load.
+        host.on_profile_opened(assistant.migrate_permissions)
         for scope in ("decks", "cards"):
             permissions.offer(
                 f"ai.{scope}", requestable=True, on_revoke=assistant.forget_chat_grants(scope)

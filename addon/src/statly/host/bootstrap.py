@@ -53,7 +53,11 @@ def _start(main_window: AnkiQt) -> None:
     router = Router(contract, runtime)
     context = Context(router=router, host=runtime, contract=contract, settings=settings)
     for module in MODULES:
-        module.register(context)
+        # One broken part must not take the rest down, least of all the toolbar link.
+        try:
+            module.register(context)
+        except Exception:
+            logger.exception("Statly could not set up %s", type(module).__name__)
     missing = router.missing_methods()
     if missing:
         logger.warning("Contract methods without a handler: %s", sorted(missing))

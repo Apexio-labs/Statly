@@ -23,7 +23,17 @@ from ..estimates.returns import ECHO_DAYS, echo_with_fallback, first_gap
 from ..statistics.calendar import AnkiCalendar
 from .days import every_day
 from .exam.inputs import collect
-from .exam.plan import ALGORITHM, ExamInputs, ExamPlan, FrozenDay, day_result, plan, replay, tone
+from .exam.plan import (
+    ALGORITHM,
+    ExamInputs,
+    ExamPlan,
+    FrozenDay,
+    day_done,
+    day_result,
+    plan,
+    replay,
+    tone,
+)
 from .ledger import Ledger
 from .live import LiveGoal, live_goal
 from .phone import phone_block
@@ -617,7 +627,7 @@ def _history(
             {
                 "date": day.isoformat(),
                 "target": new_target + review_target,
-                "done": new_done + counted_reviews,
+                "done": day_done(new_target, new_done, review_target, counted_reviews),
                 "result": day_result(
                     new_target, new_done, review_target, review_done, day == today
                 ),

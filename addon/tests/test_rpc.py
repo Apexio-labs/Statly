@@ -39,6 +39,9 @@ class FakeRuntime:
         self.has_share_sheet = False
         self.shared: tuple[str, str] | None = None
         self.folder = Path(mkdtemp(prefix="statly-test-"))
+        # Anki loads add-ons before it opens a profile, and the profile holds Statly's data.
+        self.profile_open = True
+        self._opened: list[Callable[[], None]] = []
         self.emitted: list[tuple[str, Any]] = []
         self.secret_store = SessionSecrets()
         self.backups = 0
@@ -92,6 +95,9 @@ class FakeRuntime:
         self.opened = url
 
     def data_folder(self) -> Path:
+        if not self.profile_open:
+            # What Anki's profileFolder() does without a profile.
+            raise TypeError("join() argument must be str, bytes, or os.PathLike object")
         return self.folder
 
     def open_anki_statistics(self) -> None:
@@ -278,7 +284,12 @@ class FakeRuntime:
         return "profile"
 
     def on_profile_opened(self, callback: Callable[[], None]) -> None:
-        self.profile_opened = callback
+        self._opened.append(callback)
+
+    def profile_opened(self) -> None:
+        self.profile_open = True
+        for callback in self._opened:
+            callback()
 
     def on_profile_closing(self, callback: Callable[[], None]) -> None:
         self._closing.append(callback)
@@ -360,6 +371,7 @@ def make_context(runtime: FakeRuntime) -> Context:
     context = Context(router=router, host=runtime, contract=router.contract, settings=settings)
     for module in MODULES:
         module.register(context)
+    runtime.profile_opened()
     return context
 
 

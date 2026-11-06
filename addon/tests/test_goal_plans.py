@@ -14,6 +14,7 @@ from statly.modules.goals.exam.plan import (
     DeckCounts,
     ExamInputs,
     FrozenDay,
+    day_done,
     day_result,
     plan,
     replay,
@@ -257,6 +258,25 @@ def test_tones_follow_the_owner_s_thresholds() -> None:
     assert tone(10, 4, 0, 0) == "progress"
     assert tone(10, 10, 0, 0) == "done"
     assert tone(10, 3, 20, 30) == "progress"
+
+
+def test_extra_new_cards_do_not_hide_open_reviews() -> None:
+    """ "New and due": 30 of 20 new cards and 20 of 30 reviews said "Almost there: just 0"."""
+    assert day_done(20, 30, 30, 20) == 40
+    assert tone(20, 30, 30, 20) != "done"
+    assert day_done(20, 10, 30, 35) == 40
+    # Once everything is met, the extra work shows.
+    assert day_done(20, 30, 30, 30) == 60
+    assert day_done(10, 14, 0, 0) == 14
+
+
+def test_the_ring_counts_each_part_up_to_its_target() -> None:
+    # 98 open over ten days asks for 10 new cards; 10 reviews are still due after 20 done.
+    data = inputs(deck(cards=200, due_reviews=10), today={1: opened(98, learned=30, reviewed=20)})
+    result = plan(config(counts="newAndDue"), data, None)
+    assert result.new_done > result.new_target
+    assert result.review_done < result.review_target
+    assert result.target - result.done == result.review_target - result.review_done > 0
 
 
 @pytest.mark.parametrize(
