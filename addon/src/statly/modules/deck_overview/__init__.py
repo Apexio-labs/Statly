@@ -13,7 +13,13 @@ from ...core.settings import SettingsService
 from ..statistics import metrics
 from ..statistics.calendar import AnkiCalendar
 from .heatmap_html import render_heatmap_markup
-from .styles import counter_styles, shows_wallpaper, wallpaper_styles, wallpaper_video
+from .styles import (
+    counter_styles,
+    shows_wallpaper,
+    statly_deck_name,
+    wallpaper_styles,
+    wallpaper_video,
+)
 
 _HEATMAP_ELEMENT = "statly-deck-heatmap"
 _RELEVANT_SETTINGS = {
@@ -80,7 +86,9 @@ class DeckOverview:
         video = chosen is not None and chosen[1].startswith(_VIDEO)
         image = chosen[0] if chosen is not None and not video else None
         styles = counter_styles(settings) + wallpaper_styles(settings, image)
-        parts = [f"<style>{styles}</style>"] if styles else []
+        parts = [statly_deck_name()]
+        if styles:
+            parts.append(f"<style>{styles}</style>")
         if chosen is not None and video:
             parts.append(wallpaper_video(settings, chosen[0]))
         if settings["deckHeatmap"]:

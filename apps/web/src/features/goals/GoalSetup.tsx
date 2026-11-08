@@ -342,6 +342,8 @@ export function GoalSetupPage() {
   const goals = useGoals();
   const today = useStatistic("statistics.today", {});
   const suggestion = useSuggestion();
+  const [search] = useSearchParams();
+  const copyOf = search.get("copy");
   if (goals.isPending || today.isPending || !today.data || suggestion === undefined) {
     return (
       <div className="flex flex-col">
@@ -360,24 +362,37 @@ export function GoalSetupPage() {
   if (!isGoalKind(goalKind)) {
     return <Navigate to="/goals/new" replace />;
   }
+  const source = !existing && copyOf ? goals.data?.find((goal) => goal.id === copyOf) : undefined;
+  const fresh = GOAL_KINDS[goalKind].newConfig(today.data.date);
   const initial: GoalDraft = suggestion
     ? { ...suggestion.goal, id: existing?.id ?? null, archived: existing?.archived ?? false }
-    : existing
+    : source
       ? {
-          id: existing.id,
-          name: existing.name,
-          archived: existing.archived,
-          config: existing.config,
-        }
-      : {
           id: null,
-          name: "",
+          name: t("goals.copyName", { name: source.name }).slice(0, 80),
           archived: false,
-          config: GOAL_KINDS[goalKind].newConfig(today.data.date),
-        };
+          // A copy of a finished goal needs a new exam day, everything else stays.
+          config:
+            source.config.examDate > today.data.date
+              ? source.config
+              : { ...source.config, examDate: fresh.examDate },
+        }
+      : existing
+        ? {
+            id: existing.id,
+            name: existing.name,
+            archived: existing.archived,
+            config: existing.config,
+          }
+        : {
+            id: null,
+            name: "",
+            archived: false,
+            config: fresh,
+          };
   return (
     <SetupForm
-      key={suggestion?.id ?? existing?.id ?? "new"}
+      key={suggestion?.id ?? existing?.id ?? (source ? `copy-${source.id}` : "new")}
       initial={initial}
       today={today.data.date}
       editing={!!existing}

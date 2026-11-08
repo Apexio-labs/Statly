@@ -221,12 +221,35 @@ at most one query.
 
 The stopwatch (`modules/timing`) and the goals listen to these attempts. The stopwatch always
 runs, without a permission: it only measures on this computer, never changes Anki, never sends
-anything and never stores what a card says. The stopwatch keeps them in Statly's own SQLite file, `statly_data/statly.db`, which
+anything and never stores what a card says. The stopwatch keeps them in Statly's own SQLite file,
+`statly_data/statly.db`. `modules/storage` opens that file for every part that keeps rows there
+and closes it with the profile, after each part wrote what it held (`LocalDatabase.before_close`).
 `core/localdb.py` writes on a thread of its own every few seconds and when studying ends. Each part
 keeps its tables there under a name with numbered steps, which run once in order. Undone looks are
 kept too, so the time at a card adds up every look: 40 seconds, undo, then 1 second is 41 seconds,
 where Anki keeps 1. The file stays when a goal is deleted, because the study time model learns
 from it.
+
+## Making cards
+
+Anki keeps no record of how long writing a note took, so `modules/creation` measures it, under the
+same rules as the review stopwatch: always on, only on this computer, ids and times only.
+`host/adding.py` is the only part that watches Anki's Add window. It reports `AddingEvent`s:
+opened, closed, where the person works (in the Add window or a window it opened, in another program,
+or in another Anki window), a pause in typing or a move to another field, and an added note
+with its first card's deck and its number of cards. Anki's newer, experimental editor reports no
+typing and fires no "note added" hook; there a note counts once the editor loads the next empty
+note, and only when exactly one new note appeared, so an import never counts.
+
+`clock.py` (plain Python) turns these into seconds per note. Time counts while the window is in
+front and while another program is, because cards are often made while looking things up there.
+Time in another Anki window does not count, so studying never counts twice. Between two signs of
+work at most 5 minutes count (`PAUSE_LIMIT`), and one note at most 20 minutes (`NOTE_LIMIT`). The
+newer editor, which reports no typing, gets only the note limit while it is in front. Each note becomes one row of
+the `creations` table. `stats.py` serves `statistics.creation`: only notes that still exist count,
+with their cards as they are now and the current deck of their first card, so an undone add or a
+deleted note drops out by itself. The usual pace is the time per card over all decks and all
+measured notes. 20,000 measured notes take about 100 ms on the benchmark collection.
 
 ## Estimates
 

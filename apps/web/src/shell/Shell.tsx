@@ -28,6 +28,7 @@ import { ChangeNotice } from "../features/changes/ChangeNotice.tsx";
 import { useGoalUpdates } from "../features/goals/useGoals.ts";
 import { OnboardingDialog } from "../features/onboarding/OnboardingDialog.tsx";
 import { RatingDialog } from "../features/onboarding/RatingDialog.tsx";
+import { ReleaseNotesDialog, useReleaseNotes } from "../features/onboarding/ReleaseNotesDialog.tsx";
 import { ShareDialog } from "../features/onboarding/ShareDialog.tsx";
 import { WallpaperLayer } from "../features/wallpaper/WallpaperLayer.tsx";
 import { useAero, useAppearance } from "../lib/appearance.tsx";
@@ -112,6 +113,7 @@ export function Shell() {
   useGoalUpdates();
   useHostNavigation();
   useAiChangesApply();
+  const releaseNotes = useReleaseNotes();
 
   const [rail, setRail] = useState<RailKind | null>(null);
   const [railHost, setRailHost] = useState<HTMLDivElement | null>(null);
@@ -318,8 +320,15 @@ export function Shell() {
       </div>
       <ChangeNotice />
       <OnboardingDialog />
-      <RatingDialog />
-      <ShareDialog />
+      {/* After a big update the notes come first; the requests for a rating wait for the next visit. */}
+      {releaseNotes === undefined ? null : releaseNotes.length > 0 ? (
+        <ReleaseNotesDialog releases={releaseNotes} />
+      ) : (
+        <>
+          <RatingDialog />
+          <ShareDialog />
+        </>
+      )}
     </ShellContext.Provider>
   );
 }

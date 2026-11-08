@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -43,6 +43,29 @@ class PermissionPrompt:
     details: tuple[str, ...]
     choices: tuple[tuple[str, str], ...]
     tone: str = "question"
+
+
+@dataclass(frozen=True)
+class AddingEvent:
+    """Something that happened in Anki's Add window, the one where new notes are written.
+
+    ``kind`` is one of:
+
+    - ``opened`` and ``closed``: the window appeared or went away.
+    - ``focused``: it, or a window it opened, came to the front.
+    - ``unfocused``: another program came to the front, such as a browser used for research.
+    - ``elsewhere``: another of Anki's windows came to the front, such as the main window.
+    - ``typed``: the person typed in a field or moved to another one.
+    - ``added``: a note was added, with its id, its first card's deck and how many cards it made.
+
+    ``precise`` is False for Anki's newer, experimental editor, which says nothing about typing.
+    """
+
+    kind: str
+    note_id: int = 0
+    deck_id: int = 0
+    cards: int = 0
+    precise: bool = True
 
 
 @dataclass(frozen=True)
@@ -88,6 +111,10 @@ class Host(Protocol):
     def open_external(self, url: str) -> None: ...
 
     def open_anki_statistics(self) -> None: ...
+
+    def open_browser(self, card_ids: Sequence[int]) -> None:
+        """Open Anki's card browser on these cards."""
+        ...
 
     def save_file(self, name: str, content: str) -> bool:
         """Ask where to save and write the file. Returns False if the user cancels."""
@@ -240,6 +267,10 @@ class Host(Protocol):
 
     def on_app_active(self, callback: Callable[[bool], None]) -> None:
         """Anki came to the front (True) or went to the background (False)."""
+        ...
+
+    def on_adding(self, callback: Callable[[AddingEvent], None]) -> None:
+        """Anki's Add window changed, see ``AddingEvent``. Never the note's content."""
         ...
 
     def later(self, work: Callable[[], None]) -> None:

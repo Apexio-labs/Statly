@@ -9,7 +9,12 @@ from zipfile import ZIP_DEFLATED, ZipFile
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "addon" / "src" / "statly"
 OUTPUT = ROOT / "dist" / "statly.ankiaddon"
-SKIPPED_NAMES = {".DS_Store"}
+ANKIWEB_ID = "215470814"
+"""Statly's number on AnkiWeb. The package carries it too, so a file from GitHub installs into the
+same folder as AnkiWeb's copy: it replaces that copy instead of running beside it, and Anki keeps
+offering AnkiWeb's updates for it."""
+# Anki writes meta.json into an add-on's folder for its own state, such as the update switch.
+SKIPPED_NAMES = {".DS_Store", "meta.json"}
 SKIPPED_DIRECTORIES = {"__pycache__", "user_files"}
 
 
@@ -48,7 +53,7 @@ def main() -> None:
         "web/index.html",
         "web/THIRD_PARTY_NOTICES.txt",
     }
-    if not required <= set(names) or manifest["package"] != "statly":
+    if not required <= set(names) or manifest["package"] != ANKIWEB_ID:
         raise SystemExit("The package is incomplete.")
     print(f"{OUTPUT} ({OUTPUT.stat().st_size // 1024} KB, {len(names)} files)")
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { chartAxes, combinableChartKinds, maxChartLayers, seriesSources } from "./charts.ts";
 
 /** Everything a custom widget can show. Widgets are data, never code. */
 
@@ -19,17 +20,14 @@ export const metricSources = [
   "currentStreak",
   "longestStreak",
   "dailyAverage",
-] as const;
-
-export const seriesSources = [
-  "timeline",
-  "ratingTimeline",
-  "answerButtons",
-  "deckActivity",
-  "forecast",
-  "cardStates",
-  "weekdays",
-  "hours",
+  "newCards",
+  "secondsPerRating",
+  "focus",
+  "matureShare",
+  "creationTime",
+  "cardsCreated",
+  "secondsPerCreatedCard",
+  "forgottenCards",
 ] as const;
 
 /** "dashboard" follows the filters above the dashboard. */
@@ -92,14 +90,30 @@ export const metricElement = z
   })
   .strict();
 
+/** One part of a combined chart: its own kind, series, color and scale. */
+export const chartLayer = z
+  .object({
+    id: z.string().min(1).max(40),
+    kind: z.enum(combinableChartKinds),
+    source: z.enum(seriesSources),
+    color: paint,
+    axis: z.enum(chartAxes),
+  })
+  .strict();
+
 export const chartElement = z
   .object({
     ...box,
     kind: z.literal("chart"),
     source: z.enum(seriesSources),
-    chart: z.enum(["bar", "line"]),
+    /**
+     * A pie shows each point's share of the whole, so it suits sources that split a total.
+     * "combined" draws `layers` in one plot; `source` and `color` then follow the first layer.
+     */
+    chart: z.enum(["bar", "line", "pie", "combined"]),
     range: z.enum(widgetRanges),
     color: paint,
+    layers: z.array(chartLayer).min(1).max(maxChartLayers).optional(),
   })
   .strict();
 
@@ -115,7 +129,12 @@ export const progressElement = z
   })
   .strict();
 
-export const heatmapElement = z.object({ ...box, kind: z.literal("heatmap") }).strict();
+/** The calendar views of the study overview. Older widgets without one show reviews. */
+export const heatmapModes = ["reviews", "ratings", "retention", "speed", "time", "new"] as const;
+
+export const heatmapElement = z
+  .object({ ...box, kind: z.literal("heatmap"), mode: z.enum(heatmapModes).optional() })
+  .strict();
 
 export const mediaElement = z
   .object({
@@ -196,7 +215,8 @@ export type WidgetElement = z.output<typeof widgetElement>;
 export type WidgetBackground = z.output<typeof widgetBackground>;
 export type Paint = z.output<typeof paint>;
 export type MetricSource = (typeof metricSources)[number];
-export type SeriesSource = (typeof seriesSources)[number];
+export type ChartLayer = z.output<typeof chartLayer>;
+export type ChartElement = z.output<typeof chartElement>;
 export type WidgetRange = (typeof widgetRanges)[number];
 export type MediaAsset = z.output<typeof mediaAsset>;
 export type SizeLayout = z.output<typeof sizeLayout>;

@@ -52,3 +52,12 @@ Daten, die diese Punkte brauchen.
 - **Ziele in der Widget-Bibliothek.**
 - **Live-Fortschritt auf der Handy-Karte.**
 - **Weitere KI-Werkzeuge für Ziele**, jedes mit Begründung und Test.
+
+## Fehlermeldung beim Beenden von Anki aus `host/prompt.py`
+
+**Gefunden am 07.11.2026 im Update-Test, ohne Folgen.**
+
+Beim Beenden meldet Anki manchmal `'PromptLayer' object has no attribute '_window'` aus
+`PromptLayer.eventFilter`. Python baut das Objekt dann schon ab, während Qt noch ein Ereignis
+zustellt. Abhilfe: den Filter in `PromptLayer` beim Zerstören des Fensters entfernen oder im Filter
+`getattr(self, "_window", None)` verwenden.

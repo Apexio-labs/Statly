@@ -106,7 +106,7 @@ test("a shortcut can be recorded, and conflicts are reported", async ({ page }) 
 test("the library shows all statistics and adds or removes them", async ({ page }) => {
   await page.getByRole("link", { name: "Widget Library" }).click();
   await page.getByRole("tab", { name: /^Progress/ }).click();
-  await expect(page.locator("[data-library-card]")).toHaveCount(10);
+  await expect(page.locator("[data-library-card]")).toHaveCount(13);
   await page.getByRole("tab", { name: /^All/ }).click();
 
   await page.getByRole("button", { name: "Add Your study times", exact: true }).click();
@@ -126,7 +126,8 @@ test("Anki's statistics have their own group and reach the dashboard", async ({ 
   await page.getByRole("link", { name: "Home" }).click();
 
   const reviews = page.locator('[data-widget-id^="anki-reviews"]');
-  await expect(reviews.getByRole("heading", { name: "Reviews" })).toBeVisible();
+  // Anki counts every press here, which Statly calls ratings.
+  await expect(reviews.getByRole("heading", { name: "Ratings" })).toBeVisible();
   await expect(reviews.getByText("Total")).toBeVisible();
   await reviews.getByRole("button", { name: "3 months" }).click();
   await expect(reviews.getByRole("button", { name: "3 months" })).toHaveAttribute(
@@ -144,16 +145,109 @@ test("Anki's statistics have their own group and reach the dashboard", async ({ 
 test("the library finds tiles by filter and search", async ({ page }) => {
   await page.getByRole("link", { name: "Widget Library" }).click();
   await page.getByRole("tab", { name: /^Habits/ }).click();
-  await expect(page.locator("[data-library-card]")).toHaveCount(4);
+  await expect(page.locator("[data-library-card]")).toHaveCount(8);
   await page.getByRole("tab", { name: /^Templates/ }).click();
   await expect(page.locator("[data-library-template]")).toHaveCount(3);
   await expect(page.locator("[data-library-card]")).toHaveCount(0);
 
   await page.getByRole("tab", { name: /^All/ }).click();
   await page.getByRole("searchbox", { name: "Search widgets and templates" }).fill("heatmap");
-  await expect(page.locator("[data-library-card]")).toHaveCount(3);
+  // The two heatmaps, Anki's calendar and the study overview, whose calendar is one.
+  await expect(page.locator("[data-library-card]")).toHaveCount(4);
   await page.getByRole("searchbox", { name: "Search widgets and templates" }).fill("zzz");
   await expect(page.getByText("Nothing matches this search.")).toBeVisible();
+});
+
+test("space opens the tile under the pointer and the arrows step through the library", async ({
+  page,
+}) => {
+  await page.getByRole("link", { name: "Widget Library" }).click();
+  await page.getByRole("tab", { name: /^Habits/ }).click();
+  const tiles = page.locator("[data-library-card]");
+  await tiles.nth(1).hover();
+  await page.keyboard.press(" ");
+  const dialog = page.getByRole("dialog");
+  const second = await tiles.nth(1).getByRole("button").first().getAttribute("aria-label");
+  const third = await tiles.nth(2).getByRole("button").first().getAttribute("aria-label");
+  await expect(dialog).toHaveAttribute("aria-label", second ?? "");
+  await expect(dialog).toContainText("2 of 8");
+
+  await page.keyboard.press("ArrowRight");
+  await expect(dialog).toHaveAttribute("aria-label", third ?? "");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await expect(dialog).toContainText("1 of 8");
+  await page.keyboard.press("ArrowLeft");
+  await expect(dialog).toContainText("8 of 8");
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole("searchbox", { name: "Search widgets and templates" }).click();
+  await tiles.first().hover();
+  await page.keyboard.press(" ");
+  await expect(dialog).toHaveCount(0);
+});
+
+test("the preview shows a widget at its real size and Tab closes it", async ({ page }) => {
+  await page.getByRole("link", { name: "Widget Library" }).click();
+  await page.getByRole("tab", { name: /^Habits/ }).click();
+  const dialog = page.getByRole("dialog");
+  // The study overview is as wide as the dashboard, so it scrolls sideways in the preview.
+  await page.locator('[data-library-card="study-overview"]').hover();
+  await page.keyboard.press(" ");
+  const preview = dialog.locator("[data-real-size]");
+  await expect(preview).toHaveAttribute("data-real-size", "12x10");
+  await expect(preview).toHaveAttribute("data-wide", "");
+  const height = (await dialog.boundingBox())?.height;
+
+  await page.keyboard.press("ArrowRight");
+  await expect(preview).toHaveAttribute("data-real-size", "12x5");
+  expect((await dialog.boundingBox())?.height).toBe(height);
+  await page.keyboard.press("ArrowRight");
+  await expect(preview).toHaveAttribute("data-real-size", "6x4");
+  await expect(preview).not.toHaveAttribute("data-wide", "");
+
+  await page.keyboard.press("Tab");
+  await expect(dialog).toHaveCount(0);
+});
+
+test("Anki's card distribution is drawn as a pie next to its table", async ({ page }) => {
+  await page.getByRole("link", { name: "Widget Library" }).click();
+  await page.getByRole("tab", { name: /Anki statistics/ }).click();
+  await page.locator('[data-library-card="anki-card-counts"]').hover();
+  await page.keyboard.press(" ");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator("[data-card-pie] canvas")).toBeVisible();
+  await expect(dialog.getByRole("rowheader", { name: "Total" })).toBeVisible();
+});
+
+test("the time spent making cards shows bars, cards and the usual pace", async ({ page }) => {
+  await page.getByRole("link", { name: "Widget Library" }).click();
+  await page.getByRole("tab", { name: /^Habits/ }).click();
+  await page.locator('[data-library-card="creation-time"]').hover();
+  await page.keyboard.press(" ");
+  const widget = page.getByRole("dialog").locator("[data-creation-time]");
+  await expect(widget).toContainText("Cards made");
+  await expect(widget).toContainText("Per card vs. average");
+  await expect(widget).toContainText("Average over all decks: 48 sec per card");
+  await expect(widget.locator("canvas")).toBeVisible();
+});
+
+test("a tile's size symbol tells the smallest and largest size", async ({ page }) => {
+  await page.getByRole("link", { name: "Widget Library" }).click();
+  const tile = page.locator('[data-library-card="due-forecast"]');
+  await expect(tile).not.toContainText("width");
+  await tile.locator("[data-size-tip]").hover();
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toContainText("Size on the dashboard");
+  await expect(tooltip).toContainText("Smallest");
+  await expect(tooltip).toContainText("4 × 6 cells");
+  await expect(tooltip).toContainText("12 × 16 cells");
+  await page
+    .locator('[data-library-card="card-states"] h3, [data-library-card="card-states"] button')
+    .first()
+    .hover();
+  await expect(tooltip).toHaveCount(0);
 });
 
 test("favorites are found in the library and in the dashboard panel", async ({ page }) => {
@@ -812,4 +906,36 @@ test("a suggested goal is checked on the setup page and becomes a goal only ther
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator("[data-goal]")).toContainText("Medizin exam");
   await expect(aiPanel(page).locator('[data-proposal="applied"]')).toBeVisible();
+});
+
+test("hovering shows Statly's own tooltip instead of the system one", async ({ page }) => {
+  await dragHandle(page, -100);
+  await expect.poll(() => width(page)).toBe(160);
+  const home = page.getByRole("link", { name: "Home" });
+  await expect(home).toHaveAttribute("title", "Home");
+
+  await home.hover();
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toHaveText("Home");
+  await expect(tooltip).toHaveClass(/statly-tooltip/);
+  // Without a title the engine has nothing to draw its own box from, and the link keeps its name.
+  await expect(home).not.toHaveAttribute("title", /.*/);
+  await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
+
+  await page.mouse.move(600, 400);
+  await expect(tooltip).toHaveCount(0);
+  await expect(home).toHaveAttribute("title", "Home");
+});
+
+test("Space opens a library preview and closes it again", async ({ page }) => {
+  await page.goto("/#/library");
+  const tile = page.locator("[data-library-card]").filter({ hasText: "Hourly breakdown" }).first();
+  await tile.scrollIntoViewIfNeeded();
+  await tile.hover();
+  await page.keyboard.press(" ");
+  const preview = page.getByRole("dialog");
+  await expect(preview).toBeVisible();
+  await expect(preview.locator("canvas").first()).toBeVisible();
+  await page.keyboard.press(" ");
+  await expect(preview).toBeHidden();
 });

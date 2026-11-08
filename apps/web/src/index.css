@@ -443,3 +443,96 @@ body {
     display: none;
   }
 }
+
+/* Statly's own hover box, in place of the system box Anki draws for a title. Charts draw the same
+   box (`.statly-tip`) inside their tooltips, so every hover in Statly looks alike. */
+.statly-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.statly-tooltip,
+.statly-tip {
+  --statly-tip-text: #f3f4f9;
+  --statly-tip-muted: #b9bdcc;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 8px 11px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 10px;
+  background: rgb(14 16 26 / 93%);
+  color: var(--statly-tip-text);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 28%), 0 1px 3px rgb(0 0 0 / 20%);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.statly-tip-title {
+  margin-bottom: 2px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.statly-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.statly-tip-row i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 2.5px;
+}
+
+.statly-tip-row span {
+  flex: 1;
+}
+
+.statly-tip-row b {
+  margin-left: 12px;
+  font-weight: 600;
+}
+
+.statly-tip-line {
+  color: var(--statly-tip-muted);
+}
+
+.statly-tip-row + .statly-tip-line,
+.statly-tip-title + .statly-tip-line {
+  margin-top: 2px;
+}
+
+/* The calendar heatmap's squares and labels. */
+.statly-heat-label {
+  fill: var(--statly-muted);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.statly-heat-cell {
+  transition: opacity 120ms ease;
+}
+
+.statly-heat-cell:hover {
+  stroke: var(--statly-text);
+  stroke-width: 1.5;
+}
+
+.statly-heat-today {
+  stroke: var(--statly-success);
+  stroke-width: 2;
+}
+
+.statly-heat-picked {
+  stroke: var(--statly-text);
+  stroke-width: 2;
+}

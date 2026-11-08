@@ -101,6 +101,17 @@ export function useGoalActions() {
       }),
     onSuccess: refresh,
   });
+  /**
+   * Saves a copy as a new goal. Python refuses it when the exam is over or its decks are gone;
+   * then the caller opens the setup with the copy instead.
+   */
+  const duplicate = useMutation({
+    mutationFn: ({ goal, name }: { goal: Goal; name: string }) =>
+      bridge.call("goals.save", {
+        goal: { id: null, name: name.slice(0, 80), archived: false, config: goal.config },
+      }),
+    onSuccess: refresh,
+  });
   const acknowledge = useMutation({
     mutationFn: (id: string) => bridge.call("goals.acknowledge", { id }),
   });
@@ -117,5 +128,5 @@ export function useGoalActions() {
   const openDeckOptions = useMutation({
     mutationFn: (deckId: number) => bridge.call("goals.openDeckOptions", { deckId }),
   });
-  return { save, remove, archive, acknowledge, raiseLimit, openDeckOptions };
+  return { save, remove, archive, duplicate, acknowledge, raiseLimit, openDeckOptions };
 }

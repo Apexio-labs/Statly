@@ -6,6 +6,8 @@ import { Button } from "../../components/Button.tsx";
 import { useAppearance } from "../../lib/appearance.tsx";
 
 export const ANKIWEB_URL = "https://ankiweb.net/shared/info/215470814";
+/** AnkiWeb's page for rating the add-on, where the thumbs up is. */
+export const ANKIWEB_RATE_URL = "https://ankiweb.net/shared/review/215470814";
 
 /** Python decides when this is due, based on how much Statly has been used. */
 export function RatingDialog() {
@@ -26,7 +28,7 @@ export function RatingDialog() {
   function answer(choice: "rate" | "later" | "never") {
     void bridge.call("feedback.answer", { choice });
     if (choice === "rate") {
-      void bridge.call("system.openExternal", { url: ANKIWEB_URL });
+      void bridge.call("system.openExternal", { url: ANKIWEB_RATE_URL });
     }
     setDismissed(true);
   }

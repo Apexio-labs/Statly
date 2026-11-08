@@ -1,6 +1,7 @@
 export * from "./ai.ts";
 export * from "./aiTools.ts";
 export * from "./ankiStats.ts";
+export * from "./charts.ts";
 export * from "./dashboard.ts";
 export * from "./goals.ts";
 export * from "./limits.ts";

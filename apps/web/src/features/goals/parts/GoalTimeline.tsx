@@ -2,7 +2,8 @@ import type { ExamStatus } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
 import { GraduationCap } from "lucide-react";
 import { type CSSProperties, useState } from "react";
-import { shortDate } from "../../../lib/format.ts";
+import type { Tip as RichTip } from "../../../components/tip.ts";
+import { fullDate, shortDate } from "../../../lib/format.ts";
 import { motivation, studyTime } from "../examText.ts";
 import { TONE_COLORS } from "../goalLogic.ts";
 import { ringParts, toneOfShare } from "../goalTree.ts";
@@ -18,7 +19,8 @@ function share(value: number, target: number): number {
  * A small label above what the pointer is on. `at` is where along the width, from 0 to 1. Near the
  * edges it grows inwards, so it stays inside the card.
  */
-function Tip({ text, at }: { text: string; at: number }) {
+/** The same box as every other hover in Statly: the day, then its cards with their colors. */
+function DayTip({ tip, at }: { tip: RichTip; at: number }) {
   const shift = at < 0.25 ? "0%" : at > 0.75 ? "-100%" : "-50%";
   return (
     <div
@@ -26,11 +28,20 @@ function Tip({ text, at }: { text: string; at: number }) {
       className="pointer-events-none absolute bottom-full z-10 mb-1.5"
       style={{ left: `${at * 100}%`, transform: `translateX(${shift})` }}
     >
-      <div
-        key={text}
-        className="statly-fade-in rounded-control bg-text px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-page shadow-card"
-      >
-        {text}
+      <div key={tip.title} className="statly-tip statly-fade-in whitespace-nowrap">
+        <div className="statly-tip-title">{tip.title}</div>
+        {(tip.rows ?? []).map((row) => (
+          <div key={row.label} className="statly-tip-row">
+            {row.color ? <i style={{ background: row.color }} /> : null}
+            <span>{row.label}</span>
+            {row.value === undefined ? null : <b>{row.value}</b>}
+          </div>
+        ))}
+        {(tip.lines ?? []).map((line) => (
+          <div key={line} className="statly-tip-line">
+            {line}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -117,6 +128,37 @@ export function GoalTimeline({ status }: { status: ExamStatus }) {
           : "goals.timeline.dayWithReviews";
     return t(key, values);
   };
+  const dayTip = (index: number): RichTip => {
+    const item = days[index];
+    if (!item) {
+      return {};
+    }
+    const kind = t(`goals.timeline.kinds.${item.kind}`);
+    return {
+      title: fullDate(item.date, i18n.language),
+      rows: [
+        ...(item.target > 0
+          ? [
+              {
+                color: TONE_COLORS[status.tone],
+                label: t("widgets.study-overview.tip.new"),
+                value: String(item.target),
+              },
+            ]
+          : []),
+        ...(item.reviews > 0
+          ? [
+              {
+                color: "var(--statly-muted)",
+                label: t("widgets.study-overview.tip.reviews"),
+                value: String(item.reviews),
+              },
+            ]
+          : []),
+      ],
+      lines: [kind.charAt(0).toUpperCase() + kind.slice(1)],
+    };
+  };
   const weights = parts.reduce((sum, item) => sum + item.weight, 0);
   const partAt = (key: string) => {
     let before = 0;
@@ -153,8 +195,17 @@ export function GoalTimeline({ status }: { status: ExamStatus }) {
         </div>
         <div className="relative mt-2">
           {pointed ? (
-            <Tip
-              text={`${pointed.label}: ${pointed.done} / ${pointed.target}`}
+            <DayTip
+              tip={{
+                title: pointed.label,
+                rows: [
+                  {
+                    color: TONE_COLORS[toneOfShare(pointed.done, pointed.target)],
+                    label: t("goals.timeline.kinds.met"),
+                    value: `${pointed.done} / ${pointed.target}`,
+                  },
+                ],
+              }}
               at={partAt(pointed.key)}
             />
           ) : null}
@@ -209,7 +260,7 @@ export function GoalTimeline({ status }: { status: ExamStatus }) {
         ) : null}
       </div>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        {day !== null ? <Tip text={dayText(day)} at={(day + 0.5) / days.length} /> : null}
+        {day !== null ? <DayTip tip={dayTip(day)} at={(day + 0.5) / days.length} /> : null}
         <ol
           aria-label={t("goals.timeline.label")}
           className={`m-0 flex min-h-[36px] flex-1 list-none items-end p-0 ${days.length > 40 ? "gap-px" : "gap-[3px]"}`}

@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "addon" / "src"))
 
 from statly.core.reader import CollectionReader  # noqa: E402
+from statly.modules.creation.stats import summarize  # noqa: E402
 from statly.modules.estimates import StudyTime  # noqa: E402
 from statly.modules.goals.exam.inputs import collect  # noqa: E402
 from statly.modules.goals.exam.plan import plan  # noqa: E402
@@ -34,6 +35,20 @@ BUDGET_GOAL_COLD_MS = 150
 BUDGET_GOAL_CACHED_MS = 10
 BUDGET_STUDY_TIME_MS = 100
 BUDGET_REVIEWED_GOAL_MS = 400
+INSIGHTS = (
+    "statistics.forgotten",
+    "statistics.deckTable",
+    "statistics.daily",
+    "statistics.answerMix",
+    "statistics.topics",
+    "statistics.speed",
+    "statistics.sessions",
+)
+"""Closer looks that only their own widgets read, so each has a budget of its own."""
+BUDGET_INSIGHT_MS = 800
+CREATED_NOTES = 20_000
+"""Years of heavy card making: every one of these notes was measured in the Add window."""
+BUDGET_CREATION_MS = 300
 
 
 def build() -> None:
@@ -149,6 +164,18 @@ def time_study_time(reader: CollectionReader) -> tuple[float, float, int]:
     return timings[0], timings[1], answers
 
 
+def time_creation(reader: CollectionReader, deck_id: int | None) -> float:
+    """Time making cards over a year, with every note checked against the collection."""
+    now_ms = int(time.time() * 1000)
+    measured = [
+        (1_500_000_000_000 + index * 5, 0, 1, now_ms - index * 1_500_000, 45_000)
+        for index in range(CREATED_NOTES)
+    ]
+    started = time.perf_counter()
+    summarize(parameters("statistics.creation", reader, deck_id), reader, measured)
+    return (time.perf_counter() - started) * 1000
+
+
 def main() -> int:
     if not PATH.exists():
         print("Building the benchmark collection ...")
@@ -168,14 +195,21 @@ def main() -> int:
         goal_one = time_goal(reader, ResultCache(), one)
         study_time = time_study_time(reader)
         reviewed_all = time_goal(reader, ResultCache(), deck_id, "reviewed")
+        creation = max(time_creation(reader, None), time_creation(reader, deck_id))
     finally:
         collection.close()
 
     print(f"{'metric':<28}{'cold':>10}{'one deck':>10}{'cached':>10}")
     for name, value in cold.items():
         print(f"{name:<28}{value:>9.1f} {one_deck[name]:>9.1f} {cached[name]:>9.1f}")
-    cold_total, cached_total = sum(cold.values()), sum(cached.values())
-    print(f"{'total ms':<28}{cold_total:>9.1f} {sum(one_deck.values()):>9.1f} {cached_total:>9.1f}")
+    classic = [name for name in cold if name not in INSIGHTS]
+    cold_total = sum(cold[name] for name in classic)
+    cached_total = sum(cached.values())
+    slowest_insight = max(max(cold[name], one_deck[name]) for name in INSIGHTS)
+    one_deck_total = sum(one_deck[name] for name in classic)
+    print(f"{'total ms (without insights)':<28}{cold_total:>9.1f} {one_deck_total:>9.1f}")
+    print(f"{'cached, all':<28}{'':>9} {'':>9} {cached_total:>9.1f}")
+    print(f"{'slowest insight':<28}{slowest_insight:>9.1f}")
     print(f"{'anki statistics page':<28}{anki_page:>9.1f} {anki_page_deck:>9.1f}")
     print(f"{'goal over all decks':<28}{goal_all[0]:>9.1f} {'':>9} {goal_all[1]:>9.1f}")
     print(f"{'goal over one deck':<28}{goal_one[0]:>9.1f} {'':>9} {goal_one[1]:>9.1f}")
@@ -184,14 +218,18 @@ def main() -> int:
     )
     print(f"{'study time profile':<28}{study_time[0]:>9.1f} {'':>9} {study_time[1]:>9.1f}")
     print(f"  ({study_time[2]} answers in the last 90 days, the newest 25,000 read)")
+    print(f"{'time making cards':<28}{creation:>9.1f}")
+    print(f"  ({CREATED_NOTES} measured notes)")
     if (
         cold_total > BUDGET_COLD_MS
+        or slowest_insight > BUDGET_INSIGHT_MS
         or cached_total > BUDGET_CACHED_MS
         or max(anki_page, anki_page_deck) > BUDGET_COLD_MS
         or max(goal_all[0], goal_one[0]) > BUDGET_GOAL_COLD_MS
         or max(goal_all[1], goal_one[1]) > BUDGET_GOAL_CACHED_MS
         or study_time[0] > BUDGET_STUDY_TIME_MS
         or reviewed_all[0] > BUDGET_REVIEWED_GOAL_MS
+        or creation > BUDGET_CREATION_MS
     ):
         print("Over budget.")
         return 1

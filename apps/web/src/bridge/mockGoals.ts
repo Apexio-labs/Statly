@@ -270,6 +270,10 @@ export const goalMocks: { [M in GoalMethod]: (params: Params<M>) => Result<M> } 
   "goals.list": () => mockGoals,
   "goals.save": ({ goal }) => {
     const existing = mockGoals.find((item) => item.id === goal.id);
+    // Lets a test act as if the exam were over, which Python refuses for a new goal.
+    if (!existing && (globalThis as { __mockRefuseGoalSave?: boolean }).__mockRefuseGoalSave) {
+      throw new Error("The exam has to lie in the future.");
+    }
     const saved: Goal = {
       id: existing?.id ?? `exam-${Math.random().toString(16).slice(2, 10).padEnd(8, "0")}`,
       version: 1,

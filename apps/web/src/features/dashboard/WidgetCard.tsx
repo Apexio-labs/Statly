@@ -1,16 +1,20 @@
 import { useTranslation } from "@statly/i18n";
 import { Component, type ReactNode } from "react";
+import { Link } from "react-router";
 import { BridgeError } from "../../bridge/index.ts";
 
 type Status = { isPending: boolean; error: Error | null };
 
 export function WidgetCard({
   title,
+  titleTo,
   note,
   actions,
   children,
 }: {
   title: string;
+  /** Where the title leads when clicked. While the dashboard is edited it leads nowhere. */
+  titleTo?: string | undefined;
   note?: string | undefined;
   actions?: ReactNode;
   children: ReactNode;
@@ -19,7 +23,24 @@ export function WidgetCard({
     <section className="statly-widget flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-line bg-card p-4 shadow-card">
       <header className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h2 className="m-0 truncate text-[13px] font-bold text-text">{title}</h2>
+          <h2 className="m-0 truncate text-[13px] font-bold text-text">
+            {titleTo ? (
+              <Link
+                to={titleTo}
+                draggable={false}
+                onClick={(event) => {
+                  if (event.currentTarget.closest(".statly-editing")) {
+                    event.preventDefault();
+                  }
+                }}
+                className="statly-widget-title text-text no-underline underline-offset-2 hover:text-accent-strong hover:underline"
+              >
+                {title}
+              </Link>
+            ) : (
+              title
+            )}
+          </h2>
           {note ? <p className="m-0 mt-0.5 truncate text-xs text-muted">{note}</p> : null}
         </div>
         {actions}

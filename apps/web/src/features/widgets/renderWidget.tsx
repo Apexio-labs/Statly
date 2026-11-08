@@ -31,7 +31,7 @@ export function CustomWidgetView({
   cells: Cells;
 }) {
   const aspect = designAspect(widget.size);
-  const { height } = cellsToPixels(cells);
+  const { width, height } = cellsToPixels(cells);
   return (
     <WidgetFrame widget={widget}>
       {widget.elements
@@ -43,7 +43,7 @@ export function CustomWidgetView({
               <ElementView
                 element={element}
                 scope={scope}
-                frame={{ aspect, heightPx: (height * box.h) / 100 }}
+                frame={{ aspect, heightPx: (height * box.h) / 100, widthPx: (width * box.w) / 100 }}
               />
             </div>
           );

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import base64
+import json
 from functools import cache
 from html import escape
 from pathlib import Path
 
 from ...contract.types import SettingsGetResult
+from ...core.reader import STATLY_DECK_NAME
 
 _COUNTERS = (("new", "new-count"), ("learning", "learn-count"), ("due", "review-count"))
 _MODES = (("light", ""), ("dark", ".nightMode"))
@@ -74,4 +76,38 @@ def wallpaper_video(settings: SettingsGetResult, url: str) -> str:
         "</style>"
         f'<div id="statly-wallpaper"><video src="{escape(url)}" autoplay muted playsinline'
         f"{loop}></video></div>"
+    )
+
+
+# The same three colors as the Statly link in Anki's toolbar (``host/brand.py``).
+_BRAND = {
+    "light": ("#006b70", "#145a9e", "#4f347f"),
+    "dark": ("#35c9bc", "#58a6f5", "#ac8aff"),
+}
+
+
+def statly_deck_name() -> str:
+    """Draws the name of Statly's own deck in Statly's colors, so it reads as a tool and not as
+    a deck to study. Only the name changes: Anki's row, counts and menu stay as they are."""
+    light, dark = (", ".join(_BRAND[mode]) for mode in ("light", "dark"))
+    name = json.dumps(STATLY_DECK_NAME)
+    return (
+        (
+            "<style>"
+            ".statly-deck-name{background-image:linear-gradient(90deg, LIGHT);"
+            "-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;"
+            "font-weight:700}"
+            ".nightMode .statly-deck-name,.night_mode .statly-deck-name"
+            "{background-image:linear-gradient(90deg, DARK)}"
+            "</style>"
+            "<script>(function(){var name=NAME;"
+            "function mark(){document.querySelectorAll('a.deck, .deck-name')"
+            ".forEach(function(node){"
+            "if(node.children.length===0&&node.textContent.trim()===name){"
+            "node.classList.add('statly-deck-name');}});}"
+            "mark();document.addEventListener('DOMContentLoaded',mark);})();</script>"
+        )
+        .replace("LIGHT", light)
+        .replace("DARK", dark)
+        .replace("NAME", name)
     )

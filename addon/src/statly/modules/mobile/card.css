@@ -6,6 +6,8 @@
   --statly-border: #e2e5e9;
   --statly-hover: #f0f6f5;
   --statly-accent: #087f8c;
+  --statly-success: #116b3d;
+  --statly-danger: #a52c24;
 
   margin: 0;
   padding: 0;
@@ -25,6 +27,8 @@
   --statly-border: #394352;
   --statly-hover: #2c3644;
   --statly-accent: #58d5dd;
+  --statly-success: #7ee2a5;
+  --statly-danger: #ff938b;
 }
 
 /* Fast taps would otherwise zoom the page instead of doing nothing. */
@@ -351,4 +355,69 @@
   color: var(--statly-muted);
   font-size: 11px;
   text-align: center;
+}
+
+.statly-table {
+  display: grid;
+  gap: 2px;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.statly-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(var(--statly-table-columns), minmax(44px, auto));
+  gap: 8px;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--statly-border);
+}
+
+.statly-table-head {
+  padding-top: 0;
+  color: var(--statly-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.statly-table-head span,
+.statly-table-cell {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.statly-table-name {
+  display: grid;
+  min-width: 0;
+}
+
+.statly-table-name span,
+.statly-table-name small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statly-table-name small {
+  color: var(--statly-muted);
+  font-size: 11px;
+}
+
+.statly-tone-good {
+  color: var(--statly-success);
+  font-weight: 700;
+}
+
+.statly-tone-bad {
+  color: var(--statly-danger);
+  font-weight: 700;
+}
+
+.statly-pie {
+  display: block;
+  width: 100%;
+  height: 100%;
 }

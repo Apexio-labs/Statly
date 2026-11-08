@@ -1,6 +1,6 @@
 import { builtinWidgets, customWidgetPrefix, type WidgetType } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
-import { X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { bridge } from "../../bridge/index.ts";
@@ -10,11 +10,13 @@ import { useLayout } from "../dashboard/useLayout.ts";
 import { WidgetBoundary } from "../dashboard/WidgetCard.tsx";
 import { type WidgetScope, widgetComponents } from "../dashboard/widgets.tsx";
 import { templates } from "../widgets/editor/templates.ts";
+import { CustomWidgetView } from "../widgets/renderWidget.tsx";
 import { useCustomWidgets } from "../widgets/useCustomWidgets.ts";
-import type { LibraryItem } from "./libraryItems.ts";
-import { WidgetPicture } from "./Thumbnail.tsx";
+import { type LibraryItem, takesKeys } from "./libraryItems.ts";
+import { RealSizePreview } from "./RealSizePreview.tsx";
 
-const PREVIEW_HEIGHT = 300;
+/** The preview keeps this height for every widget, small or large. */
+const PREVIEW_HEIGHT = 360;
 
 function StatisticPreview({ type, scope }: { type: WidgetType; scope: WidgetScope }) {
   const { t } = useTranslation();
@@ -26,13 +28,28 @@ function StatisticPreview({ type, scope }: { type: WidgetType; scope: WidgetScop
   );
 }
 
+/** A focused button inside the preview, which Space presses instead of closing the preview. */
+function pressesOwnButton(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    target.closest("button, a, [role='button'], [role='menuitem']") !== null &&
+    target.closest("[role='dialog']") !== null
+  );
+}
+
 export function LibraryDetail({
   item,
   scope,
+  position,
+  onStep,
   onClose,
 }: {
   item: LibraryItem;
   scope: WidgetScope | null;
+  /** Where this tile stands among the tiles on the page, counted from 1. */
+  position?: { index: number; total: number };
+  /** Moves to the tile before (-1) or after (1) without closing. */
+  onStep?: (direction: -1 | 1) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -48,15 +65,38 @@ export function LibraryDetail({
     [item],
   );
 
+  // A question to delete belongs to the widget it was asked for, not to the next one.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs whenever another tile is shown.
+  useEffect(() => setConfirming(false), [item.key]);
+
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      // Tab leaves the preview as well, so it can be closed from where the hand already is.
+      if (event.key === "Escape" || event.key === "Tab") {
+        event.preventDefault();
         onClose();
+        return;
       }
+      // Space opened the preview, so it closes it too. A held key does not open and close at once,
+      // and a button inside the preview or a field keeps its own use of Space.
+      if (event.key === " ") {
+        if (event.repeat || takesKeys(event.target) || pressesOwnButton(event.target)) {
+          return;
+        }
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      const direction = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+      if (direction === 0 || !onStep || event.defaultPrevented || takesKeys(event.target)) {
+        return;
+      }
+      event.preventDefault();
+      onStep(direction);
     }
     addEventListener("keydown", handleKey);
     return () => removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, [onClose, onStep]);
 
   const dashboardType =
     item.kind === "statistic"
@@ -87,13 +127,38 @@ export function LibraryDetail({
         role="dialog"
         aria-modal="true"
         aria-label={item.title}
-        className="statly-dialog flex max-h-full w-full max-w-[720px] flex-col overflow-hidden rounded-popover bg-card text-text shadow-card"
+        className="statly-dialog flex max-h-full w-full max-w-[880px] flex-col overflow-hidden rounded-popover bg-card text-text shadow-card"
       >
         <header className="statly-dialog-header flex items-start gap-3 border-b border-line p-5">
           <div className="min-w-0 flex-1">
             <h2 className="m-0 text-lg font-bold">{item.title}</h2>
             <p className="m-0 mt-1 text-[13px] text-muted">{item.text}</p>
           </div>
+          {onStep && position && position.total > 1 ? (
+            <div className="statly-dialog-steps flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                aria-label={t("library.previous")}
+                title={`${t("library.previous")} (←)`}
+                onClick={() => onStep(-1)}
+                className="statly-step grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover hover:text-text"
+              >
+                <ChevronLeft size={17} />
+              </button>
+              <span className="min-w-[52px] text-center text-xs text-muted tabular-nums">
+                {t("library.position", { index: position.index, total: position.total })}
+              </span>
+              <button
+                type="button"
+                aria-label={t("library.next")}
+                title={`${t("library.next")} (→)`}
+                onClick={() => onStep(1)}
+                className="statly-step grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover hover:text-text"
+              >
+                <ChevronRight size={17} />
+              </button>
+            </div>
+          ) : null}
           <button
             type="button"
             aria-label={t("library.close")}
@@ -105,17 +170,21 @@ export function LibraryDetail({
         </header>
         <section
           aria-label={t("library.preview")}
-          className="statly-dialog-body shrink-0 bg-page p-4"
+          className="statly-dialog-body shrink-0 bg-page"
           style={{ height: PREVIEW_HEIGHT }}
         >
-          {item.kind === "statistic" && scope ? (
-            <StatisticPreview type={item.type} scope={scope} />
-          ) : null}
-          {item.kind === "custom" ? (
-            <WidgetPicture widget={item.widget} scope={scope} height={PREVIEW_HEIGHT - 32} />
-          ) : null}
-          {template ? (
-            <WidgetPicture widget={template} scope={scope} height={PREVIEW_HEIGHT - 32} />
+          {size ? (
+            <RealSizePreview key={item.key} cells={size} height={PREVIEW_HEIGHT}>
+              {item.kind === "statistic" && scope ? (
+                <StatisticPreview type={item.type} scope={scope} />
+              ) : null}
+              {item.kind === "custom" && scope ? (
+                <CustomWidgetView widget={item.widget} scope={scope} cells={item.widget.size} />
+              ) : null}
+              {template && scope ? (
+                <CustomWidgetView widget={template} scope={scope} cells={template.size} />
+              ) : null}
+            </RealSizePreview>
           ) : null}
         </section>
         <footer className="statly-dialog-footer flex flex-wrap items-center gap-2 border-t border-line p-4">

@@ -13,6 +13,7 @@ import pytest
 from anki.collection import Collection
 from anki.scheduler.v3 import CardAnswer
 
+from statly.core.contract import Contract
 from statly.core.reader import STATLY_NOTE_GUID, CollectionReader
 from statly.modules.changes import phone_card as writer
 from statly.modules.mobile.card import MARKER, card_styles, front_template, viewer_script
@@ -633,6 +634,31 @@ def test_custom_widgets_reach_the_card_with_their_values(collection: Collection)
     assert len(values["h"]["levels"]) >= 364
 
 
+def test_a_combined_chart_reaches_the_card_with_one_list_per_layer(collection: Collection) -> None:
+    box = {"x": 0, "y": 0, "w": 100, "h": 100, "opacity": 1}
+    layer = {"color": "accent", "axis": "auto"}
+    chart = {
+        **box,
+        "id": "c",
+        "kind": "chart",
+        "source": "hours",
+        "chart": "combined",
+        "range": "last30",
+        "color": "accent",
+        "layers": [
+            {**layer, "id": "a", "kind": "bar", "source": "hours"},
+            {**layer, "id": "b", "kind": "line", "source": "focusHours"},
+        ],
+    }
+    widget = custom_widget(elements=[chart])
+    snapshot = snapshot_of(collection, placed("custom:mine", "last7"), custom={"mine": widget})
+    values = snapshot["blocks"]["custom:mine|last7"]["values"]["c"]
+    assert "bars" not in values
+    hours, focus = values["layers"]
+    assert len(hours) == len(focus) == 24
+    assert all(0 <= point["value"] <= 100 for point in focus)
+
+
 def picture(asset_id: str, background: bool = False) -> dict[str, Any]:
     asset = {"id": asset_id, "type": "image/png"}
     return {
@@ -695,3 +721,81 @@ def test_snapshot_encoding_survives_umlauts(collection: Collection) -> None:
     decoded = json.loads(base64.b64decode(encoded))
     assert decoded["updated"] == "Aktualisiert 01.11.2026 09:30"
     assert decoded["blocks"]["due-cards|today"]["label"] == "Fällige Karten"
+
+
+INSIGHT_KINDS = (
+    "study-overview",
+    "period-summary",
+    "answer-mix",
+    "answer-speed",
+    "study-sessions",
+    "deck-table",
+    "forgotten-cards",
+    "weakest-decks",
+    "new-cards-from",
+)
+
+
+def test_the_closer_looks_reach_the_card_and_fit_the_contract(collection: Collection) -> None:
+    items = [placed(kind, "last30") for kind in (*INSIGHT_KINDS, "day-notes")]
+    snapshot = snapshot_of(collection, *items, language="de")
+
+    Contract().check_result("mobile.preview", snapshot)
+    assert set(snapshot["blocks"]) == {f"{kind}|last30" for kind in INSIGHT_KINDS}
+    assert snapshot["blocks"]["deck-table|last30"]["kind"] == "table"
+    assert snapshot["blocks"]["deck-table|last30"]["columns"][0] == "Stabilität"
+    assert snapshot["blocks"]["study-overview|last30"]["kind"] == "heatmap"
+
+
+def test_day_notes_never_go_onto_the_synced_card(collection: Collection) -> None:
+    snapshot = snapshot_of(collection, placed("day-notes"))
+    assert snapshot["blocks"] == {}
+    assert snapshot["phone"] == []
+
+
+def test_custom_widgets_can_use_every_new_source(collection: Collection) -> None:
+    box = {"x": 0, "y": 0, "w": 50, "h": 50, "opacity": 1}
+    text = {"size": 12, "bold": False, "align": "left", "color": "text"}
+    metrics = ("newCards", "secondsPerRating", "focus", "matureShare", "forgottenCards")
+    series = (
+        "retentionTimeline",
+        "speedTimeline",
+        "timeTimeline",
+        "newTimeline",
+        "forgottenCards",
+        "weakestDecks",
+        "newCardsFrom",
+        "deckStability",
+        "sessionHours",
+    )
+    elements = [
+        *(
+            {**box, **text, "id": f"m{index}", "kind": "metric", "source": source, "range": "last7"}
+            for index, source in enumerate(metrics)
+        ),
+        *(
+            {
+                **box,
+                "id": f"c{index}",
+                "kind": "chart",
+                "source": source,
+                "chart": "line",
+                "range": "last7",
+                "color": "accent",
+            }
+            for index, source in enumerate(series)
+        ),
+        *(
+            {**box, "id": f"h{mode}", "kind": "heatmap", "mode": mode}
+            for mode in ("reviews", "ratings", "retention", "speed", "time", "new")
+        ),
+    ]
+    widget = custom_widget(elements=elements)
+    snapshot = snapshot_of(collection, placed("custom:mine", "last7"), custom={"mine": widget})
+
+    Contract().check_result("mobile.preview", snapshot)
+    values = snapshot["blocks"]["custom:mine|last7"]["values"]
+    assert len(values) == len(elements)
+    assert len(values["c3"]["bars"]) == 7
+    assert len(values["c8"]["bars"]) == 24
+    assert all(len(values[f"h{mode}"]["levels"]) >= 364 for mode in ("retention", "speed"))

@@ -1,5 +1,6 @@
 import {
   defaultWallpaper,
+  MAX_DROPPED_IMAGE_CHARS,
   type MediaAsset,
   type Settings,
   WALLPAPER_HISTORY,
@@ -15,11 +16,34 @@ import { useAero, useAppearance } from "../../../lib/appearance.tsx";
 import { AERO_SKY, type ShownWallpaper, useWallpaper } from "../../wallpaper/useWallpaper.ts";
 import { WallpaperPicture } from "../../wallpaper/WallpaperLayer.tsx";
 import { useMedia } from "../../widgets/useCustomWidgets.ts";
-import { Card, Panel, Row, Toggle } from "../parts.tsx";
+import { Card, Panel, Row, Toggle, useDeleteWhilePointed } from "../parts.tsx";
 
 const FILE_TYPES = /^(image\/(png|jpeg|gif|webp)|video\/.+)$/;
-const FILE_ENDINGS = /\.(png|jpe?g|gif|webp|mp4|m4v|mov|webm)$/i;
+const FILE_ENDINGS = /\.(png|jpe?g|jfif|gif|webp|mp4|m4v|mov|webm)$/i;
+const PICTURE_TYPES = /^image\/(png|jpeg|gif|webp)$/;
 const SCROLL_STEP = 320;
+
+/**
+ * A picture's content as base64, sent along with a drop. Statly takes the dropped file's path
+ * where the window sees the drop, but on some Windows setups it does not, and then this is used.
+ * Videos and very large files cannot travel this way.
+ */
+function pictureData(file: File): Promise<string | undefined> {
+  const isPicture =
+    PICTURE_TYPES.test(file.type) || /\.(jpe?g|jfif|png|gif|webp)$/i.test(file.name);
+  if (!isPicture || (file.size * 4) / 3 > MAX_DROPPED_IMAGE_CHARS - 4) {
+    return Promise.resolve(undefined);
+  }
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = typeof reader.result === "string" ? reader.result : "";
+      resolve(url.includes(",") ? url.slice(url.indexOf(",") + 1) : undefined);
+    };
+    reader.onerror = () => resolve(undefined);
+    reader.readAsDataURL(file);
+  });
+}
 
 /** The page only sorts out what is plainly no picture or video. Python checks the content. */
 export function suitsAsWallpaper(file: Pick<File, "name" | "type">) {
@@ -119,7 +143,8 @@ export function WallpaperPanel() {
     onSuccess: changed,
   });
   const drop = useMutation({
-    mutationFn: () => bridge.call("wallpaper.dropped", {}),
+    mutationFn: (image: string | undefined) =>
+      bridge.call("wallpaper.dropped", image === undefined ? {} : { image }),
     onSuccess: changed,
   });
   const remove = useMutation({
@@ -161,13 +186,15 @@ export function WallpaperPanel() {
       return;
     }
     if (suitsAsWallpaper(file)) {
-      drop.mutate();
+      void pictureData(file).then((image) => drop.mutate(image));
     } else {
       setRejected(true);
     }
   }
 
   const busy = choose.isPending || drop.isPending;
+  const chosenNow = wallpaper.enabled && wallpaper.source !== "none";
+  const deleting = useDeleteWhilePointed(chosenNow && !busy ? () => remove.mutate() : null);
   const failed = rejected || choose.isError || drop.isError;
   const chosen = wallpaper.enabled && wallpaper.source !== "none";
   const moving =
@@ -198,6 +225,8 @@ export function WallpaperPanel() {
           disabled={busy}
           data-testid="wallpaper-drop"
           data-dragging={dragging || undefined}
+          title={chosenNow ? t("settings.wallpaperDeleteHint") : undefined}
+          {...deleting}
           onClick={() => {
             setRejected(false);
             choose.mutate();

@@ -8,6 +8,8 @@ export type MenuEntry = {
   icon?: ReactNode;
   /** The page the menu was opened on: shown with a tick, not chosen again. */
   current?: boolean;
+  /** Shown in red, for something that cannot be taken back easily. */
+  danger?: boolean;
   onSelect?: () => void;
 };
 
@@ -79,9 +81,15 @@ export function MenuContent({
                 entry.onSelect?.();
               }
             }}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent px-2.5 py-1.5 text-left text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:bg-hover aria-disabled:cursor-default aria-disabled:font-semibold aria-disabled:hover:bg-transparent"
+            className={`flex w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent px-2.5 py-1.5 text-left text-[13px] outline-none transition-colors hover:bg-hover focus-visible:bg-hover aria-disabled:cursor-default aria-disabled:font-semibold aria-disabled:hover:bg-transparent ${
+              entry.danger ? "text-danger" : "text-text"
+            }`}
           >
-            <span className="grid size-4 shrink-0 place-items-center text-muted">{entry.icon}</span>
+            <span
+              className={`grid size-4 shrink-0 place-items-center ${entry.danger ? "" : "text-muted"}`}
+            >
+              {entry.icon}
+            </span>
             <span className="min-w-0 flex-1 truncate">{entry.label}</span>
             {entry.current ? (
               <Check size={14} aria-hidden="true" className="shrink-0 text-accent" />

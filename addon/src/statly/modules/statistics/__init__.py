@@ -8,7 +8,7 @@ from typing import Any
 from ...core.module import Context, Events
 from ...core.reader import CollectionReader
 from ..review import ANSWERED, UNDONE
-from . import anki_stats, metrics
+from . import anki_stats, insights, metrics
 from .cache import ResultCache
 
 _METRICS = {
@@ -24,6 +24,13 @@ _METRICS = {
     "statistics.due": metrics.due,
     "statistics.forecast": metrics.forecast,
     "statistics.cardStates": metrics.card_states,
+    "statistics.forgotten": insights.forgotten,
+    "statistics.deckTable": insights.deck_table,
+    "statistics.daily": insights.daily,
+    "statistics.answerMix": insights.answer_mix,
+    "statistics.topics": insights.topics,
+    "statistics.speed": insights.speed,
+    "statistics.sessions": insights.sessions,
 }
 
 

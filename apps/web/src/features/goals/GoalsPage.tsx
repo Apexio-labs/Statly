@@ -1,9 +1,12 @@
+import * as Popover from "@radix-ui/react-popover";
 import type { Goal } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
 import {
   Archive,
   ArchiveRestore,
   Check,
+  Copy,
+  Ellipsis,
   Flame,
   Pencil,
   Plus,
@@ -15,6 +18,7 @@ import { Link, useNavigate } from "react-router";
 import { Button } from "../../components/Button.tsx";
 import { ConfirmDialog } from "../../components/ConfirmDialog.tsx";
 import { AddIcon } from "../../components/icons.tsx";
+import { MenuContent } from "../../components/Menu.tsx";
 import { PageHeader } from "../../components/PageHeader.tsx";
 import { shortDate } from "../../lib/format.ts";
 import { spotlight } from "../../lib/spotlight.ts";
@@ -30,10 +34,59 @@ import { useGoalActions, useGoalStatus, useGoals } from "./useGoals.ts";
 const ACTION =
   "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-control border border-line bg-control px-2.5 text-xs font-semibold text-text no-underline hover:bg-hover";
 
+/** Duplicate, archive and delete, behind three dots. */
+function GoalMenu({ goal, onDelete }: { goal: Goal; onDelete: () => void }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { archive, duplicate } = useGoalActions();
+  const [open, setOpen] = useState(false);
+  const label = t("goals.actions.more", { name: goal.name });
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger
+        aria-label={label}
+        aria-haspopup="menu"
+        title={label}
+        className={`${ACTION} w-8 justify-center px-0 data-[state=open]:bg-hover`}
+      >
+        <Ellipsis size={15} aria-hidden="true" />
+      </Popover.Trigger>
+      <MenuContent
+        label={label}
+        align="end"
+        onClose={() => setOpen(false)}
+        entries={[
+          {
+            label: t("goals.actions.duplicate"),
+            icon: <Copy size={14} />,
+            onSelect: () =>
+              duplicate.mutate(
+                { goal, name: t("goals.copyName", { name: goal.name }) },
+                {
+                  onError: () => void navigate(`/goals/new/${goal.config.kind}?copy=${goal.id}`),
+                },
+              ),
+          },
+          {
+            label: t(goal.archived ? "goals.actions.restore" : "goals.actions.archive"),
+            icon: goal.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />,
+            onSelect: () => archive.mutate(goal),
+          },
+          {
+            label: t("goals.actions.delete"),
+            icon: <Trash2 size={14} />,
+            danger: true,
+            onSelect: onDelete,
+          },
+        ]}
+      />
+    </Popover.Root>
+  );
+}
+
 function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: () => void }) {
   const { t, i18n } = useTranslation();
   const status = useGoalStatus(goal.id);
-  const { archive } = useGoalActions();
   const { layout, save } = useLayout();
   const placed = layout?.widgets.some((widget) => widget.type.startsWith(`goal:${goal.id}:`));
   const data = status.data;
@@ -102,18 +155,7 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: () => void }) {
             <Pencil size={13} aria-hidden="true" />
             {t("goals.actions.edit")}
           </Link>
-          <button type="button" className={ACTION} onClick={() => archive.mutate(goal)}>
-            {goal.archived ? (
-              <ArchiveRestore size={13} aria-hidden="true" />
-            ) : (
-              <Archive size={13} aria-hidden="true" />
-            )}
-            {t(goal.archived ? "goals.actions.restore" : "goals.actions.archive")}
-          </button>
-          <button type="button" className={`${ACTION} text-danger`} onClick={onDelete}>
-            <Trash2 size={13} aria-hidden="true" />
-            {t("goals.actions.delete")}
-          </button>
+          <GoalMenu goal={goal} onDelete={onDelete} />
         </div>
       </div>
     </article>

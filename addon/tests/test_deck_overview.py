@@ -13,6 +13,7 @@ from statly.modules.deck_overview import heatmap_grid, heatmap_payload
 from statly.modules.deck_overview.heatmap_html import render_heatmap_markup
 from statly.modules.deck_overview.styles import (
     counter_styles,
+    statly_deck_name,
     wallpaper_styles,
     wallpaper_video,
 )
@@ -101,3 +102,12 @@ def test_heatmap_markup_from_a_real_collection(collection: Collection) -> None:
     html = render_heatmap_markup(payload, "de")
     assert "statly-deck-overview-heatmap" in html
     assert "Heute 1 Karte" in html
+
+
+def test_statlys_own_deck_is_named_in_statlys_colors() -> None:
+    markup = statly_deck_name()
+    assert '"Statly Dashboard"' in markup
+    assert "linear-gradient(90deg, #006b70, #145a9e, #4f347f)" in markup
+    assert ".nightMode .statly-deck-name" in markup
+    # Only a name that is exactly Statly's own deck changes, never a deck that contains it.
+    assert "textContent.trim()===name" in markup

@@ -32,6 +32,7 @@ class MobileSync:
         self._dashboard: Any = context.services["dashboard"]
         self._widgets: Any = context.services["widgets"]
         self._goals: Any = context.services.get("goals")
+        self._creation: Any = context.services.get("creation")
         self._thumbnails: dict[tuple[str, int], str] = {}
         self._store = JsonStore(context.host.data_folder)
         self._saw_first_sync = False
@@ -89,6 +90,11 @@ class MobileSync:
         def goal_block(kind: str) -> dict[str, Any] | None:
             return goals.phone_block(kind, reader, language, STAND) if goals else None
 
+        creation = self._creation
+
+        def created(span: dict[str, Any]) -> dict[str, Any]:
+            return creation.statistics(span, reader)
+
         return build_snapshot(
             reader,
             devices,
@@ -97,6 +103,7 @@ class MobileSync:
             lambda asset: self._shrunk(asset, _PICTURE_SIDE),
             self._backgrounds(),
             goal_block,
+            created if creation is not None else None,
         )
 
     def preview(self, params: Any, reader: CollectionReader) -> dict[str, Any]:

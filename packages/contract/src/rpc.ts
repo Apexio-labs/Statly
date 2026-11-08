@@ -40,6 +40,9 @@ import { customWidget, mediaTypes } from "./widget.ts";
 
 const empty = z.object({}).strict();
 
+/** About 20 MB of picture as base64. Larger files and videos need the dropped file's path. */
+export const MAX_DROPPED_IMAGE_CHARS = 28_000_000;
+
 export const hostInfo = z
   .object({
     statlyVersion: z.string(),
@@ -87,6 +90,8 @@ export const reviewSummary = z
     /** Same share, limited to cards in review with an interval of at least one day. */
     retention: z.number().nullable(),
     activeDays: count,
+    /** Cards seen for the very first time. */
+    newCards: count,
   })
   .strict();
 
@@ -163,8 +168,196 @@ export const cardStates = z
     suspended: count,
     buried: count,
     other: count,
+    /** Cards in review with an interval of at least 21 days, in any queue. */
+    mature: count,
   })
   .strict();
+
+const share = z.number().min(0).max(1);
+
+/** Cards answered Again most often. A card's very first answer never counts as forgotten. */
+export const forgottenCards = z
+  .object({
+    cards: z.array(
+      z
+        .object({
+          cardId: z.number().int(),
+          text: z.string(),
+          deck: z.string(),
+          forgot: count,
+          /** Answers in the range, without the first sight of a new card. */
+          seen: count,
+          /** Null while the card is new or still in its first steps. */
+          intervalDays: count.nullable(),
+        })
+        .strict(),
+    ),
+    /** Cards forgotten at least once in the range. */
+    total: count,
+  })
+  .strict();
+
+/** One deck in the deck table. Rows come flat, each naming the row it belongs under. */
+export const deckTableRow = z
+  .object({
+    deckId: z.number().int(),
+    parentId: z.number().int().nullable(),
+    depth: count,
+    name: z.string(),
+    /** The decks above it, separated by "::", for a deck that was lifted out of a folder. */
+    path: z.string(),
+    /** Reviews or ratings, as asked. */
+    count,
+    /** The same, for each part of the range in `buckets`. */
+    series: z.array(count),
+    timeMs: count,
+    retention: share.nullable(),
+    cards: count,
+    matureShare: share.nullable(),
+    /** Stability against cards first studied around the same time, as a factor. */
+    stability: z.number().positive().nullable(),
+    stabilityDays: z.number().nonnegative().nullable(),
+    children: count,
+  })
+  .strict();
+
+export const deckTable = z
+  .object({
+    /** The first day of each part of the range. */
+    buckets: z.array(isoDate),
+    /** Without FSRS, a card's interval stands in for its stability. */
+    stabilityKind: z.enum(["stability", "interval"]),
+    rows: z.array(deckTableRow),
+  })
+  .strict();
+
+export const dailyStatistics = z
+  .object({
+    days: z.array(
+      z
+        .object({
+          date: isoDate,
+          reviews: count,
+          ratings: count,
+          timeMs: count,
+          newCards: count,
+          /** Answers to cards in review with an interval of at least a day, and the passed ones. */
+          checked: count,
+          passed: count,
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export const answerMix = z
+  .object({
+    again: count,
+    hard: count,
+    good: count,
+    easy: count,
+    new: count,
+    learning: count,
+    review: count,
+    relearning: count,
+  })
+  .strict();
+
+const topicDeck = { deckId: z.number().int(), name: z.string(), path: z.string() };
+
+export const studyTopics = z
+  .object({
+    retention: share.nullable(),
+    weakest: z.array(z.object({ ...topicDeck, checked: count, passed: count }).strict()),
+    newFrom: z.array(z.object({ ...topicDeck, cards: count }).strict()),
+    newCards: count,
+  })
+  .strict();
+
+const speedDistribution = z
+  .object({
+    answers: count,
+    /** Share of answers that were not slower than usual. */
+    focus: share.nullable(),
+    medianMs: count.nullable(),
+    /** 5th, 25th, 50th, 75th and 95th percentile, in spreads from the usual time. */
+    quantiles: z.array(z.number()).length(5).nullable(),
+    /** Answers per step of `zStep` from `zLow` on. */
+    histogram: z.array(count),
+  })
+  .strict();
+
+export const answerSpeed = z
+  .object({
+    zLow: z.number(),
+    zStep: z.number().positive(),
+    /** Answers beyond this many spreads count as slow. */
+    slowAt: z.number(),
+    usualMs: z.object({ new: count, review: count }).strict(),
+    current: speedDistribution,
+    /** The range of the same length right before. */
+    previous: speedDistribution.nullable(),
+  })
+  .strict();
+
+/**
+ * Time spent making new cards in Anki's Add window, measured by Statly since it was installed.
+ * Only notes that still exist count, in the current deck of their first card.
+ */
+export const creationTime = z
+  .object({
+    granularity: z.enum(["day", "week", "month"]),
+    /** Every day, week or month of the range, also the empty ones. */
+    items: z
+      .array(
+        z
+          .object({
+            date: isoDate,
+            seconds: z.number().nonnegative(),
+            cards: count,
+            notes: count,
+          })
+          .strict(),
+      )
+      .max(400),
+    total: z.object({ seconds: z.number().nonnegative(), cards: count, notes: count }).strict(),
+    /** Seconds per card over all decks and every measured note: the usual pace to compare with. */
+    usualSecondsPerCard: z.number().nonnegative().nullable(),
+    /** The Anki day of the first measured note, or null before the first one. */
+    measuredSince: isoDate.nullable(),
+  })
+  .strict();
+
+export const studySessions = z
+  .object({
+    /** The hour at which an Anki day starts. */
+    dayStartHour: z.number().int().min(0).max(23),
+    /** The last days of the range, at most 14. Times in seconds from the day's start. */
+    days: z.array(
+      z
+        .object({
+          date: isoDate,
+          sessions: z.array(
+            z
+              .object({
+                start: count,
+                end: count,
+                ratings: count,
+                timeMs: count,
+                focus: share.nullable(),
+                retention: share.nullable(),
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+    /** Every hour of the clock over the whole range. */
+    hours: z.array(z.object({ ratings: count, focus: share.nullable() }).strict()).length(24),
+  })
+  .strict();
+
+export const dayNote = z.object({ date: isoDate, text: z.string().max(2000) }).strict();
 
 export const mobileStatus = z
   .object({ enabled: z.boolean(), updated: z.string().nullable() })
@@ -206,12 +399,41 @@ const mobileHeatmap = z
   })
   .strict();
 
+/** Rows of a list with a few value columns, such as decks or forgotten cards. */
+const mobileTable = z
+  .object({
+    kind: z.literal("table"),
+    label: z.string(),
+    note: z.string(),
+    columns: z.array(z.string()).max(4),
+    rows: z
+      .array(
+        z
+          .object({
+            label: z.string(),
+            sub: z.string(),
+            cells: z.array(z.string()).max(4),
+            /** Colors the first cell: good in green, bad in red. */
+            tone: z.enum(["good", "bad"]).nullable(),
+          })
+          .strict(),
+      )
+      .max(12),
+    facts: z.array(mobileFact),
+  })
+  .strict();
+
 /** What Python worked out for one element, because a card cannot ask for anything. */
 const mobileElementValue = z
   .object({
     text: z.string().optional(),
     share: z.number().optional(),
     bars: z.array(z.object({ label: z.string(), value: count }).strict()).optional(),
+    /** A combined chart's points, one list per layer, in the layers' order. */
+    layers: z
+      .array(z.array(z.object({ label: z.string(), value: z.number().min(0) }).strict()))
+      .max(6)
+      .optional(),
     levels: z.array(z.number().int().min(0).max(4)).optional(),
   })
   .strict();
@@ -231,6 +453,7 @@ const mobileBlock = z.discriminatedUnion("kind", [
   mobileTile,
   mobileBars,
   mobileHeatmap,
+  mobileTable,
   mobileCustom,
 ]);
 
@@ -335,9 +558,38 @@ export const methods = {
     result: reviewHeatmap,
   },
   "statistics.due": { params: deckParams, result: z.object({ cards: count }).strict() },
-  "statistics.forecast": { params: deckParams, result: dueForecast },
+  "statistics.forecast": {
+    params: z
+      .object({ deckId: deckScope, days: z.number().int().min(1).max(365).optional() })
+      .strict(),
+    result: dueForecast,
+  },
   "statistics.cardStates": { params: deckParams, result: cardStates },
   "statistics.ankiView": { params: ankiViewParams, result: ankiViewResult },
+  "statistics.forgotten": {
+    params: rangeParams.extend({ limit: z.number().int().min(1).max(50).optional() }).strict(),
+    result: forgottenCards,
+  },
+  "statistics.deckTable": { params: countedRangeParams, result: deckTable },
+  "statistics.daily": { params: rangeParams, result: dailyStatistics },
+  "statistics.answerMix": { params: rangeParams, result: answerMix },
+  "statistics.topics": { params: rangeParams, result: studyTopics },
+  "statistics.speed": { params: rangeParams, result: answerSpeed },
+  "statistics.sessions": { params: rangeParams, result: studySessions },
+  /** Time spent making new cards, from Statly's own measurements on this computer. */
+  "statistics.creation": { params: rangeParams, result: creationTime },
+  /** Opens Anki's card browser on these cards. Changes nothing. */
+  "system.openBrowser": {
+    params: z.object({ cardIds: z.array(z.number().int()).min(1).max(100) }).strict(),
+    result: z.null(),
+  },
+  /** Notes a person wrote about their study days. Kept only on this computer. */
+  "notes.list": {
+    params: z.object({ start: isoDate, end: isoDate }).strict(),
+    result: z.array(dayNote),
+  },
+  /** An empty text removes the day's note. */
+  "notes.save": { params: dayNote, result: z.null() },
   "dashboard.get": { params: empty, result: dashboardLayout },
   "dashboard.save": {
     params: z.object({ layout: dashboardLayout, devices: deviceLayouts.optional() }).strict(),
@@ -372,6 +624,15 @@ export const methods = {
     params: z.object({ choice: z.enum(["share", "later", "never"]) }).strict(),
     result: z.null(),
   },
+  /**
+   * What a big update brought: the page shows the notes of every big version after ``since`` up
+   * to ``current``. Both are equal when there is nothing to show.
+   */
+  "releaseNotes.pending": {
+    params: empty,
+    result: z.object({ since: z.string().max(40), current: z.string().max(40) }).strict(),
+  },
+  "releaseNotes.seen": { params: empty, result: z.null() },
   /** Opens the system's share sheet where there is one. Elsewhere the text lands on the clipboard. */
   "system.share": {
     params: z
@@ -537,8 +798,14 @@ export const methods = {
   "ai.newExternalCode": { params: empty, result: z.object({ code: z.string() }).strict() },
   "ai.saveBridge": { params: empty, result: z.object({ saved: z.boolean() }).strict() },
   "wallpaper.choose": { params: empty, result: settings },
-  /** Uses the file that was just dropped onto the page, which a page cannot name itself. */
-  "wallpaper.dropped": { params: empty, result: settings },
+  /**
+   * Uses the file that was just dropped onto the page, which a page cannot name itself. An image
+   * also comes along as base64, for when the window never saw the drop, as on some Windows setups.
+   */
+  "wallpaper.dropped": {
+    params: z.object({ image: z.string().max(MAX_DROPPED_IMAGE_CHARS).optional() }).strict(),
+    result: settings,
+  },
   "wallpaper.remove": { params: empty, result: settings },
   /** Puts a file from the history back behind Statly. */
   "wallpaper.use": { params: z.object({ id: z.string().max(64) }).strict(), result: settings },

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import tempfile
@@ -19,6 +20,8 @@ from .media import (
     inspect_widget_media,
     set_gif_loop,
 )
+
+logger = logging.getLogger(__name__)
 
 MAX_WIDGETS = 100
 MAX_SOURCE_BYTES = 2 * 1024 * 1024 * 1024
@@ -192,4 +195,9 @@ class WidgetStore:
             used.update(media_references(widget))
         for path in folder.iterdir():
             if path.is_file() and not path.is_symlink() and path.stem not in used:
-                path.unlink()
+                try:
+                    path.unlink()
+                except OSError:
+                    # Windows keeps a file that is still shown, such as the old wallpaper on
+                    # Anki's deck overview. It goes the next time something is cleaned up.
+                    logger.info("Statly will remove %s later", path.name)

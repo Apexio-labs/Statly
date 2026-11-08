@@ -16,7 +16,7 @@ Free, open source and local. No account, no telemetry.
 
 <b>All of Anki's statistics as widgets.</b> The same numbers as Anki's statistics page, with stability, difficulty and retrievability if you use FSRS.
 
-<b>A clearer picture of your habits.</b> A yearly heatmap with streaks, your study times by weekday and hour, true retention, and a forecast of the coming week.
+<b>A clearer picture of your habits.</b> A yearly heatmap with streaks, your study times by weekday and hour, true retention, a forecast of the coming week, the cards you forget most, your answer pace, day notes and the time you spend making new cards.
 
 [IMAGE 2]
 
@@ -24,7 +24,7 @@ Free, open source and local. No account, no telemetry.
 
 <b>Reviews that count cards.</b> A review is a card that moved on to a later day, counted once a day. Every press of Again, Hard, Good or Easy is a rating, and both have their own widgets.
 
-<b>Widgets of your own.</b> Build them without code. They are plain data, so a shared widget cannot run anything on your computer.
+<b>Widgets of your own.</b> Build them without code, from text, numbers, pictures and charts, and lay bars and lines over one another in one combined chart. They are plain data, so a shared widget cannot run anything on your computer.
 
 <b>Your dashboard on your phone.</b> Statly can put it on a card that travels with the normal Anki sync, arranged for phones and tablets. No server is involved. The card shows the state of your last desktop sync. It is tested on iPhone with AnkiMobile. AnkiDroid should work but is untested so far, so reports are welcome.
 
@@ -44,7 +44,7 @@ So please do not just take our word for anything. All the code is public on <a h
 
 <b>Early days</b>
 
-Version 2 is a complete rewrite, and 2.1 adds study goals, so expect a few rough edges. A <a href="https://github.com/apexio-labs/statly/issues">bug report on GitHub</a> helps more than a bad review, because we can answer it there. If Statly is useful to you, a thumbs up helps others find it.
+Version 2 is a complete rewrite, 2.1 adds study goals and 2.2 new widgets and combined charts, so expect a few rough edges. A <a href="https://github.com/apexio-labs/statly/issues">bug report on GitHub</a> helps more than a bad review, because we can answer it there. If Statly is useful to you, a thumbs up helps others find it.
 
 <b>Updating from 1.x?</b> Your settings and dashboard layout carry over. Widgets you built yourself in 1.x do not.
 

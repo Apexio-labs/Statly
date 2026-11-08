@@ -313,3 +313,28 @@ def test_a_source_needs_one_new_prefix(dashboard: DashboardService, prefix: str)
     dashboard.add_source("custom:", dict)
     with pytest.raises(ValueError):
         dashboard.add_source(prefix, dict)
+
+
+def test_the_dashboard_filter_survives_a_restart(store: JsonStore) -> None:
+    contract = Contract()
+    first = SettingsService(store, contract)
+    assert first.get()["dashboardFilter"] == {"preset": "today", "custom": None, "deck": "all"}
+    chosen = {
+        "preset": "custom",
+        "custom": {"start": "2026-10-01", "end": "2026-10-31"},
+        "deck": "7",
+    }
+    first.update({"dashboardFilter": chosen})  # pyright: ignore[reportArgumentType]
+
+    assert SettingsService(store, contract).get()["dashboardFilter"] == chosen
+
+
+def test_settings_from_before_the_filter_still_load(store: JsonStore) -> None:
+    contract = Contract()
+    older = {
+        key: value for key, value in contract.default_settings.items() if key != "dashboardFilter"
+    }
+    store.write("settings", {**older, "theme": "dark"})
+    loaded = SettingsService(store, contract).get()
+    assert loaded["theme"] == "dark"
+    assert loaded["dashboardFilter"]["preset"] == "today"

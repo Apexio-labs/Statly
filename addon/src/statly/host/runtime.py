@@ -9,7 +9,7 @@ import json
 import os
 import tempfile
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -36,8 +36,9 @@ from aqt.utils import openLink, tooltip
 
 from ..contract.types import SystemInfoResult
 from ..core.errors import CollectionUnavailable, InvalidParams
-from ..core.module import PermissionPrompt, SecretStore, ShownCard
+from ..core.module import AddingEvent, PermissionPrompt, SecretStore, ShownCard
 from ..core.reader import CollectionReader, ReadableCollection
+from .adding import AddWindowWatcher
 from .hooks import guarded, guarded_filter
 from .keychain import system_secrets
 from .labels import host_labels
@@ -59,6 +60,8 @@ class AnkiRuntime:
         self.shortcuts = Shortcuts(main_window, self._quit_pressed)
         self._secrets = system_secrets()
         self._before_uninstall: list[Callable[[], None]] = []
+        self._auto_update_listeners: list[Callable[[], None]] = []
+        self._adding = AddWindowWatcher(main_window)
         self.unsaved_message: str | None = None
         # Set by bootstrap, which knows the settings. Statly's own popups take their look from it.
         self.appearance: Callable[[], dict[str, Any]] = lambda: {
@@ -99,7 +102,42 @@ class AnkiRuntime:
         openLink(url)
 
     def open_anki_statistics(self) -> None:
-        self._mw.onStats()
+        """Opens Anki's statistics in front of Statly.
+
+        Anki's dialog belongs to its main window. On Windows, showing it raises that whole group
+        of windows, so Statly seemed to vanish behind Anki. Opened from here, the dialog belongs
+        to Statly's window instead, before it first shows, and stays in front of it.
+        """
+        window = self._statly_window()
+        owner = window if isinstance(window, QWidget) and window.isVisible() else None
+
+        def adopt(dialog: Any) -> None:
+            if owner is not None and dialog.parent() is not owner:
+                dialog.setParent(owner, Qt.WindowType.Window)
+
+        gui_hooks.stats_dialog_will_show.append(adopt)
+        try:
+            self._mw.onStats()
+        finally:
+            gui_hooks.stats_dialog_will_show.remove(adopt)
+        if owner is None:
+            return
+        dialogs: Any = aqt.dialogs
+        for name in ("NewDeckStats", "DeckStats"):
+            dialog = dialogs._dialogs.get(name, [None, None])[1]
+            if dialog is not None and dialog.parent() is not owner:
+                # Already open from Anki itself: take it over now, which hides it, and show it.
+                adopt(dialog)
+                dialog.show()
+            if dialog is not None:
+                dialog.raise_()
+                dialog.activateWindow()
+
+    def open_browser(self, card_ids: Sequence[int]) -> None:
+        if self._mw.col is None:
+            raise CollectionUnavailable("The collection is closed.")
+        search = "cid:" + ",".join(str(int(card_id)) for card_id in card_ids)
+        aqt.dialogs.open("Browser", self._mw, search=(search,))
 
     def _dialog_parent(self) -> QWidget:
         dialogs: Any = aqt.dialogs
@@ -264,6 +302,12 @@ class AnkiRuntime:
         meta = manager.addon_meta(self._package)
         meta.update_enabled = enabled
         manager.write_addon_meta(meta)
+        for listener in self._auto_update_listeners:
+            listener()
+
+    def on_auto_update_changed(self, listener: Callable[[], None]) -> None:
+        """Called after the switch changed, from Settings or from the menu alike."""
+        self._auto_update_listeners.append(listener)
 
     def uninstall(self, done: Callable[[bool], None]) -> None:
         text = host_labels(self.appearance().get("language", "en"))
@@ -444,6 +488,9 @@ class AnkiRuntime:
             callback(state == Qt.ApplicationState.ApplicationActive)
 
         application.applicationStateChanged.connect(guarded(changed))
+
+    def on_adding(self, callback: Callable[[AddingEvent], None]) -> None:
+        self._adding.listen(callback)
 
     def later(self, work: Callable[[], None]) -> None:
         QTimer.singleShot(0, guarded(work))

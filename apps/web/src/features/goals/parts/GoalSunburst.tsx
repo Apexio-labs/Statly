@@ -3,6 +3,7 @@ import { useTranslation } from "@statly/i18n";
 import { filledEnd, type Slice, slicePath, slices } from "@statly/widget-runtime";
 import { ArrowLeft } from "lucide-react";
 import { type CSSProperties, type KeyboardEvent, useState } from "react";
+import { richTip } from "../../../components/tip.ts";
 import { motivation, studyTime } from "../examText.ts";
 import { TONE_COLORS } from "../goalLogic.ts";
 import { deckOf, parentFocus, type RingPart, ringParts, toneOfShare } from "../goalTree.ts";
@@ -259,8 +260,16 @@ export function GoalSunburst({
                   onFocus={() => point(item)}
                   onBlur={() => point(null)}
                   className={opens ? "cursor-pointer outline-none" : ""}
+                  data-tooltip={richTip({
+                    title: slice.item.label,
+                    rows: [
+                      {
+                        label: t("goals.timeline.kinds.met"),
+                        value: `${slice.item.done} / ${slice.item.target}`,
+                      },
+                    ],
+                  })}
                 >
-                  <title>{`${slice.item.label}: ${slice.item.done} / ${slice.item.target}`}</title>
                   <SliceShape slice={slice} radii={INNER} focused />
                 </g>
                 {item.outer.map((child) => (
@@ -274,10 +283,16 @@ export function GoalSunburst({
                     data-dim={(inGroup && lit !== item.id && lit !== child.id) || undefined}
                     onPointerEnter={() => point(child)}
                     onClick={() => open(child.slice.item.opens ? child.slice.item : slice.item)}
+                    data-tooltip={richTip({
+                      title: child.slice.item.label,
+                      rows: [
+                        {
+                          label: t("goals.timeline.kinds.met"),
+                          value: `${child.slice.item.done} / ${child.slice.item.target}`,
+                        },
+                      ],
+                    })}
                   >
-                    <title>
-                      {`${child.slice.item.label}: ${child.slice.item.done} / ${child.slice.item.target}`}
-                    </title>
                     <SliceShape slice={child.slice} radii={OUTER} focused={false} />
                   </g>
                 ))}
@@ -295,9 +310,8 @@ export function GoalSunburst({
           className={focused && interactive ? "cursor-pointer" : ""}
           onPointerEnter={() => point(null)}
           onClick={() => (focused && interactive ? back() : null)}
-        >
-          {focused && interactive ? <title>{t("goals.widget.back")}</title> : null}
-        </circle>
+          data-tooltip={focused && interactive ? t("goals.widget.back") : undefined}
+        />
       </svg>
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
         <div

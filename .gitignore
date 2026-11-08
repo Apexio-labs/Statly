@@ -17,6 +17,8 @@ addon/src/statly/modules/ai/statly.mcpb
 
 # Media of custom widgets in the development Anki
 addon/src/statly/user_files/
+# Anki's own state for the add-on folder a local Anki loads, such as the update switch.
+addon/src/statly/meta.json
 
 # Local Anki data used for development
 .dev/

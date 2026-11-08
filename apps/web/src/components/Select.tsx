@@ -2,7 +2,13 @@ import * as RadixSelect from "@radix-ui/react-select";
 import { Check, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 
-type Option<T extends string> = { value: T; label: string };
+/** A disabled option stays visible, greyed, with ``hint`` telling why it cannot be picked. */
+type Option<T extends string> = {
+  value: T;
+  label: string;
+  disabled?: boolean;
+  hint?: string | undefined;
+};
 
 type Props<T extends string> = {
   value: T;
@@ -38,9 +44,14 @@ export function Select<T extends string>({ value, options, onChange, label, icon
               <RadixSelect.Item
                 key={option.value}
                 value={option.value}
-                className="flex cursor-pointer items-center gap-2 rounded-control px-3 py-2 text-[13px] text-text outline-none data-[highlighted]:bg-hover"
+                disabled={option.disabled === true}
+                title={option.hint}
+                className="flex cursor-pointer items-center gap-2 rounded-control px-3 py-2 text-[13px] text-text outline-none data-[disabled]:cursor-not-allowed data-[highlighted]:bg-hover data-[disabled]:opacity-45"
               >
                 <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
+                {option.disabled && option.hint ? (
+                  <span className="ml-auto pl-3 text-[11px] text-muted">{option.hint}</span>
+                ) : null}
                 <RadixSelect.ItemIndicator className="ml-auto text-accent">
                   <Check size={14} />
                 </RadixSelect.ItemIndicator>

@@ -1,8 +1,9 @@
-import { type ChartTheme, heatmapOption, seriesOption } from "@statly/charts";
+import { type ChartTheme, pieOption, seriesOption } from "@statly/charts";
 import type { AnkiFact, AnkiView, AnkiViewResult, WidgetType } from "@statly/contract";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Button } from "../../components/Button.tsx";
+import { CalendarHeatmap, type HeatDay } from "../../components/CalendarHeatmap.tsx";
 import { useStatistic } from "../../lib/calls.ts";
 import { durationParts, fullDate, shortDate } from "../../lib/format.ts";
 import { Chart } from "./Chart.tsx";
@@ -78,6 +79,7 @@ function factText(fact: AnkiFact, tools: Formatters): string {
   const plain = (): string => {
     switch (fact.unit) {
       case "reviews":
+      case "ratings":
       case "cards":
       case "notes":
         return t(`ankiStats.units.${fact.unit}`, { count: fact.value, value: rounded });
@@ -360,23 +362,12 @@ function AnkiCalendar({ scope }: WidgetProps) {
   const { t, number, locale } = tools;
   const [year, setYear] = useState<number | null>(null);
   const { status, data } = useAnkiView("calendar", "calendar", scope.deckId, "all");
-  const theme = useChartTheme(scope.themeKey);
   const shownYear = year ?? data?.lastYear ?? new Date().getFullYear();
-  const days = (data?.days ?? [])
-    .filter((day) => day.date.startsWith(`${shownYear}-`))
-    .map((day) => ({ date: day.date, count: day.reviews }));
-  const option = heatmapOption({
-    year: shownYear,
-    days,
-    theme,
-    locale,
-    format: (date, count) =>
-      t("widgets.review-heatmap.tooltip", {
-        date: fullDate(date, locale),
-        count,
-        reviews: number(count),
-      }),
-  });
+  const days = new Map<string, HeatDay>(
+    (data?.days ?? [])
+      .filter((day) => day.date.startsWith(`${shownYear}-`))
+      .map((day) => [day.date, { value: day.reviews }]),
+  );
   const actions = data ? (
     <div className="flex items-center gap-1">
       <Button
@@ -401,7 +392,25 @@ function AnkiCalendar({ scope }: WidgetProps) {
   return (
     <WidgetCard title={title} note={note} actions={actions}>
       <WidgetState status={status} empty={false}>
-        <Chart option={option} label={title} />
+        <CalendarHeatmap
+          start={`${shownYear}-01-01`}
+          end={`${shownYear}-12-31`}
+          today={scope.end}
+          days={days}
+          scale={{ kind: "amount" }}
+          locale={locale}
+          label={title}
+          tip={(date, day) => ({
+            title: fullDate(date, locale),
+            lines: [
+              t("widgets.review-heatmap.tooltip", {
+                date: fullDate(date, locale),
+                count: day?.value ?? 0,
+                reviews: number(day?.value ?? 0),
+              }).replace(`${fullDate(date, locale)}: `, ""),
+            ],
+          })}
+        />
       </WidgetState>
     </WidgetCard>
   );
@@ -413,8 +422,24 @@ function AnkiCardCounts({ scope }: WidgetProps) {
   const [separate, setSeparate] = useState(true);
   const { status, data } = useAnkiView("counts", "card-counts", scope.deckId, "all", separate);
   const theme = useChartTheme(scope.themeKey);
-  const items = (data?.items ?? []).filter((item) => item.value > 0 || item.name !== "buried");
+  const items = useMemo(
+    () => (data?.items ?? []).filter((item) => item.value > 0 || item.name !== "buried"),
+    [data],
+  );
   const total = data?.total ?? 0;
+  const pie = useMemo(
+    () =>
+      pieOption({
+        slices: items.map((item) => ({
+          label: t(`ankiStats.series.${item.name as "mature"}`),
+          value: item.value,
+          color: colorOf(theme, item.name),
+        })),
+        theme,
+        format: number,
+      }),
+    [items, theme, t, number],
+  );
   return (
     <WidgetCard title={title} note={note}>
       <Layout
@@ -425,49 +450,43 @@ function AnkiCardCounts({ scope }: WidgetProps) {
         }
       >
         <WidgetState status={status} empty={total === 0}>
-          <div
-            role="img"
-            aria-label={title}
-            className="flex h-5 shrink-0 gap-0.5 overflow-hidden rounded-[4px]"
-          >
-            {items
-              .filter((item) => item.value > 0)
-              .map((item) => (
-                <span
-                  key={item.name}
-                  style={{ flexGrow: item.value, background: colorOf(theme, item.name) }}
-                />
-              ))}
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto statly-no-scrollbar">
-            <table className="w-full border-collapse text-xs">
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.name}>
-                    <th scope="row" className="py-0.5 text-left font-normal text-muted">
-                      <span
-                        className="mr-1.5 inline-block size-2.5 rounded-[3px]"
-                        style={{ background: colorOf(theme, item.name) }}
-                      />
-                      {t(`ankiStats.series.${item.name as "mature"}`)}
+          <div className="flex min-h-0 flex-1 flex-col gap-3 @[360px]:flex-row @[360px]:items-center">
+            <div
+              data-card-pie=""
+              className="min-h-[96px] flex-1 @[360px]:h-full @[360px]:w-[44%] @[360px]:flex-none"
+            >
+              <Chart option={pie} label={title} />
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto statly-no-scrollbar @[360px]:max-h-full">
+              <table className="w-full border-collapse text-xs">
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.name}>
+                      <th scope="row" className="py-0.5 text-left font-normal text-muted">
+                        <span
+                          className="mr-1.5 inline-block size-2.5 rounded-[3px]"
+                          style={{ background: colorOf(theme, item.name) }}
+                        />
+                        {t(`ankiStats.series.${item.name as "mature"}`)}
+                      </th>
+                      <td className="text-right font-semibold text-text">{number(item.value)}</td>
+                      <td className="w-16 text-right text-muted">
+                        {percentText(total ? item.value / total : 0, tools)}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <th scope="row" className="border-t border-line py-0.5 text-left font-semibold">
+                      {t("ankiStats.series.total")}
                     </th>
-                    <td className="text-right font-semibold text-text">{number(item.value)}</td>
-                    <td className="w-16 text-right text-muted">
-                      {percentText(total ? item.value / total : 0, tools)}
+                    <td className="border-t border-line text-right font-semibold text-text">
+                      {number(total)}
                     </td>
+                    <td className="border-t border-line" />
                   </tr>
-                ))}
-                <tr>
-                  <th scope="row" className="border-t border-line py-0.5 text-left font-semibold">
-                    {t("ankiStats.series.total")}
-                  </th>
-                  <td className="border-t border-line text-right font-semibold text-text">
-                    {number(total)}
-                  </td>
-                  <td className="border-t border-line" />
-                </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </WidgetState>
       </Layout>
@@ -496,7 +515,7 @@ function AnkiHours({ scope }: WidgetProps) {
                 ),
                 series: [
                   {
-                    name: t("ankiStats.series.reviews"),
+                    name: t("ankiStats.series.ratings"),
                     color: theme.accent,
                     values: points.map((point) => point.total),
                   },

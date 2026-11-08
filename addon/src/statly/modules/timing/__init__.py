@@ -52,17 +52,11 @@ class Stopwatch:
 class TimingModule:
     def register(self, context: Context) -> None:
         host, events = context.host, context.events
-        database = LocalDatabase(host.data_folder)
+        database: LocalDatabase = context.services["localdb"]
         database.schema("timing", store.SCHEMA)
-        context.services["localdb"] = database
         stopwatch = Stopwatch(database, host.monotonic)
         context.services["stopwatch"] = stopwatch
         events.subscribe(ANSWERED, stopwatch.answered)
         events.subscribe(UNDONE, stopwatch.undone)
         events.subscribe(FINISHED, lambda _value: stopwatch.write())
-
-        def closing() -> None:
-            stopwatch.write()
-            database.close()
-
-        host.on_profile_closing(closing)
+        database.before_close(stopwatch.write)

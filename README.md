@@ -10,8 +10,9 @@ Sponsored by [Oldschool Timeless](https://oldschooltimeless.com).
   and pick a theme and a background picture.
 - **Anki's statistics as widgets.** Every section of Anki's statistics page, with Anki's own numbers
   and FSRS values, plus Statly's own widgets.
-- **Your own widgets, without code.** Build them from text, numbers, charts, pictures and shapes.
-  Widgets are plain data, so sharing one can never run code on someone's computer.
+- **Your own widgets, without code.** Build them from text, numbers, charts, pictures and shapes,
+  and combine bars and lines in one chart. Widgets are plain data, so sharing one can never run
+  code on someone's computer.
 - **Study goals.** Set an exam date and Statly spreads the cards of the chosen decks over the days
   before it, shows the day's goal as a ring, estimates how long today takes by your own pace and
   keeps a streak. Goals can sync to your other computers through AnkiWeb.

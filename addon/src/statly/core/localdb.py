@@ -68,6 +68,11 @@ class LocalDatabase:
         self._connection: sqlite3.Connection | None = None
         self._path: Path | None = None
         self._ready: dict[str, int] = {}
+        self._before_close: list[Callable[[], None]] = []
+
+    def before_close(self, flush: Callable[[], None]) -> None:
+        """Run ``flush`` when the file is about to close, so what waits in memory is written."""
+        self._before_close.append(flush)
 
     def schema(self, name: str, steps: Sequence[Step]) -> None:
         """Declare a part's tables. Add new steps at the end, never change old ones."""
@@ -107,6 +112,11 @@ class LocalDatabase:
 
     def close(self, timeout: float = 3.0) -> None:
         """Finish what is waiting, then let go of the file, as when the profile closes."""
+        for flush in self._before_close:
+            try:
+                flush()
+            except Exception:
+                logger.exception("Writing before Statly's database closes failed")
         if self._thread is None:
             return
         finished = threading.Event()

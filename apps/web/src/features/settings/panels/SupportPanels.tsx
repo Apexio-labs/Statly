@@ -3,8 +3,12 @@ import mark from "@statly/ui/assets/oldschooltimeless-mark.png";
 import photo from "@statly/ui/assets/oldschooltimeless-social.jpg";
 import { bridge } from "../../../bridge/index.ts";
 import { Button } from "../../../components/Button.tsx";
+import { ANKIWEB_RATE_URL } from "../../onboarding/RatingDialog.tsx";
 import { Card, Panel } from "../parts.tsx";
 
+const REPOSITORY_URL = "https://github.com/Apexio-labs/Statly";
+const NEW_ISSUE_URL = `${REPOSITORY_URL}/issues/new/choose`;
+const ISSUES_URL = `${REPOSITORY_URL}/issues`;
 const SPONSOR_URL = "https://oldschooltimeless.com";
 const BESTSELLER_URL = "https://oldschooltimeless.com/collections/unsere-bestseller";
 const COLLECTION_URL = "https://oldschooltimeless.com/collections/all";
@@ -17,6 +21,24 @@ export function SupportPanel() {
   const { t } = useTranslation();
   return (
     <Panel title={t("settings.sections.support.title")} note={t("settings.sections.support.note")}>
+      <Card>
+        <h3 className="m-0 text-[13px] font-bold">{t("settings.supportReportTitle")}</h3>
+        <p className="m-0 mt-1 text-[13px] text-muted">{t("settings.supportReportBody")}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button primary onClick={() => open(NEW_ISSUE_URL)}>
+            {t("settings.supportReport")}
+          </Button>
+          <Button onClick={() => open(ISSUES_URL)}>{t("settings.supportIssues")}</Button>
+          <Button onClick={() => open(REPOSITORY_URL)}>{t("settings.supportCode")}</Button>
+        </div>
+      </Card>
+      <Card>
+        <h3 className="m-0 text-[13px] font-bold">{t("settings.supportLikeTitle")}</h3>
+        <p className="m-0 mt-1 text-[13px] text-muted">{t("settings.supportLikeBody")}</p>
+        <div className="mt-3">
+          <Button onClick={() => open(ANKIWEB_RATE_URL)}>{t("settings.supportLike")}</Button>
+        </div>
+      </Card>
       <Card>
         <h3 className="m-0 text-[13px] font-bold">{t("settings.supportTitle")}</h3>
         <p className="m-0 mt-1 text-[13px] text-muted">{t("settings.supportBody")}</p>

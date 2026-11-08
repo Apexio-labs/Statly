@@ -1,8 +1,9 @@
-import { barOption, heatmapOption } from "@statly/charts";
+import { barOption } from "@statly/charts";
 import type { Measure, WidgetType } from "@statly/contract";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "../../components/Button.tsx";
+import { CalendarHeatmap, type HeatDay } from "../../components/CalendarHeatmap.tsx";
 import { useStatistic } from "../../lib/calls.ts";
 import {
   addDays,
@@ -14,6 +15,8 @@ import {
 } from "../../lib/format.ts";
 import { ankiWidgets } from "./ankiWidgets.tsx";
 import { Chart } from "./Chart.tsx";
+import { CreationTime } from "./creationWidget.tsx";
+import { insightWidgets } from "./insightWidgets.tsx";
 import { WidgetCard, WidgetState } from "./WidgetCard.tsx";
 import { ChipGroup, Tile, useChartTheme, useFormatters, type WidgetProps } from "./widgetParts.tsx";
 
@@ -306,21 +309,11 @@ function CountHeatmap({ scope, measure }: CountedProps) {
   const [year, setYear] = useState<number | null>(null);
   const id = measure === "reviews" ? "review-heatmap" : "rating-heatmap";
   const heatmap = useStatistic("statistics.heatmap", { year, deckId: scope.deckId, measure });
-  const theme = useChartTheme(scope.themeKey);
   const data = heatmap.data;
   const shownYear = data?.year ?? new Date().getFullYear();
-  const option = heatmapOption({
-    year: shownYear,
-    days: data?.days ?? [],
-    theme,
-    locale,
-    format: (date, count) =>
-      t(`widgets.${id}.tooltip`, {
-        date: fullDate(date, locale),
-        count,
-        reviews: number(count),
-      }),
-  });
+  const days = new Map<string, HeatDay>(
+    (data?.days ?? []).map((day) => [day.date, { value: day.count }]),
+  );
   const stats = data
     ? t(`widgets.${id}.summary`, {
         current: number(data.currentStreak),
@@ -352,7 +345,33 @@ function CountHeatmap({ scope, measure }: CountedProps) {
   return (
     <WidgetCard title={t(`widgets.${id}.title`)} note={stats} actions={actions}>
       <WidgetState status={heatmap} empty={false}>
-        <Chart option={option} label={t(`widgets.${id}.title`)} />
+        <CalendarHeatmap
+          start={`${shownYear}-01-01`}
+          end={`${shownYear}-12-31`}
+          today={data?.today ?? scope.end}
+          days={days}
+          scale={
+            measure === "reviews"
+              ? { kind: "amount" }
+              : { kind: "amount", color: "var(--statly-series-3)" }
+          }
+          locale={locale}
+          label={t(`widgets.${id}.title`)}
+          highlight={{ start: scope.start, end: scope.end }}
+          onPick={
+            scope.pickRange ? (date) => scope.pickRange?.({ start: date, end: date }) : undefined
+          }
+          tip={(date, day) => ({
+            title: fullDate(date, locale),
+            rows: [
+              {
+                color: measure === "reviews" ? "var(--statly-accent)" : "var(--statly-series-3)",
+                label: t(`editor.metrics.${measure}`),
+                value: number(day?.value ?? 0),
+              },
+            ],
+          })}
+        />
       </WidgetState>
     </WidgetCard>
   );
@@ -377,5 +396,7 @@ export const widgetComponents: Record<WidgetType, (props: WidgetProps) => ReactN
   "rating-rhythm": counted(StudyRhythm, "ratings"),
   "review-heatmap": counted(CountHeatmap, "reviews"),
   "rating-heatmap": counted(CountHeatmap, "ratings"),
+  "creation-time": CreationTime,
+  ...insightWidgets,
   ...ankiWidgets,
 };

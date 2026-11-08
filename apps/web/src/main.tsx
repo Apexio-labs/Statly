@@ -13,6 +13,7 @@ import { SettingsPage } from "./features/settings/SettingsPage.tsx";
 import { EditorPage } from "./features/widgets/editor/EditorPage.tsx";
 import "./index.css";
 import "./aero.css";
+import { TooltipLayer } from "./components/TooltipLayer.tsx";
 import { AppearanceProvider } from "./lib/appearance.tsx";
 import { ErrorPage } from "./pages/ErrorPage.tsx";
 import { Shell } from "./shell/Shell.tsx";
@@ -59,6 +60,7 @@ async function start() {
           ankiNightMode={info.nightMode}
         >
           <RouterProvider router={router} />
+          <TooltipLayer />
         </AppearanceProvider>
       </QueryClientProvider>
     </StrictMode>,

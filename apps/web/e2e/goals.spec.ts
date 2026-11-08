@@ -92,7 +92,8 @@ test("a goal goes onto the dashboard and leaves it with its deletion", async ({ 
   await sidebar(page).getByRole("link", { name: "Goals" }).click();
   const card = page.locator("[data-goal]");
   await expect(card).toContainText("On the dashboard");
-  await card.getByRole("button", { name: "Delete" }).click();
+  await card.getByRole("button", { name: /^More actions for / }).click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
   await expect(card).toHaveCount(0);
 
@@ -105,10 +106,70 @@ test("an archived goal waits below the running ones", async ({ page }) => {
   await chooseDeck(page, /Sprachen/);
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator("[data-goal]")).toHaveCount(1);
-  await page.locator("[data-goal]").getByRole("button", { name: "Archive" }).click();
+  await page
+    .locator("[data-goal]")
+    .getByRole("button", { name: /^More actions for / })
+    .click();
+  await page.getByRole("menuitem", { name: "Archive" }).click();
   await expect(page.locator("[data-goal]")).toHaveCount(0);
   await page.getByRole("button", { name: "1 archived goal" }).click();
-  await expect(page.locator("[data-goal]").getByRole("button", { name: "Restore" })).toBeVisible();
+  await page
+    .locator("[data-goal]")
+    .getByRole("button", { name: /^More actions for / })
+    .click();
+  await expect(page.getByRole("menuitem", { name: "Restore" })).toBeVisible();
+});
+
+test("a goal can be duplicated from its menu", async ({ page }) => {
+  await newExamGoal(page);
+  await chooseDeck(page, /Sprachen/);
+  await page.getByRole("textbox", { name: "Name" }).fill("Spanish test");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("button", { name: "More actions for Spanish test" }).click();
+  await page.getByRole("menuitem", { name: "Duplicate" }).click();
+  await expect(page.locator("[data-goal]")).toHaveCount(2);
+  await expect(page.locator("[data-goal]").nth(1)).toContainText("Spanish test (copy)");
+});
+
+test("a goal whose exam is over is copied through the setup with a new date", async ({ page }) => {
+  await newExamGoal(page);
+  await chooseDeck(page, /Sprachen/);
+  await page.getByRole("textbox", { name: "Name" }).fill("Old exam");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator("[data-goal]")).toHaveCount(1);
+  await page.evaluate(() => {
+    (globalThis as { __mockRefuseGoalSave?: boolean }).__mockRefuseGoalSave = true;
+  });
+  await page.getByRole("button", { name: "More actions for Old exam" }).click();
+  await page.getByRole("menuitem", { name: "Duplicate" }).click();
+  await expect(page.getByRole("heading", { name: "New exam goal" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue("Old exam (copy)");
+});
+
+test("the goal's name or a double click on the dashboard opens the goal", async ({ page }) => {
+  await newExamGoal(page);
+  await chooseDeck(page, /Sprachen/);
+  await page.getByRole("textbox", { name: "Name" }).fill("Spanish test");
+  await page.getByRole("button", { name: "Save and Add to Dashboard" }).click();
+  const widget = page.locator("[data-goal-widget]");
+  await widget.getByRole("link", { name: "Spanish test" }).click();
+  await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: "Home" }).click();
+  await widget.locator("footer").dblclick();
+  await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
+});
+
+test("while the dashboard is edited a double click on a goal stays put", async ({ page }) => {
+  await newExamGoal(page);
+  await chooseDeck(page, /Sprachen/);
+  await page.getByRole("button", { name: "Save and Add to Dashboard" }).click();
+  await page.getByRole("button", { name: "Edit dashboard" }).click();
+  const widget = page.locator("[data-goal-widget]").first();
+  await widget.locator("footer").dblclick();
+  await widget.getByRole("link").first().click();
+  await expect(page.getByRole("alertdialog", { name: "Save your changes?" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit dashboard" })).toHaveCount(0);
 });
 
 test("leaving with unsaved settings asks first, whichever way", async ({ page }) => {

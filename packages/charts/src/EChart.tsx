@@ -1,11 +1,10 @@
 import type { EChartsOption } from "echarts";
-import { BarChart, HeatmapChart, LineChart } from "echarts/charts";
+import { BarChart, LineChart, PieChart } from "echarts/charts";
 import {
-  CalendarComponent,
   GridComponent,
   LegendComponent,
+  MarkLineComponent,
   TooltipComponent,
-  VisualMapComponent,
 } from "echarts/components";
 import type { EChartsType } from "echarts/core";
 import { init, use } from "echarts/core";
@@ -14,14 +13,13 @@ import { useEffect, useRef } from "react";
 
 use([
   BarChart,
-  CalendarComponent,
   CanvasRenderer,
   GridComponent,
-  HeatmapChart,
   LegendComponent,
   LineChart,
+  MarkLineComponent,
+  PieChart,
   TooltipComponent,
-  VisualMapComponent,
 ]);
 
 const RESIZE_SETTLE_MS = 90;

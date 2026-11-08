@@ -24,8 +24,10 @@ from .calendar import DAY_SECONDS, AnkiCalendar
 from .scope import (
     ANSWERED,
     Period,
+    bucket_of,
     card_filter,
     deck_ids,
+    granularity_of,
     make_period,
     period_from_params,
     review_filter,
@@ -50,6 +52,7 @@ MOVED_ON = "r.ivl > 0"
 
 LONG_INTERVAL_DAYS = 21
 FORECAST_DAYS = 7
+MATURE_DAYS = 21
 BUCKET_MS = 15 * 60 * 1000
 """Rhythm counts use quarter hours, so that half-hour time zones land in the right hour."""
 
@@ -102,7 +105,8 @@ def summary(params: Any, reader: CollectionReader) -> types.StatisticsSummaryRes
                COALESCE(SUM(r.ease > 1), 0),
                COALESCE(SUM(r.type = ? AND r.lastIvl >= 1), 0),
                COALESCE(SUM(r.type = ? AND r.lastIvl >= 1 AND r.ease > 1), 0),
-               COUNT(DISTINCT (r.id / 1000 - ?) / ?)
+               COUNT(DISTINCT (r.id / 1000 - ?) / ?),
+               COALESCE(SUM(r.type = 0 AND r.lastIvl = 0), 0)
         FROM revlog AS r
         WHERE {conditions}
         """,
@@ -112,7 +116,7 @@ def summary(params: Any, reader: CollectionReader) -> types.StatisticsSummaryRes
         DAY_SECONDS,
         *parameters,
     )
-    ratings, elapsed_ms, successes, mature, mature_successes, active_days = rows[0]
+    ratings, elapsed_ms, successes, mature, mature_successes, active_days, new_cards = rows[0]
     # Summing each day's distinct cards is cheaper than collecting distinct (card, day) pairs.
     reviews = reader.scalar(
         f"""
@@ -129,6 +133,7 @@ def summary(params: Any, reader: CollectionReader) -> types.StatisticsSummaryRes
         "successRate": _ratio(successes, ratings),
         "retention": _ratio(mature_successes, mature),
         "activeDays": active_days,
+        "newCards": new_cards,
     }
 
 
@@ -229,28 +234,15 @@ def _daily(
     return {period.first_day + timedelta(days=offset): number for offset, number in rows}
 
 
-def _timeline_bucket(day: date, granularity: str) -> date:
-    if granularity == "week":
-        return day - timedelta(days=day.weekday())
-    if granularity == "month":
-        return day.replace(day=1)
-    return day
-
-
 def timeline(params: Any, reader: CollectionReader) -> types.StatisticsTimelineResult:
     period = period_from_params(params, _calendar(reader))
     daily = _daily(reader, period, deck_ids(reader, params["deckId"]), _measure(params))
-    if period.days <= 31:
-        granularity = "day"
-    elif period.days <= 180:
-        granularity = "week"
-    else:
-        granularity = "month"
+    granularity = granularity_of(period)
 
     buckets: dict[date, int] = {}
     for offset in range(period.days):
         day = period.first_day + timedelta(days=offset)
-        bucket = _timeline_bucket(day, granularity)
+        bucket = bucket_of(day, granularity)
         buckets[bucket] = buckets.get(bucket, 0) + daily.get(day, 0)
 
     items: list[types.StatisticsTimelineResultItemsItem] = []
@@ -402,6 +394,7 @@ def due(params: Any, reader: CollectionReader) -> types.StatisticsDueResult:
 def forecast(params: Any, reader: CollectionReader) -> list[types.StatisticsForecastResultItem]:
     conditions, parameters = card_filter(deck_ids(reader, params["deckId"]), reader.excluded_cards)
     current = reader.today
+    days = int(params.get("days") or FORECAST_DAYS)
     rows = reader.rows(
         f"""
         SELECT MAX(due, ?), COUNT(*) FROM cards
@@ -412,23 +405,25 @@ def forecast(params: Any, reader: CollectionReader) -> list[types.StatisticsFore
         *parameters,
         QUEUE_REVIEW,
         QUEUE_DAY_LEARNING,
-        current + FORECAST_DAYS - 1,
+        current + days - 1,
     )
     counts = {day - current: cards for day, cards in rows}
     first_day = _calendar(reader).today
     return [
         {"date": (first_day + timedelta(days=offset)).isoformat(), "cards": counts.get(offset, 0)}
-        for offset in range(FORECAST_DAYS)
+        for offset in range(days)
     ]
 
 
 def card_states(params: Any, reader: CollectionReader) -> types.StatisticsCardStatesResult:
     conditions, parameters = card_filter(deck_ids(reader, params["deckId"]), reader.excluded_cards)
     rows = reader.rows(
-        f"SELECT queue, COUNT(*) FROM cards WHERE {conditions} GROUP BY queue",
+        f"SELECT queue, COUNT(*), SUM(type = 2 AND ivl >= ?) FROM cards WHERE {conditions} "
+        "GROUP BY queue",
+        MATURE_DAYS,
         *parameters,
     )
-    counts = {queue: cards for queue, cards in rows}
+    counts = {queue: cards for queue, cards, _mature in rows}
     known = {
         QUEUE_NEW,
         QUEUE_LEARNING,
@@ -445,4 +440,5 @@ def card_states(params: Any, reader: CollectionReader) -> types.StatisticsCardSt
         "suspended": counts.get(QUEUE_SUSPENDED, 0),
         "buried": counts.get(QUEUE_BURIED_SIBLING, 0) + counts.get(QUEUE_BURIED_MANUAL, 0),
         "other": sum(cards for queue, cards in counts.items() if queue not in known),
+        "mature": sum(mature or 0 for _queue, _cards, mature in rows),
     }

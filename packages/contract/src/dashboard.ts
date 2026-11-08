@@ -39,6 +39,17 @@ export const builtinWidgets = {
   "rating-rhythm": { ...chart, minW: 6, minH: 7, w: 8 },
   "review-heatmap": { ...chart, minW: 6, minH: 7, w: 12 },
   "rating-heatmap": { ...chart, minW: 6, minH: 7, w: 12 },
+  "study-overview": { minW: 6, maxW: 12, minH: 7, maxH: 16, w: 12, h: 10 },
+  "period-summary": { minW: 4, maxW: 12, minH: 3, maxH: 6, w: 12, h: 3 },
+  "answer-mix": { minW: 3, maxW: 8, minH: 5, maxH: 10, w: 4, h: 6 },
+  "answer-speed": { minW: 4, maxW: 12, minH: 5, maxH: 10, w: 8, h: 6 },
+  "study-sessions": { minW: 6, maxW: 12, minH: 4, maxH: 12, w: 12, h: 5 },
+  "deck-table": { minW: 6, maxW: 12, minH: 5, maxH: 16, w: 12, h: 8 },
+  "forgotten-cards": { minW: 4, maxW: 12, minH: 5, maxH: 16, w: 8, h: 8 },
+  "weakest-decks": { minW: 4, maxW: 12, minH: 5, maxH: 12, w: 8, h: 7 },
+  "new-cards-from": { minW: 3, maxW: 12, minH: 3, maxH: 8, w: 6, h: 3 },
+  "day-notes": { minW: 3, maxW: 12, minH: 3, maxH: 10, w: 6, h: 4 },
+  "creation-time": { ...chart, minH: 7, w: 8 },
   "anki-today": { minW: 3, maxW: 8, minH: 6, maxH: 12, w: 4, h: 8 },
   "anki-future-due": ankiChart,
   "anki-calendar": { ...chart, minW: 6, minH: 7, w: 12 },
@@ -61,6 +72,7 @@ export const widgetTypes = Object.keys(builtinWidgets) as [WidgetType, ...Widget
 /** How the widget list in the editor is grouped. */
 export const widgetGroups = {
   progress: [
+    "period-summary",
     "review-summary",
     "rating-summary",
     "learned-cards",
@@ -71,9 +83,29 @@ export const widgetGroups = {
     "review-timeline",
     "rating-timeline",
     "answer-buttons",
+    "answer-mix",
+    "answer-speed",
   ],
-  collection: ["deck-activity", "deck-ratings", "due-forecast", "card-states"],
-  habits: ["study-rhythm", "rating-rhythm", "review-heatmap", "rating-heatmap"],
+  collection: [
+    "deck-table",
+    "forgotten-cards",
+    "weakest-decks",
+    "new-cards-from",
+    "deck-activity",
+    "deck-ratings",
+    "due-forecast",
+    "card-states",
+  ],
+  habits: [
+    "study-overview",
+    "study-sessions",
+    "day-notes",
+    "study-rhythm",
+    "rating-rhythm",
+    "review-heatmap",
+    "rating-heatmap",
+    "creation-time",
+  ],
   anki: [
     "anki-today",
     "anki-future-due",
@@ -93,8 +125,19 @@ export const widgetGroups = {
 
 export const widgetKinds: Record<
   WidgetType,
-  "metric" | "chart" | "forecast" | "collection" | "heatmap"
+  "metric" | "chart" | "forecast" | "collection" | "heatmap" | "note"
 > = {
+  "study-overview": "heatmap",
+  "period-summary": "metric",
+  "answer-mix": "chart",
+  "answer-speed": "chart",
+  "study-sessions": "chart",
+  "deck-table": "collection",
+  "forgotten-cards": "collection",
+  "weakest-decks": "chart",
+  "new-cards-from": "collection",
+  "day-notes": "note",
+  "creation-time": "chart",
   "review-summary": "metric",
   "rating-summary": "metric",
   "learned-cards": "metric",
@@ -291,6 +334,29 @@ export const discoverySources = [
   "other",
 ] as const;
 
+/** The dashboard's time ranges. Named ones move with the days, a custom one stays put. */
+export const dashboardRangePresets = [
+  "today",
+  "yesterday",
+  "last7",
+  "last30",
+  "lastYear",
+  "all",
+  "custom",
+] as const;
+
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** What the dashboard showed last, so it opens the same way next time. */
+export const dashboardFilter = z
+  .object({
+    preset: z.enum(dashboardRangePresets),
+    custom: z.object({ start: day, end: day }).strict().nullable(),
+    /** A deck's id, or "all". */
+    deck: z.string().max(40),
+  })
+  .strict();
+
 export const settings = z
   .object({
     theme: z.enum(themeModes),
@@ -336,6 +402,7 @@ export const settings = z
       .strict(),
     onboardingDone: z.boolean(),
     mobileSync: z.boolean(),
+    dashboardFilter,
     /** Stays on this device. Nothing here is sent anywhere. */
     onboardingAnswers: z
       .object({
@@ -401,5 +468,6 @@ export const defaultSettings: Settings = {
   },
   onboardingDone: false,
   mobileSync: false,
+  dashboardFilter: { preset: "today", custom: null, deck: "all" },
   onboardingAnswers: { role: null, discovery: null },
 };

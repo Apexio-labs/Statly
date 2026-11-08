@@ -544,3 +544,15 @@ test("every card wobbles around its own middle, wherever it sits", async ({ page
   }
   await button(page, "Cancel").click();
 });
+
+test("the dashboard keeps its range and deck when someone comes back", async ({ page }) => {
+  const filter = page.getByRole("button", { name: "Time range" });
+  await filter.click();
+  await button(page, "Last 7 days").click();
+  await button(page, "Apply").click();
+  await expect(filter).toContainText("Last 7 days");
+
+  await page.getByRole("link", { name: "Widget Library" }).click();
+  await page.getByRole("link", { name: "Home" }).click();
+  await expect(page.getByRole("button", { name: "Time range" })).toContainText("Last 7 days");
+});

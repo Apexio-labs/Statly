@@ -130,14 +130,26 @@ export function GoalWidgetView({ goalId, view }: { goalId: string; view: GoalVie
   const exam = goal?.config.examDate;
   const warnings = status.data?.warnings.length ?? 0;
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: a right click offers what the goal page does.
+    // biome-ignore lint/a11y/noStaticElementInteractions: the title link does the same for the keyboard.
     <div
       className="relative h-full"
       data-goal-widget={goalId}
       onContextMenu={context.onContextMenu}
+      onDoubleClick={(event) => {
+        // Editing the dashboard keeps every card where it is, and fields keep their double click.
+        const target = event.target as HTMLElement;
+        if (
+          event.currentTarget.closest(".statly-editing") ||
+          target.closest("a, input, textarea, select")
+        ) {
+          return;
+        }
+        void navigate(`/goals/${goalId}`);
+      }}
     >
       <WidgetCard
         title={goal?.name ?? t("goals.title")}
+        titleTo={`/goals/${goalId}`}
         note={exam ? t("goals.widget.examOn", { date: shortDate(exam, i18n.language) }) : undefined}
         actions={
           warnings > 0 ? (

@@ -332,3 +332,28 @@ test("the device buttons show the size a widget gets there", async ({ page }) =>
   await button(page, "Tablet").click();
   await expect(page.getByTestId("current-size")).toContainText("4 × 8");
 });
+
+test("a combined chart lays bars and a line over one another", async ({ page }) => {
+  await button(page, "Chart").click();
+  await page.getByRole("combobox", { name: "Chart type" }).click();
+  await page.getByRole("option", { name: "Combined" }).click();
+  const bars = page.locator('[data-combined-kind="bar"]');
+  const lines = page.locator('[data-combined-kind="line"]');
+  await expect(bars.getByRole("checkbox")).toBeChecked();
+  await expect(lines.getByRole("checkbox")).toBeChecked();
+  await expect(lines.locator("[data-layer]")).toHaveCount(1);
+
+  await lines.getByRole("button", { name: "Another line" }).click();
+  await expect(lines.locator("[data-layer]")).toHaveCount(2);
+  await lines.getByRole("button", { name: "Remove layer" }).first().click();
+  await expect(lines.locator("[data-layer]")).toHaveCount(1);
+
+  // Series along another axis stay visible but cannot be picked.
+  await lines.getByRole("combobox", { name: "Shows" }).click();
+  await expect(page.getByRole("option", { name: /Answer buttons/ })).toHaveAttribute(
+    "data-disabled",
+    "",
+  );
+  await page.keyboard.press("Escape");
+  await expect(canvas(page).locator("canvas").first()).toBeVisible();
+});

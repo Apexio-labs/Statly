@@ -15,6 +15,7 @@ import {
   defaultSettings,
   deviceColumns,
   type MethodName,
+  type Params,
   type PermissionId,
   type PermissionState,
   type ResolvedDevice,
@@ -26,6 +27,10 @@ import type { BridgeResponse, Transport } from "./client.ts";
 import { goalMocks, mockRaise } from "./mockGoals.ts";
 import { statisticsMocks } from "./mockStatistics.ts";
 
+const mockNotes = new Map<string, string>([
+  [new Date().toISOString().slice(0, 10), "Klausurwiederholung Repro. Lange gelernt."],
+]);
+
 declare global {
   /** Lets browser tests answer the file dialog that Anki would show. */
   var __mockOpenFile: string | undefined;
@@ -35,7 +40,25 @@ declare global {
 
 const RESPONSE_DELAY_MS = 30;
 
-let mockLayout = defaultLayout;
+/** `?insights` opens the preview with the closer looks, for checking them and for pictures. */
+const insightLayout: DashboardLayout = {
+  widgets: [
+    { id: "study-overview-1", type: "study-overview", x: 0, y: 0, w: 12, h: 10 },
+    { id: "period-summary-1", type: "period-summary", x: 0, y: 10, w: 12, h: 3 },
+    { id: "deck-table-1", type: "deck-table", x: 0, y: 13, w: 12, h: 8 },
+    { id: "forgotten-cards-1", type: "forgotten-cards", x: 0, y: 21, w: 8, h: 8 },
+    { id: "answer-mix-1", type: "answer-mix", x: 8, y: 21, w: 4, h: 8 },
+    { id: "answer-speed-1", type: "answer-speed", x: 0, y: 29, w: 8, h: 6 },
+    { id: "new-cards-from-1", type: "new-cards-from", x: 8, y: 29, w: 4, h: 3 },
+    { id: "day-notes-1", type: "day-notes", x: 8, y: 32, w: 4, h: 5 },
+    { id: "study-sessions-1", type: "study-sessions", x: 0, y: 37, w: 12, h: 5 },
+    { id: "weakest-decks-1", type: "weakest-decks", x: 0, y: 42, w: 8, h: 7 },
+    { id: "review-heatmap-1", type: "review-heatmap", x: 0, y: 49, w: 12, h: 7 },
+    { id: "creation-time-1", type: "creation-time", x: 0, y: 56, w: 8, h: 8 },
+  ],
+};
+
+let mockLayout = location.search.includes("insights") ? insightLayout : defaultLayout;
 let mockSettings: Settings = defaultSettings;
 let mockSettingsReady = false;
 let mockAutoUpdate = true;
@@ -531,6 +554,20 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
     return mockLayout;
   },
   "system.openAnkiStatistics": () => null,
+  "system.openBrowser": () => null,
+  "notes.list": ({ start, end }: Params<"notes.list">) =>
+    [...mockNotes.entries()]
+      .filter(([date]) => date >= start && date <= end)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, text]) => ({ date, text })),
+  "notes.save": ({ date, text }: Params<"notes.save">) => {
+    if (text.trim()) {
+      mockNotes.set(date, text.trim());
+    } else {
+      mockNotes.delete(date);
+    }
+    return null;
+  },
   "system.saveFile": () => ({ saved: true }),
   "system.openFile": () => ({ content: globalThis.__mockOpenFile ?? null }),
   "system.setUnsaved": () => null,
@@ -560,6 +597,11 @@ const results: { [M in MethodName]: (params: never) => Result<M> } = {
   }),
   "feedback.answer": () => null,
   "feedback.answerShare": () => null,
+  "releaseNotes.pending": () => ({
+    since: location.search.includes("releaseNotes") ? "2.1.1" : "2.2.0",
+    current: "2.2.0",
+  }),
+  "releaseNotes.seen": () => null,
   "widgets.list": () => mockWidgets,
   "widgets.save": ({ widget }: { widget: CustomWidget }) => {
     mockWidgets = [...mockWidgets.filter((item) => item.id !== widget.id), widget];

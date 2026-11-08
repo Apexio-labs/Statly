@@ -86,7 +86,12 @@ class SystemModule:
         ) -> None:
             host.uninstall(lambda uninstalled: finish({"uninstalled": uninstalled}))
 
+        def open_browser(params: Any) -> None:
+            # The phone card is a tool, not study material, so it never shows up there.
+            host.open_browser([int(card_id) for card_id in params["cardIds"]])
+
         router.local("system.openAnkiStatistics", open_anki_statistics)
+        router.local("system.openBrowser", open_browser)
         router.local("system.saveFile", save_file)
         router.local("system.openFile", open_file)
         router.local("system.addon", addon)

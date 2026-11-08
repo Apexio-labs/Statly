@@ -137,6 +137,7 @@ def test_empty_range_has_no_rates(log: Log) -> None:
         "successRate": None,
         "retention": None,
         "activeDays": 0,
+        "newCards": 0,
     }
 
 
@@ -353,6 +354,8 @@ def test_card_states_group_every_queue(log: Log) -> None:
             index,
             queue,
         )
+    # A suspended card keeps its interval, so it still counts as mature.
+    log.database.execute("update cards set ivl = 30 where id in (5, 6)")
 
     result = metrics.card_states({"deckId": None}, reader_for(log.collection))
 
@@ -363,6 +366,7 @@ def test_card_states_group_every_queue(log: Log) -> None:
         "suspended": 1,
         "buried": 2,
         "other": 1,
+        "mature": 2,
     }
 
 

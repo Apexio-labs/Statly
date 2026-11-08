@@ -171,8 +171,27 @@ class PromptLayer(QObject):
         # that call to end.
         QTimer.singleShot(0, lambda: answered(answer))
 
+    def detach(self) -> None:
+        """The window closes for good: stop watching it, so nothing calls in here afterwards."""
+        window = getattr(self, "_window", None)
+        try:
+            if window is not None:
+                window.removeEventFilter(self)
+            self.view.on_escape = None
+        except (AttributeError, RuntimeError):
+            pass
+
     def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
-        resized = a0 is self._window and a1 is not None and a1.type() == QEvent.Type.Resize
-        if resized and self.view.isVisible():
-            self.view.setGeometry(self._below.geometry())
+        # Anki tidies Python's memory now and then. A closed window and this layer hold on to each
+        # other, so the tidying can empty this object first and tear the window down after, which
+        # still sends the window events. Then the attributes are gone, so nothing here may assume
+        # them, and an error in a filter would reach the person as Anki's error dialog.
+        window = getattr(self, "_window", None)
+        if window is None or a0 is not window or a1 is None:
+            return False
+        try:
+            if a1.type() == QEvent.Type.Resize and self.view.isVisible():
+                self.view.setGeometry(self._below.geometry())
+        except (AttributeError, RuntimeError):
+            pass
         return False

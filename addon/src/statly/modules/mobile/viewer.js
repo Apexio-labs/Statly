@@ -1,4 +1,113 @@
 (function() {
+	// ../contract/src/charts.ts
+	/**
+	* What each series runs along. Only series along the same axis can share a combined chart, and
+	* series that list things of their own, such as decks, combine only with themselves.
+	*/
+	var seriesAxisOf = {
+		timeline: "days",
+		ratingTimeline: "days",
+		retentionTimeline: "days",
+		speedTimeline: "days",
+		timeTimeline: "days",
+		newTimeline: "days",
+		forecast: "futureDays",
+		creationTimeline: "creation",
+		hours: "hours",
+		sessionHours: "hours",
+		focusHours: "hours",
+		weekdays: "weekdays",
+		answerButtons: "answerButtons",
+		deckActivity: "deckActivity",
+		cardStates: "cardStates",
+		forgottenCards: "forgottenCards",
+		weakestDecks: "weakestDecks",
+		newCardsFrom: "newCardsFrom",
+		deckStability: "deckStability"
+	};
+	/** The unit of each series. Series with the same unit share a scale in a combined chart. */
+	var seriesUnitOf = {
+		timeline: "count",
+		ratingTimeline: "count",
+		retentionTimeline: "percent",
+		speedTimeline: "seconds",
+		timeTimeline: "minutes",
+		newTimeline: "count",
+		forecast: "count",
+		creationTimeline: "minutes",
+		hours: "count",
+		sessionHours: "count",
+		focusHours: "percent",
+		weekdays: "count",
+		answerButtons: "count",
+		deckActivity: "count",
+		cardStates: "count",
+		forgottenCards: "count",
+		weakestDecks: "percent",
+		newCardsFrom: "count",
+		deckStability: "days"
+	};
+	/** The series that can share a combined chart with ``source``, itself included. */
+	function combinesWith(source, other) {
+		return seriesAxisOf[source] === seriesAxisOf[other];
+	}
+	/**
+	* Gives every layer a scale. Layers with the same unit share one, so two counts never stand on
+	* two different scales. Chosen sides come first; "auto" then puts the first new unit left, the
+	* next right, and so on, until both sides are full; the rest get a hidden scale.
+	*/
+	function planAxes(layers) {
+		const axes = [];
+		const layerAxis = new Array(layers.length).fill(-1);
+		const onSide = (side) => axes.filter((axis) => axis.side === side).length;
+		const visible = (unit, side) => axes.findIndex((axis) => axis.side !== "hidden" && axis.unit === unit && (side === void 0 || axis.side === side));
+		const place = (side, unit) => {
+			const count = onSide(side);
+			if (count >= 2) return -1;
+			axes.push({
+				side,
+				slot: count,
+				unit
+			});
+			return axes.length - 1;
+		};
+		const hidden = (unit) => {
+			const found = axes.findIndex((axis) => axis.side === "hidden" && axis.unit === unit);
+			if (found >= 0) return found;
+			axes.push({
+				side: "hidden",
+				unit
+			});
+			return axes.length - 1;
+		};
+		layers.forEach((layer, index) => {
+			if (layer.axis === "left" || layer.axis === "right") {
+				const found = visible(layer.unit, layer.axis);
+				const placed = found >= 0 ? found : place(layer.axis, layer.unit);
+				layerAxis[index] = placed >= 0 ? placed : hidden(layer.unit);
+			}
+		});
+		layers.forEach((layer, index) => {
+			if (layer.axis !== "auto") return;
+			const found = visible(layer.unit);
+			if (found >= 0) {
+				layerAxis[index] = found;
+				return;
+			}
+			const first = onSide("left") <= onSide("right") ? "left" : "right";
+			const second = first === "left" ? "right" : "left";
+			const placed = place(first, layer.unit);
+			const placedElsewhere = placed >= 0 ? placed : place(second, layer.unit);
+			layerAxis[index] = placedElsewhere >= 0 ? placedElsewhere : hidden(layer.unit);
+		});
+		layers.forEach((layer, index) => {
+			if (layer.axis === "none") layerAxis[index] = hidden(layer.unit);
+		});
+		return {
+			axes,
+			layerAxis
+		};
+	}
 	// ../widget-runtime/src/layout.ts
 	function distance(first, second) {
 		return Math.abs(first.w - second.w) + Math.abs(first.h - second.h);
@@ -178,6 +287,117 @@
 		svg.append(line);
 		return svg;
 	}
+	/** Each point's share of the whole as a slice, each a little lighter than the one before. */
+	function pieChart(bars, label, color) {
+		const shown = bars.filter((bar) => bar.value > 0);
+		const total = shown.reduce((sum, bar) => sum + bar.value, 0);
+		const svg = svgNode("svg", {
+			viewBox: "0 0 100 100",
+			role: "img",
+			class: "statly-pie"
+		});
+		svg.setAttribute("aria-label", label);
+		let start = -Math.PI / 2;
+		shown.forEach((bar, index) => {
+			const angle = total ? bar.value / total * 2 * Math.PI : 0;
+			const end = start + angle;
+			const point = (at) => `${50 + 46 * Math.cos(at)} ${50 + 46 * Math.sin(at)}`;
+			const shape = shown.length === 1 ? svgNode("circle", {
+				cx: 50,
+				cy: 50,
+				r: 46
+			}) : svgNode("path", { d: `M50 50 L${point(start)} A46 46 0 ${angle > Math.PI ? 1 : 0} 1 ${point(end)} Z` });
+			shape.style.fill = color;
+			shape.style.opacity = String(Math.max(.3, 1 - index * (.7 / Math.max(1, shown.length))));
+			shape.style.stroke = "var(--statly-card)";
+			shape.style.strokeWidth = "1.5";
+			const title = svgNode("title", {});
+			title.textContent = `${bar.label}: ${bar.value.toLocaleString()}`;
+			shape.append(title);
+			svg.append(shape);
+			start = end;
+		});
+		return svg;
+	}
+	/**
+	* How each kind of a combined chart draws one layer. Every kind the editor offers under
+	* "Combined" needs an entry here, which the type makes sure of.
+	*/
+	var layerPainters = {
+		bar: ({ svg, values, highest, color, slot, slots, step, height }) => {
+			const width = step * .76 / slots;
+			values.forEach((value, index) => {
+				const barHeight = Math.max(value > 0 ? 2 : 0, value / highest * (height - 2));
+				const rect = svgNode("rect", {
+					x: index * step + step * .12 + slot * width,
+					y: height - barHeight,
+					width,
+					height: barHeight,
+					rx: 2,
+					class: "statly-bar"
+				});
+				rect.style.fill = color;
+				svg.append(rect);
+			});
+		},
+		line: ({ svg, values, highest, color, step, height }) => {
+			const line = svgNode("polyline", {
+				points: values.map((value, index) => `${index * step + step / 2},${height - value / highest * (height - 4) - 2}`).join(" "),
+				fill: "none",
+				"stroke-width": 2,
+				"vector-effect": "non-scaling-stroke"
+			});
+			line.style.stroke = color;
+			svg.append(line);
+		}
+	};
+	/**
+	* Several layers in one plot. A card has no room for scales, so each unit gets a scale of its own
+	* that fills the height, as the desktop's scales do; layers with the same unit share one.
+	*/
+	function combinedChart(layers, series, label) {
+		const width = 320;
+		const height = 110;
+		const first = layers[0];
+		const kept = layers.map((layer, index) => ({
+			layer,
+			points: series[index] ?? []
+		})).filter(({ layer }) => first !== void 0 && combinesWith(first.source, layer.source));
+		const labels = kept.reduce((best, { points }) => points.length > best.length ? points : best, []).map((point) => point.label);
+		const values = kept.map(({ points }) => {
+			const byLabel = new Map(points.map((point) => [point.label, point.value]));
+			return labels.map((name) => byLabel.get(name) ?? 0);
+		});
+		const plan = planAxes(kept.map(({ layer }) => ({
+			axis: layer.axis,
+			unit: seriesUnitOf[layer.source]
+		})));
+		const highestOf = plan.axes.map((_axis, axisIndex) => Math.max(1, ...values.flatMap((row, index) => plan.layerAxis[index] === axisIndex ? row : [])));
+		const svg = svgNode("svg", {
+			viewBox: `0 0 ${width} ${height}`,
+			role: "img",
+			preserveAspectRatio: "none"
+		});
+		svg.setAttribute("aria-label", label);
+		const step = width / Math.max(1, labels.length);
+		const bars = kept.filter(({ layer }) => layer.kind === "bar").map(({ layer }) => layer.id);
+		const order = [...kept.keys()].sort((a, b) => Number(kept[a]?.layer.kind === "line") - Number(kept[b]?.layer.kind === "line"));
+		for (const index of order) {
+			const entry = kept[index];
+			if (!entry) continue;
+			layerPainters[entry.layer.kind]({
+				svg,
+				values: values[index] ?? [],
+				highest: highestOf[plan.layerAxis[index] ?? 0] ?? 1,
+				color: paintValue(entry.layer.color),
+				slot: Math.max(0, bars.indexOf(entry.layer.id)),
+				slots: Math.max(1, bars.length),
+				step,
+				height
+			});
+		}
+		return svg;
+	}
 	function barAt(svg, event, count) {
 		const bounds = svg.getBoundingClientRect();
 		const share = (event.clientX - bounds.left) / bounds.width;
@@ -222,6 +442,28 @@
 		const wrapper = element("div", "statly-chart");
 		wrapper.append(heatGrid(block.levels, block.label), element("p", "statly-note", block.note));
 		return wrapper;
+	}
+	/** Rows with a name, a line below it and a few values, such as decks or forgotten cards. */
+	function renderTable(block, limit) {
+		const table = element("div", "statly-table");
+		table.style.setProperty("--statly-table-columns", String(block.columns.length));
+		const head = element("div", "statly-table-row statly-table-head");
+		head.append(element("span", ""), ...block.columns.map((name) => element("span", "", name)));
+		table.append(head);
+		for (const row of block.rows.slice(0, limit)) {
+			const line = element("div", "statly-table-row");
+			const name = element("span", "statly-table-name");
+			name.append(element("span", "", row.label));
+			if (row.sub) name.append(element("small", "", row.sub));
+			line.append(name);
+			row.cells.forEach((cell, index) => {
+				const value = element("span", "statly-table-cell", cell);
+				if (index === 0 && row.tone) value.classList.add(`statly-tone-${row.tone}`);
+				line.append(value);
+			});
+			table.append(line);
+		}
+		return table;
 	}
 	function fitText(text, style) {
 		const box = element("div", "statly-fit");
@@ -303,8 +545,9 @@
 			case "metric": return fitText(value?.text ?? "", textStyle(item, aspect));
 			case "chart": {
 				const color = paintValue(item.color);
+				if (item.chart === "combined" && item.layers?.length && value?.layers) return combinedChart(item.layers, value.layers, item.source);
 				const bars = value?.bars ?? [];
-				return (item.chart === "line" ? lineChart : columnChart)(bars, item.source, color);
+				return (item.chart === "line" ? lineChart : item.chart === "pie" ? pieChart : columnChart)(bars, item.source, color);
 			}
 			case "progress": return progress(item, block);
 			case "heatmap": return heatGrid(value?.levels ?? [], "heatmap");
@@ -343,6 +586,9 @@
 		} else if (block.kind === "bars") {
 			if (block.note) card.append(element("p", "statly-note statly-period", block.note));
 			card.append(renderBars(block, open && ((index) => open(block, index))));
+		} else if (block.kind === "table") {
+			if (block.note) card.append(element("p", "statly-note statly-period", block.note));
+			card.append(renderTable(block, Math.max(1, cells.h - 2)));
 		} else card.append(renderHeatmap(block));
 		if (open) card.addEventListener("click", () => open(block));
 		return card;
@@ -389,6 +635,11 @@
 		const body = document.createElement("div");
 		if (block.kind === "tile") {
 			body.append(element("div", "statly-value statly-sheet-value", block.value));
+			const facts = element("div", "statly-facts");
+			facts.append(...block.facts.map((fact) => factRow(fact.label, fact.value)));
+			body.append(facts);
+		} else if (block.kind === "table") {
+			body.append(renderTable(block));
 			const facts = element("div", "statly-facts");
 			facts.append(...block.facts.map((fact) => factRow(fact.label, fact.value)));
 			body.append(facts);

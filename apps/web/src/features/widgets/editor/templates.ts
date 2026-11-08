@@ -65,7 +65,7 @@ export function newElement(kind: ElementKind, id: string): WidgetElement {
         color: "accent",
       };
     case "heatmap":
-      return { ...BOX, id, kind, x: 4, y: 20, w: 92, h: 70 };
+      return { ...BOX, id, kind, x: 4, y: 20, w: 92, h: 70, mode: "reviews" };
     default:
       return {
         ...BOX,

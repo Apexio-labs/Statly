@@ -7,6 +7,7 @@ import {
   aiSettingsPatch,
 } from "./ai.ts";
 import { ankiViews } from "./ankiStats.ts";
+import { seriesSources } from "./charts.ts";
 import { dashboardLayout, languages, themeModes, widgetTypes } from "./dashboard.ts";
 import { goalDraft } from "./goals.ts";
 import { gridColumns, widgetSizeLimits } from "./limits.ts";
@@ -14,8 +15,8 @@ import { type MethodName, measures, methods } from "./rpc.ts";
 import {
   type CustomWidget,
   customWidget,
+  heatmapModes,
   metricSources,
-  seriesSources,
   widgetRanges,
 } from "./widget.ts";
 
@@ -139,14 +140,15 @@ Every element has id, kind, x, y, w, h in percent of the widget, and opacity fro
 Paint is text, muted, accent, card or #rrggbb.
 text: text, size (percent of the widget's height), bold, align (left, center, right), color (paint).
 metric: source, range, size, bold, align, color.
-chart: source (series), chart (bar, line), range, color.
+chart: source (series), chart (bar, line, pie, combined), range, color. combined adds layers: [{id, kind (bar, line), source, color, axis (auto, left, right, none)}], up to 6, all series along the same axis.
 progress: source, range, goal (number), style (ring, bar), color.
-heatmap: nothing else.
+heatmap: mode (${heatmapModes.join(", ")}).
 shape: shape (rectangle, ellipse), fill (paint), radius.
 source: ${metricSources.join(", ")}.
 series: ${seriesSources.join(", ")}.
 range: ${widgetRanges.join(", ")}. Use dashboard to follow the dashboard's filter.
-Example: ${JSON.stringify(aiWidgetExample)}`;
+Example: ${JSON.stringify(aiWidgetExample)}
+Dashboard types for propose_dashboard: ${widgetTypes.join(", ")}, or custom:<id>.`;
 
 function reading(method: MethodName, description: string, permission?: AiPermissionScope): Tool {
   const tool: Tool = { access: "read", description, input: methods[method].params, method };
@@ -212,7 +214,8 @@ export const aiTools: Record<string, Tool> = {
   },
   get_widget_format: {
     access: "read",
-    description: "How a widget is built. Call this before propose_widget.",
+    description:
+      "How a widget is built and which types a dashboard takes. Call before proposing either.",
     input: empty,
     method: null,
   },
@@ -259,7 +262,7 @@ export const aiTools: Record<string, Tool> = {
   },
   propose_dashboard: {
     access: "propose",
-    description: `Suggest a new dashboard: layout {widgets:[{id,type,x,y,w,h}]}, ${gridColumns} columns. Types: ${widgetTypes.join(", ")}, or custom:<id>.`,
+    description: `Suggest a new dashboard: layout {widgets:[{id,type,x,y,w,h}]}, ${gridColumns} columns. Types from get_widget_format.`,
     input: z.object({ layout: dashboardLayout, summary }).strict(),
     shown: z.object({ layout: z.object({}), summary }).strict(),
     method: null,

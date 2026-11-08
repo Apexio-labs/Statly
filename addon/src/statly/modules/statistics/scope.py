@@ -50,6 +50,24 @@ def period_from_params(params: Any, calendar: AnkiCalendar) -> Period:
     return make_period(calendar, first_day, min(last_day, calendar.today))
 
 
+def granularity_of(period: Period) -> str:
+    """How a chart over time groups the days of a range: by day, week or month."""
+    if period.days <= 31:
+        return "day"
+    if period.days <= 180:
+        return "week"
+    return "month"
+
+
+def bucket_of(day: date, granularity: str) -> date:
+    """The first day of the group a day belongs to."""
+    if granularity == "week":
+        return day - timedelta(days=day.weekday())
+    if granularity == "month":
+        return day.replace(day=1)
+    return day
+
+
 def deck_ids(reader: CollectionReader, deck_id: int | None) -> tuple[int, ...] | None:
     """Return a deck and its subdecks, or None for the whole collection."""
     if deck_id is None:

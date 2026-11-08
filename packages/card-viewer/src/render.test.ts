@@ -202,6 +202,36 @@ describe("card viewer", () => {
     expect(sheet?.querySelectorAll(".statly-bar-dim")).toHaveLength(1);
   });
 
+  it("draws a pie chart as one slice per share", () => {
+    const pie = {
+      id: "c",
+      kind: "chart",
+      source: "cardStates",
+      chart: "pie",
+      range: "dashboard",
+      color: "accent",
+      x: 0,
+      y: 0,
+      w: 100,
+      h: 100,
+      opacity: 1,
+    } as const;
+    const block = snapshot.blocks.own as Extract<Block, { kind: "custom" }>;
+    const bars = [
+      { label: "New", value: 3 },
+      { label: "Young", value: 1 },
+      { label: "Empty", value: 0 },
+    ];
+    const drawn = renderBlock(
+      { ...block, widget: { ...block.widget, elements: [pie] }, values: { c: { bars } } },
+      { w: 4, h: 6 },
+      words,
+    );
+    const slices = drawn.querySelectorAll(".statly-pie path");
+    expect(slices).toHaveLength(2);
+    expect(slices[0]?.textContent).toBe("New: 3");
+  });
+
   it("says where a video went", () => {
     const video = {
       id: "v",
@@ -255,5 +285,67 @@ describe("card viewer", () => {
 
   it("decodes non-ASCII text", () => {
     expect(decode(encode({ title: "Äöü ß" })).title).toBe("Äöü ß");
+  });
+});
+
+describe("tables", () => {
+  const table: Block = {
+    kind: "table",
+    label: "Decks",
+    note: "Last 30 days",
+    columns: ["Stability", "Reviews"],
+    rows: [
+      { label: "<b>Anatomy</b>", sub: "School", cells: ["+20 %", "7,783"], tone: "good" },
+      { label: "Chemistry", sub: "", cells: ["-", "93"], tone: null },
+    ],
+    facts: [],
+  };
+
+  it("draws names as text, values in their columns and the tone on the first value", () => {
+    const block = renderBlock(table, { w: 4, h: 6 }, words);
+    const rows = block.querySelectorAll(".statly-table-row");
+    expect(rows).toHaveLength(3);
+    expect(block.querySelector(".statly-table-name span")?.textContent).toBe("<b>Anatomy</b>");
+    expect(block.querySelector("b")).toBeNull();
+    expect(block.querySelector(".statly-tone-good")?.textContent).toBe("+20 %");
+  });
+
+  it("shows only as many rows as the cell has room for", () => {
+    const block = renderBlock(table, { w: 4, h: 3 }, words);
+    expect(block.querySelectorAll(".statly-table-row:not(.statly-table-head)")).toHaveLength(1);
+  });
+});
+
+describe("combined charts on the card", () => {
+  const points = (values: number[]) =>
+    values.map((value, index) => ({ label: String(index), value }));
+
+  it("draws every kind the editor can combine", async () => {
+    const { combinableChartKinds } = await import("@statly/contract/charts");
+    const { combinedChart } = await import("./render.ts");
+    for (const kind of combinableChartKinds) {
+      const svg = combinedChart(
+        [{ id: "a", kind, source: "hours", color: "accent", axis: "auto" }],
+        [points([1, 2, 3])],
+        "hours",
+      );
+      expect(svg.children.length, kind).toBeGreaterThan(0);
+    }
+  });
+
+  it("puts bars side by side and a line on top, leaving out layers along another axis", async () => {
+    const { combinedChart } = await import("./render.ts");
+    const svg = combinedChart(
+      [
+        { id: "a", kind: "line", source: "focusHours", color: "muted", axis: "auto" },
+        { id: "b", kind: "bar", source: "hours", color: "accent", axis: "auto" },
+        { id: "c", kind: "bar", source: "sessionHours", color: "#ff0000", axis: "auto" },
+        { id: "d", kind: "bar", source: "weekdays", color: "#00ff00", axis: "auto" },
+      ],
+      [points([50, 80]), points([4, 2]), points([1, 3]), points([9, 9])],
+      "hours",
+    );
+    expect(svg.querySelectorAll("rect")).toHaveLength(4);
+    expect(svg.lastElementChild?.tagName).toBe("polyline");
   });
 });

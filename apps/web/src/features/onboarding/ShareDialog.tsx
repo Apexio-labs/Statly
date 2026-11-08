@@ -4,7 +4,7 @@ import { type MouseEvent, useState } from "react";
 import { bridge } from "../../bridge/index.ts";
 import { Button } from "../../components/Button.tsx";
 import { useAppearance } from "../../lib/appearance.tsx";
-import { ANKIWEB_URL } from "./RatingDialog.tsx";
+import { ANKIWEB_RATE_URL, ANKIWEB_URL } from "./RatingDialog.tsx";
 
 /** Python decides when this is due: weeks after installing, never on the day of a rating request. */
 export function ShareDialog() {
@@ -70,6 +70,16 @@ export function ShareDialog() {
                 {t("share.never")}
               </Button>
             </div>
+            <p className="m-0 border-line border-t pt-3 text-[13px] text-muted">
+              {t("share.likeBody")}{" "}
+              <button
+                type="button"
+                className="cursor-pointer border-0 bg-transparent p-0 font-semibold text-accent-strong underline"
+                onClick={() => void bridge.call("system.openExternal", { url: ANKIWEB_RATE_URL })}
+              >
+                {t("share.like")}
+              </button>
+            </p>
           </>
         )}
       </div>

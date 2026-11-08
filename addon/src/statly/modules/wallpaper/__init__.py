@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import logging
 from collections.abc import Callable
 from pathlib import Path
@@ -17,7 +19,9 @@ logger = logging.getLogger(__name__)
 _OLD_FILE = "wallpaper.jpg"
 # The contract's WALLPAPER_HISTORY. A longer list would fail its check.
 HISTORY_LIMIT = 8
-_MEDIA_FILTER = "Images and videos (*.png *.jpg *.jpeg *.gif *.webp *.mp4 *.m4v *.mov *.webm)"
+_MEDIA_FILTER = (
+    "Images and videos (*.png *.jpg *.jpeg *.jfif *.gif *.webp *.mp4 *.m4v *.mov *.webm)"
+)
 
 
 class WallpaperService:
@@ -37,8 +41,31 @@ class WallpaperService:
     def choose(self, finish: Callable[[Any], None], fail: Callable[[Exception], None]) -> None:
         self._take(self._host.pick_path(_MEDIA_FILTER), finish, fail)
 
-    def dropped(self, finish: Callable[[Any], None], fail: Callable[[Exception], None]) -> None:
-        self._take(self._host.take_dropped_file(), finish, fail)
+    def dropped(
+        self,
+        image: str | None,
+        finish: Callable[[Any], None],
+        fail: Callable[[Exception], None],
+    ) -> None:
+        """Prefers the dropped file's path. Without one, a picture the page sent along is used,
+        checked by its content like any other file."""
+        path = self._host.take_dropped_file()
+        if path is not None or image is None:
+            self._take(path, finish, fail)
+            return
+        try:
+            data = base64.b64decode(image, validate=True)
+        except (binascii.Error, ValueError):
+            fail(InvalidParams("This is not a picture."))
+            return
+
+        def store() -> Any:
+            try:
+                return self._store.add_media(data)
+            except ValueError as error:
+                raise InvalidParams(str(error)) from None
+
+        self._host.run_task(store, lambda asset: finish(self._use(asset)), fail)
 
     def _take(
         self,
@@ -128,9 +155,9 @@ class WallpaperModule:
             service.choose(finish, fail)
 
         def dropped(
-            _params: Any, finish: Callable[[Any], None], fail: Callable[[Exception], None]
+            params: Any, finish: Callable[[Any], None], fail: Callable[[Exception], None]
         ) -> None:
-            service.dropped(finish, fail)
+            service.dropped(params.get("image"), finish, fail)
 
         context.router.deferred("wallpaper.choose", choose)
         context.router.deferred("wallpaper.dropped", dropped)

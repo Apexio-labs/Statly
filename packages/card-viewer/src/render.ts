@@ -1,4 +1,11 @@
-import type { Cells, MobileSnapshot, WidgetElement } from "@statly/contract";
+import type {
+  Cells,
+  ChartLayer,
+  CombinableChartKind,
+  MobileSnapshot,
+  WidgetElement,
+} from "@statly/contract";
+import { combinesWith, seriesUnitOf } from "@statly/contract/charts";
 import {
   backgroundStyle,
   boxStyle,
@@ -6,6 +13,7 @@ import {
   isVisibleAt,
   layoutAt,
   paintValue,
+  planAxes,
   textStyle,
 } from "@statly/widget-runtime";
 
@@ -15,6 +23,7 @@ type Device = "tablet" | "phone";
 type Bars = Extract<Block, { kind: "bars" }>;
 type Heatmap = Extract<Block, { kind: "heatmap" }>;
 type Custom = Extract<Block, { kind: "custom" }>;
+type Table = Extract<Block, { kind: "table" }>;
 type Point = Bars["bars"][number];
 type Open = (block: Block, selected?: number) => void;
 type Words = Snapshot["words"];
@@ -117,6 +126,153 @@ function lineChart(bars: Point[], label: string, color: string): SVGElement {
   return svg;
 }
 
+/** Each point's share of the whole as a slice, each a little lighter than the one before. */
+function pieChart(bars: Point[], label: string, color: string): SVGElement {
+  const shown = bars.filter((bar) => bar.value > 0);
+  const total = shown.reduce((sum, bar) => sum + bar.value, 0);
+  const svg = svgNode("svg", { viewBox: "0 0 100 100", role: "img", class: "statly-pie" });
+  svg.setAttribute("aria-label", label);
+  let start = -Math.PI / 2;
+  shown.forEach((bar, index) => {
+    const angle = total ? (bar.value / total) * 2 * Math.PI : 0;
+    const end = start + angle;
+    const point = (at: number) => `${50 + 46 * Math.cos(at)} ${50 + 46 * Math.sin(at)}`;
+    // A single slice is a whole circle, which one arc cannot draw.
+    const shape =
+      shown.length === 1
+        ? svgNode("circle", { cx: 50, cy: 50, r: 46 })
+        : svgNode("path", {
+            d: `M50 50 L${point(start)} A46 46 0 ${angle > Math.PI ? 1 : 0} 1 ${point(end)} Z`,
+          });
+    shape.style.fill = color;
+    shape.style.opacity = String(Math.max(0.3, 1 - index * (0.7 / Math.max(1, shown.length))));
+    shape.style.stroke = "var(--statly-card)";
+    shape.style.strokeWidth = "1.5";
+    const title = svgNode("title", {});
+    title.textContent = `${bar.label}: ${bar.value.toLocaleString()}`;
+    shape.append(title);
+    svg.append(shape);
+    start = end;
+  });
+  return svg;
+}
+
+type LayerPoint = { label: string; value: number };
+type Painted = {
+  svg: SVGElement;
+  values: number[];
+  highest: number;
+  color: string;
+  /** Where this layer's bars go among the bars at one point, and how many there are. */
+  slot: number;
+  slots: number;
+  step: number;
+  height: number;
+};
+
+/**
+ * How each kind of a combined chart draws one layer. Every kind the editor offers under
+ * "Combined" needs an entry here, which the type makes sure of.
+ */
+const layerPainters: Record<CombinableChartKind, (layer: Painted) => void> = {
+  bar: ({ svg, values, highest, color, slot, slots, step, height }) => {
+    const width = (step * 0.76) / slots;
+    values.forEach((value, index) => {
+      const barHeight = Math.max(value > 0 ? 2 : 0, (value / highest) * (height - 2));
+      const rect = svgNode("rect", {
+        x: index * step + step * 0.12 + slot * width,
+        y: height - barHeight,
+        width,
+        height: barHeight,
+        rx: 2,
+        class: "statly-bar",
+      });
+      rect.style.fill = color;
+      svg.append(rect);
+    });
+  },
+  line: ({ svg, values, highest, color, step, height }) => {
+    const points = values
+      .map(
+        (value, index) =>
+          `${index * step + step / 2},${height - (value / highest) * (height - 4) - 2}`,
+      )
+      .join(" ");
+    const line = svgNode("polyline", {
+      points,
+      fill: "none",
+      "stroke-width": 2,
+      "vector-effect": "non-scaling-stroke",
+    });
+    line.style.stroke = color;
+    svg.append(line);
+  },
+};
+
+/**
+ * Several layers in one plot. A card has no room for scales, so each unit gets a scale of its own
+ * that fills the height, as the desktop's scales do; layers with the same unit share one.
+ */
+export function combinedChart(
+  layers: ChartLayer[],
+  series: LayerPoint[][],
+  label: string,
+): SVGElement {
+  const width = 320;
+  const height = 110;
+  const first = layers[0];
+  const kept = layers
+    .map((layer, index) => ({ layer, points: series[index] ?? [] }))
+    .filter(({ layer }) => first !== undefined && combinesWith(first.source, layer.source));
+  const longest = kept.reduce<LayerPoint[]>(
+    (best, { points }) => (points.length > best.length ? points : best),
+    [],
+  );
+  const labels = longest.map((point) => point.label);
+  const values = kept.map(({ points }) => {
+    const byLabel = new Map(points.map((point) => [point.label, point.value]));
+    return labels.map((name) => byLabel.get(name) ?? 0);
+  });
+  const plan = planAxes(
+    kept.map(({ layer }) => ({ axis: layer.axis, unit: seriesUnitOf[layer.source] })),
+  );
+  const highestOf = plan.axes.map((_axis, axisIndex) =>
+    Math.max(
+      1,
+      ...values.flatMap((row, index) => (plan.layerAxis[index] === axisIndex ? row : [])),
+    ),
+  );
+  const svg = svgNode("svg", {
+    viewBox: `0 0 ${width} ${height}`,
+    role: "img",
+    preserveAspectRatio: "none",
+  });
+  svg.setAttribute("aria-label", label);
+  const step = width / Math.max(1, labels.length);
+  const bars = kept.filter(({ layer }) => layer.kind === "bar").map(({ layer }) => layer.id);
+  // Bars first, so lines stay on top.
+  const order = [...kept.keys()].sort(
+    (a, b) => Number(kept[a]?.layer.kind === "line") - Number(kept[b]?.layer.kind === "line"),
+  );
+  for (const index of order) {
+    const entry = kept[index];
+    if (!entry) {
+      continue;
+    }
+    layerPainters[entry.layer.kind]({
+      svg,
+      values: values[index] ?? [],
+      highest: highestOf[plan.layerAxis[index] ?? 0] ?? 1,
+      color: paintValue(entry.layer.color),
+      slot: Math.max(0, bars.indexOf(entry.layer.id)),
+      slots: Math.max(1, bars.length),
+      step,
+      height,
+    });
+  }
+  return svg;
+}
+
 function barAt(svg: SVGElement, event: Event, count: number): number {
   const bounds = svg.getBoundingClientRect();
   const share = ((event as MouseEvent).clientX - bounds.left) / bounds.width;
@@ -175,6 +331,33 @@ function renderHeatmap(block: Heatmap): Element {
     element("p", "statly-note", block.note),
   );
   return wrapper;
+}
+
+/** Rows with a name, a line below it and a few values, such as decks or forgotten cards. */
+function renderTable(block: Table, limit?: number): HTMLElement {
+  const table = element("div", "statly-table");
+  table.style.setProperty("--statly-table-columns", String(block.columns.length));
+  const head = element("div", "statly-table-row statly-table-head");
+  head.append(element("span", ""), ...block.columns.map((name) => element("span", "", name)));
+  table.append(head);
+  for (const row of block.rows.slice(0, limit)) {
+    const line = element("div", "statly-table-row");
+    const name = element("span", "statly-table-name");
+    name.append(element("span", "", row.label));
+    if (row.sub) {
+      name.append(element("small", "", row.sub));
+    }
+    line.append(name);
+    row.cells.forEach((cell, index) => {
+      const value = element("span", "statly-table-cell", cell);
+      if (index === 0 && row.tone) {
+        value.classList.add(`statly-tone-${row.tone}`);
+      }
+      line.append(value);
+    });
+    table.append(line);
+  }
+  return table;
 }
 
 function fitText(text: string, style: Partial<CSSStyleDeclaration>): HTMLElement {
@@ -266,8 +449,12 @@ function elementContent(
       return fitText(value?.text ?? "", textStyle(item, aspect) as Partial<CSSStyleDeclaration>);
     case "chart": {
       const color = paintValue(item.color);
+      if (item.chart === "combined" && item.layers?.length && value?.layers) {
+        return combinedChart(item.layers, value.layers, item.source);
+      }
       const bars = value?.bars ?? [];
-      const draw = item.chart === "line" ? lineChart : columnChart;
+      const draw =
+        item.chart === "line" ? lineChart : item.chart === "pie" ? pieChart : columnChart;
       return draw(bars, item.source, color);
     }
     case "progress":
@@ -327,6 +514,11 @@ export function renderBlock(block: Block, cells: Cells, words: Words, open?: Ope
       card.append(element("p", "statly-note statly-period", block.note));
     }
     card.append(renderBars(block, open && ((index) => open(block, index))));
+  } else if (block.kind === "table") {
+    if (block.note) {
+      card.append(element("p", "statly-note statly-period", block.note));
+    }
+    card.append(renderTable(block, Math.max(1, cells.h - 2)));
   } else {
     card.append(renderHeatmap(block));
   }
@@ -396,6 +588,11 @@ function sheetBody(block: Exclude<Block, Custom>, selected: number, words: Words
   const body = document.createElement("div");
   if (block.kind === "tile") {
     body.append(element("div", "statly-value statly-sheet-value", block.value));
+    const facts = element("div", "statly-facts");
+    facts.append(...block.facts.map((fact) => factRow(fact.label, fact.value)));
+    body.append(facts);
+  } else if (block.kind === "table") {
+    body.append(renderTable(block));
     const facts = element("div", "statly-facts");
     facts.append(...block.facts.map((fact) => factRow(fact.label, fact.value)));
     body.append(facts);

@@ -115,6 +115,7 @@ class StatisticsSummaryResult(TypedDict):
     successRate: Any
     retention: Any
     activeDays: int
+    newCards: int
 
 
 class StatisticsCategoriesParams(TypedDict):
@@ -224,6 +225,7 @@ class StatisticsDueResult(TypedDict):
 
 class StatisticsForecastParams(TypedDict):
     deckId: int | None
+    days: NotRequired[int]
 
 
 class StatisticsForecastResultItem(TypedDict):
@@ -242,6 +244,7 @@ class StatisticsCardStatesResult(TypedDict):
     suspended: int
     buried: int
     other: int
+    mature: int
 
 
 class StatisticsAnkiViewParams(TypedDict):
@@ -274,14 +277,14 @@ class StatisticsAnkiViewResultOption1PointsItem(TypedDict):
 class StatisticsAnkiViewResultOption1FactsItem(TypedDict):
     name: str
     value: float
-    unit: Literal["reviews", "cards", "notes", "minutes", "seconds", "days", "percent", "cardsPerMinute"]
+    unit: Literal["reviews", "ratings", "cards", "notes", "minutes", "seconds", "days", "percent", "cardsPerMinute"]
     of: NotRequired[float]
 
 
 class StatisticsAnkiViewResultOption1(TypedDict):
     kind: Literal["timeline"]
     series: list[str]
-    unit: Literal["reviews", "cards", "minutes"]
+    unit: Literal["reviews", "ratings", "cards", "minutes"]
     hasBacklog: NotRequired[bool]
     points: list[StatisticsAnkiViewResultOption1PointsItem]
     facts: list[StatisticsAnkiViewResultOption1FactsItem]
@@ -297,7 +300,7 @@ class StatisticsAnkiViewResultOption2PointsItem(TypedDict):
 class StatisticsAnkiViewResultOption2FactsItem(TypedDict):
     name: str
     value: float
-    unit: Literal["reviews", "cards", "notes", "minutes", "seconds", "days", "percent", "cardsPerMinute"]
+    unit: Literal["reviews", "ratings", "cards", "notes", "minutes", "seconds", "days", "percent", "cardsPerMinute"]
     of: NotRequired[float]
 
 
@@ -366,6 +369,235 @@ class StatisticsAnkiViewResultOption7RowsItem(TypedDict):
 class StatisticsAnkiViewResultOption7(TypedDict):
     kind: Literal["retention"]
     rows: list[StatisticsAnkiViewResultOption7RowsItem]
+
+
+class StatisticsForgottenParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+    limit: NotRequired[int]
+
+
+class StatisticsForgottenResultCardsItem(TypedDict):
+    cardId: int
+    text: str
+    deck: str
+    forgot: int
+    seen: int
+    intervalDays: int | None
+
+
+class StatisticsForgottenResult(TypedDict):
+    cards: list[StatisticsForgottenResultCardsItem]
+    total: int
+
+
+class StatisticsDeckTableParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+    measure: NotRequired[Literal["reviews", "ratings"]]
+
+
+class StatisticsDeckTableResultRowsItem(TypedDict):
+    deckId: int
+    parentId: int | None
+    depth: int
+    name: str
+    path: str
+    count: int
+    series: list[int]
+    timeMs: int
+    retention: float | None
+    cards: int
+    matureShare: float | None
+    stability: float | None
+    stabilityDays: float | None
+    children: int
+
+
+class StatisticsDeckTableResult(TypedDict):
+    buckets: list[str]
+    stabilityKind: Literal["stability", "interval"]
+    rows: list[StatisticsDeckTableResultRowsItem]
+
+
+class StatisticsDailyParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+
+
+class StatisticsDailyResultDaysItem(TypedDict):
+    date: str
+    reviews: int
+    ratings: int
+    timeMs: int
+    newCards: int
+    checked: int
+    passed: int
+
+
+class StatisticsDailyResult(TypedDict):
+    days: list[StatisticsDailyResultDaysItem]
+
+
+class StatisticsAnswerMixParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+
+
+class StatisticsAnswerMixResult(TypedDict):
+    again: int
+    hard: int
+    good: int
+    easy: int
+    new: int
+    learning: int
+    review: int
+    relearning: int
+
+
+class StatisticsTopicsParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+
+
+class StatisticsTopicsResultWeakestItem(TypedDict):
+    deckId: int
+    name: str
+    path: str
+    checked: int
+    passed: int
+
+
+class StatisticsTopicsResultNewFromItem(TypedDict):
+    deckId: int
+    name: str
+    path: str
+    cards: int
+
+
+class StatisticsTopicsResult(TypedDict):
+    retention: float | None
+    weakest: list[StatisticsTopicsResultWeakestItem]
+    newFrom: list[StatisticsTopicsResultNewFromItem]
+    newCards: int
+
+
+class StatisticsSpeedParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+
+
+class StatisticsSpeedResultUsualMs(TypedDict):
+    new: int
+    review: int
+
+
+class StatisticsSpeedResultCurrent(TypedDict):
+    answers: int
+    focus: float | None
+    medianMs: int | None
+    quantiles: list[float] | None
+    histogram: list[int]
+
+
+class StatisticsSpeedResultPreviousOption0(TypedDict):
+    answers: int
+    focus: float | None
+    medianMs: int | None
+    quantiles: list[float] | None
+    histogram: list[int]
+
+
+class StatisticsSpeedResult(TypedDict):
+    zLow: float
+    zStep: float
+    slowAt: float
+    usualMs: StatisticsSpeedResultUsualMs
+    current: StatisticsSpeedResultCurrent
+    previous: StatisticsSpeedResultPreviousOption0 | None
+
+
+class StatisticsSessionsParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+
+
+class StatisticsSessionsResultDaysItemSessionsItem(TypedDict):
+    start: int
+    end: int
+    ratings: int
+    timeMs: int
+    focus: float | None
+    retention: float | None
+
+
+class StatisticsSessionsResultDaysItem(TypedDict):
+    date: str
+    sessions: list[StatisticsSessionsResultDaysItemSessionsItem]
+
+
+class StatisticsSessionsResultHoursItem(TypedDict):
+    ratings: int
+    focus: float | None
+
+
+class StatisticsSessionsResult(TypedDict):
+    dayStartHour: int
+    days: list[StatisticsSessionsResultDaysItem]
+    hours: list[StatisticsSessionsResultHoursItem]
+
+
+class StatisticsCreationParams(TypedDict):
+    start: str
+    end: str
+    deckId: int | None
+
+
+class StatisticsCreationResultItemsItem(TypedDict):
+    date: str
+    seconds: float
+    cards: int
+    notes: int
+
+
+class StatisticsCreationResultTotal(TypedDict):
+    seconds: float
+    cards: int
+    notes: int
+
+
+class StatisticsCreationResult(TypedDict):
+    granularity: Literal["day", "week", "month"]
+    items: list[StatisticsCreationResultItemsItem]
+    total: StatisticsCreationResultTotal
+    usualSecondsPerCard: float | None
+    measuredSince: str | None
+
+
+class SystemOpenBrowserParams(TypedDict):
+    cardIds: list[int]
+
+
+class NotesListParams(TypedDict):
+    start: str
+    end: str
+
+
+class NotesListResultItem(TypedDict):
+    date: str
+    text: str
+
+
+class NotesSaveParams(TypedDict):
+    date: str
+    text: str
 
 
 class DashboardGetParams(TypedDict):
@@ -645,6 +877,17 @@ class DashboardChooseBackgroundResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class DashboardChooseBackgroundResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class DashboardChooseBackgroundResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: DashboardChooseBackgroundResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class DashboardChooseBackgroundResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -669,6 +912,7 @@ class DashboardChooseBackgroundResult(TypedDict):
     shortcuts: DashboardChooseBackgroundResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: DashboardChooseBackgroundResultDashboardFilter
     onboardingAnswers: DashboardChooseBackgroundResultOnboardingAnswers
 
 
@@ -752,6 +996,17 @@ class DashboardRemoveBackgroundResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class DashboardRemoveBackgroundResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class DashboardRemoveBackgroundResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: DashboardRemoveBackgroundResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class DashboardRemoveBackgroundResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -776,6 +1031,7 @@ class DashboardRemoveBackgroundResult(TypedDict):
     shortcuts: DashboardRemoveBackgroundResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: DashboardRemoveBackgroundResultDashboardFilter
     onboardingAnswers: DashboardRemoveBackgroundResultOnboardingAnswers
 
 
@@ -876,6 +1132,17 @@ class SettingsGetResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class SettingsGetResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class SettingsGetResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: SettingsGetResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class SettingsGetResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -900,6 +1167,7 @@ class SettingsGetResult(TypedDict):
     shortcuts: SettingsGetResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: SettingsGetResultDashboardFilter
     onboardingAnswers: SettingsGetResultOnboardingAnswers
 
 
@@ -979,6 +1247,17 @@ class SettingsUpdateParamsShortcuts(TypedDict):
     fullscreen: str
 
 
+class SettingsUpdateParamsDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class SettingsUpdateParamsDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: SettingsUpdateParamsDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class SettingsUpdateParamsOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -1003,6 +1282,7 @@ class SettingsUpdateParams(TypedDict):
     shortcuts: NotRequired[SettingsUpdateParamsShortcuts]
     onboardingDone: NotRequired[bool]
     mobileSync: NotRequired[bool]
+    dashboardFilter: NotRequired[SettingsUpdateParamsDashboardFilter]
     onboardingAnswers: NotRequired[SettingsUpdateParamsOnboardingAnswers]
 
 
@@ -1082,6 +1362,17 @@ class SettingsUpdateResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class SettingsUpdateResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class SettingsUpdateResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: SettingsUpdateResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class SettingsUpdateResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -1106,6 +1397,7 @@ class SettingsUpdateResult(TypedDict):
     shortcuts: SettingsUpdateResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: SettingsUpdateResultDashboardFilter
     onboardingAnswers: SettingsUpdateResultOnboardingAnswers
 
 
@@ -1124,6 +1416,19 @@ class FeedbackAnswerParams(TypedDict):
 
 class FeedbackAnswerShareParams(TypedDict):
     choice: Literal["share", "later", "never"]
+
+
+class ReleaseNotesPendingParams(TypedDict):
+    pass
+
+
+class ReleaseNotesPendingResult(TypedDict):
+    since: str
+    current: str
+
+
+class ReleaseNotesSeenParams(TypedDict):
+    pass
 
 
 class SystemShareParamsAnchor(TypedDict):
@@ -1246,7 +1551,7 @@ class WidgetsListResultItemElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -1264,6 +1569,14 @@ class WidgetsListResultItemElementsItemOption2LayoutsItem(TypedDict):
     h: float
 
 
+class WidgetsListResultItemElementsItemOption2LayersItem(TypedDict):
+    id: str
+    kind: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    color: Literal["text", "muted", "accent", "card"] | str
+    axis: Literal["auto", "left", "right", "none"]
+
+
 class WidgetsListResultItemElementsItemOption2(TypedDict):
     id: str
     x: float
@@ -1275,10 +1588,11 @@ class WidgetsListResultItemElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsListResultItemElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsListResultItemElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
-    chart: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    chart: Literal["bar", "line", "pie", "combined"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
+    layers: NotRequired[list[WidgetsListResultItemElementsItemOption2LayersItem]]
 
 
 class WidgetsListResultItemElementsItemOption3ShowFrom(TypedDict):
@@ -1306,7 +1620,7 @@ class WidgetsListResultItemElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsListResultItemElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsListResultItemElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -1338,6 +1652,7 @@ class WidgetsListResultItemElementsItemOption4(TypedDict):
     showFrom: NotRequired[WidgetsListResultItemElementsItemOption4ShowFrom]
     layouts: NotRequired[list[WidgetsListResultItemElementsItemOption4LayoutsItem]]
     kind: Literal["heatmap"]
+    mode: NotRequired[Literal["reviews", "ratings", "retention", "speed", "time", "new"]]
 
 
 class WidgetsListResultItemElementsItemOption5ShowFrom(TypedDict):
@@ -1514,7 +1829,7 @@ class WidgetsSaveParamsWidgetElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -1532,6 +1847,14 @@ class WidgetsSaveParamsWidgetElementsItemOption2LayoutsItem(TypedDict):
     h: float
 
 
+class WidgetsSaveParamsWidgetElementsItemOption2LayersItem(TypedDict):
+    id: str
+    kind: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    color: Literal["text", "muted", "accent", "card"] | str
+    axis: Literal["auto", "left", "right", "none"]
+
+
 class WidgetsSaveParamsWidgetElementsItemOption2(TypedDict):
     id: str
     x: float
@@ -1543,10 +1866,11 @@ class WidgetsSaveParamsWidgetElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsSaveParamsWidgetElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsSaveParamsWidgetElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
-    chart: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    chart: Literal["bar", "line", "pie", "combined"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
+    layers: NotRequired[list[WidgetsSaveParamsWidgetElementsItemOption2LayersItem]]
 
 
 class WidgetsSaveParamsWidgetElementsItemOption3ShowFrom(TypedDict):
@@ -1574,7 +1898,7 @@ class WidgetsSaveParamsWidgetElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsSaveParamsWidgetElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsSaveParamsWidgetElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -1606,6 +1930,7 @@ class WidgetsSaveParamsWidgetElementsItemOption4(TypedDict):
     showFrom: NotRequired[WidgetsSaveParamsWidgetElementsItemOption4ShowFrom]
     layouts: NotRequired[list[WidgetsSaveParamsWidgetElementsItemOption4LayoutsItem]]
     kind: Literal["heatmap"]
+    mode: NotRequired[Literal["reviews", "ratings", "retention", "speed", "time", "new"]]
 
 
 class WidgetsSaveParamsWidgetElementsItemOption5ShowFrom(TypedDict):
@@ -1786,7 +2111,7 @@ class WidgetsSaveResultElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -1804,6 +2129,14 @@ class WidgetsSaveResultElementsItemOption2LayoutsItem(TypedDict):
     h: float
 
 
+class WidgetsSaveResultElementsItemOption2LayersItem(TypedDict):
+    id: str
+    kind: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    color: Literal["text", "muted", "accent", "card"] | str
+    axis: Literal["auto", "left", "right", "none"]
+
+
 class WidgetsSaveResultElementsItemOption2(TypedDict):
     id: str
     x: float
@@ -1815,10 +2148,11 @@ class WidgetsSaveResultElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsSaveResultElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsSaveResultElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
-    chart: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    chart: Literal["bar", "line", "pie", "combined"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
+    layers: NotRequired[list[WidgetsSaveResultElementsItemOption2LayersItem]]
 
 
 class WidgetsSaveResultElementsItemOption3ShowFrom(TypedDict):
@@ -1846,7 +2180,7 @@ class WidgetsSaveResultElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsSaveResultElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsSaveResultElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -1878,6 +2212,7 @@ class WidgetsSaveResultElementsItemOption4(TypedDict):
     showFrom: NotRequired[WidgetsSaveResultElementsItemOption4ShowFrom]
     layouts: NotRequired[list[WidgetsSaveResultElementsItemOption4LayoutsItem]]
     kind: Literal["heatmap"]
+    mode: NotRequired[Literal["reviews", "ratings", "retention", "speed", "time", "new"]]
 
 
 class WidgetsSaveResultElementsItemOption5ShowFrom(TypedDict):
@@ -2101,7 +2436,7 @@ class WidgetsImportResultWidgetOption0ElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -2119,6 +2454,14 @@ class WidgetsImportResultWidgetOption0ElementsItemOption2LayoutsItem(TypedDict):
     h: float
 
 
+class WidgetsImportResultWidgetOption0ElementsItemOption2LayersItem(TypedDict):
+    id: str
+    kind: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    color: Literal["text", "muted", "accent", "card"] | str
+    axis: Literal["auto", "left", "right", "none"]
+
+
 class WidgetsImportResultWidgetOption0ElementsItemOption2(TypedDict):
     id: str
     x: float
@@ -2130,10 +2473,11 @@ class WidgetsImportResultWidgetOption0ElementsItemOption2(TypedDict):
     showFrom: NotRequired[WidgetsImportResultWidgetOption0ElementsItemOption2ShowFrom]
     layouts: NotRequired[list[WidgetsImportResultWidgetOption0ElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
-    chart: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    chart: Literal["bar", "line", "pie", "combined"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
+    layers: NotRequired[list[WidgetsImportResultWidgetOption0ElementsItemOption2LayersItem]]
 
 
 class WidgetsImportResultWidgetOption0ElementsItemOption3ShowFrom(TypedDict):
@@ -2161,7 +2505,7 @@ class WidgetsImportResultWidgetOption0ElementsItemOption3(TypedDict):
     showFrom: NotRequired[WidgetsImportResultWidgetOption0ElementsItemOption3ShowFrom]
     layouts: NotRequired[list[WidgetsImportResultWidgetOption0ElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -2193,6 +2537,7 @@ class WidgetsImportResultWidgetOption0ElementsItemOption4(TypedDict):
     showFrom: NotRequired[WidgetsImportResultWidgetOption0ElementsItemOption4ShowFrom]
     layouts: NotRequired[list[WidgetsImportResultWidgetOption0ElementsItemOption4LayoutsItem]]
     kind: Literal["heatmap"]
+    mode: NotRequired[Literal["reviews", "ratings", "retention", "speed", "time", "new"]]
 
 
 class WidgetsImportResultWidgetOption0ElementsItemOption5ShowFrom(TypedDict):
@@ -2916,7 +3261,7 @@ class AiConversationResultProposalsItemWidgetElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -2934,6 +3279,14 @@ class AiConversationResultProposalsItemWidgetElementsItemOption2LayoutsItem(Type
     h: float
 
 
+class AiConversationResultProposalsItemWidgetElementsItemOption2LayersItem(TypedDict):
+    id: str
+    kind: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    color: Literal["text", "muted", "accent", "card"] | str
+    axis: Literal["auto", "left", "right", "none"]
+
+
 class AiConversationResultProposalsItemWidgetElementsItemOption2(TypedDict):
     id: str
     x: float
@@ -2945,10 +3298,11 @@ class AiConversationResultProposalsItemWidgetElementsItemOption2(TypedDict):
     showFrom: NotRequired[AiConversationResultProposalsItemWidgetElementsItemOption2ShowFrom]
     layouts: NotRequired[list[AiConversationResultProposalsItemWidgetElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
-    chart: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    chart: Literal["bar", "line", "pie", "combined"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
+    layers: NotRequired[list[AiConversationResultProposalsItemWidgetElementsItemOption2LayersItem]]
 
 
 class AiConversationResultProposalsItemWidgetElementsItemOption3ShowFrom(TypedDict):
@@ -2976,7 +3330,7 @@ class AiConversationResultProposalsItemWidgetElementsItemOption3(TypedDict):
     showFrom: NotRequired[AiConversationResultProposalsItemWidgetElementsItemOption3ShowFrom]
     layouts: NotRequired[list[AiConversationResultProposalsItemWidgetElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -3008,6 +3362,7 @@ class AiConversationResultProposalsItemWidgetElementsItemOption4(TypedDict):
     showFrom: NotRequired[AiConversationResultProposalsItemWidgetElementsItemOption4ShowFrom]
     layouts: NotRequired[list[AiConversationResultProposalsItemWidgetElementsItemOption4LayoutsItem]]
     kind: Literal["heatmap"]
+    mode: NotRequired[Literal["reviews", "ratings", "retention", "speed", "time", "new"]]
 
 
 class AiConversationResultProposalsItemWidgetElementsItemOption5ShowFrom(TypedDict):
@@ -3312,7 +3667,7 @@ class AiApplyProposalParamsWidgetElementsItemOption1(TypedDict):
     align: Literal["left", "center", "right"]
     color: Literal["text", "muted", "accent", "card"] | str
     kind: Literal["metric"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
 
 
@@ -3330,6 +3685,14 @@ class AiApplyProposalParamsWidgetElementsItemOption2LayoutsItem(TypedDict):
     h: float
 
 
+class AiApplyProposalParamsWidgetElementsItemOption2LayersItem(TypedDict):
+    id: str
+    kind: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    color: Literal["text", "muted", "accent", "card"] | str
+    axis: Literal["auto", "left", "right", "none"]
+
+
 class AiApplyProposalParamsWidgetElementsItemOption2(TypedDict):
     id: str
     x: float
@@ -3341,10 +3704,11 @@ class AiApplyProposalParamsWidgetElementsItemOption2(TypedDict):
     showFrom: NotRequired[AiApplyProposalParamsWidgetElementsItemOption2ShowFrom]
     layouts: NotRequired[list[AiApplyProposalParamsWidgetElementsItemOption2LayoutsItem]]
     kind: Literal["chart"]
-    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours"]
-    chart: Literal["bar", "line"]
+    source: Literal["timeline", "ratingTimeline", "answerButtons", "deckActivity", "forecast", "cardStates", "weekdays", "hours", "retentionTimeline", "speedTimeline", "timeTimeline", "newTimeline", "forgottenCards", "weakestDecks", "newCardsFrom", "deckStability", "sessionHours", "creationTimeline", "focusHours"]
+    chart: Literal["bar", "line", "pie", "combined"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     color: Literal["text", "muted", "accent", "card"] | str
+    layers: NotRequired[list[AiApplyProposalParamsWidgetElementsItemOption2LayersItem]]
 
 
 class AiApplyProposalParamsWidgetElementsItemOption3ShowFrom(TypedDict):
@@ -3372,7 +3736,7 @@ class AiApplyProposalParamsWidgetElementsItemOption3(TypedDict):
     showFrom: NotRequired[AiApplyProposalParamsWidgetElementsItemOption3ShowFrom]
     layouts: NotRequired[list[AiApplyProposalParamsWidgetElementsItemOption3LayoutsItem]]
     kind: Literal["progress"]
-    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage"]
+    source: Literal["reviews", "ratings", "studyTime", "successRate", "retention", "activeDays", "dueCards", "currentStreak", "longestStreak", "dailyAverage", "newCards", "secondsPerRating", "focus", "matureShare", "creationTime", "cardsCreated", "secondsPerCreatedCard", "forgottenCards"]
     range: Literal["dashboard", "today", "last7", "last30", "lastYear"]
     goal: float
     style: Literal["ring", "bar"]
@@ -3404,6 +3768,7 @@ class AiApplyProposalParamsWidgetElementsItemOption4(TypedDict):
     showFrom: NotRequired[AiApplyProposalParamsWidgetElementsItemOption4ShowFrom]
     layouts: NotRequired[list[AiApplyProposalParamsWidgetElementsItemOption4LayoutsItem]]
     kind: Literal["heatmap"]
+    mode: NotRequired[Literal["reviews", "ratings", "retention", "speed", "time", "new"]]
 
 
 class AiApplyProposalParamsWidgetElementsItemOption5ShowFrom(TypedDict):
@@ -3856,6 +4221,17 @@ class WallpaperChooseResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class WallpaperChooseResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class WallpaperChooseResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: WallpaperChooseResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class WallpaperChooseResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -3880,11 +4256,12 @@ class WallpaperChooseResult(TypedDict):
     shortcuts: WallpaperChooseResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: WallpaperChooseResultDashboardFilter
     onboardingAnswers: WallpaperChooseResultOnboardingAnswers
 
 
 class WallpaperDroppedParams(TypedDict):
-    pass
+    image: NotRequired[str]
 
 
 class WallpaperDroppedResultDashboardBackgroundsDesktopOption0(TypedDict):
@@ -3963,6 +4340,17 @@ class WallpaperDroppedResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class WallpaperDroppedResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class WallpaperDroppedResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: WallpaperDroppedResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class WallpaperDroppedResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -3987,6 +4375,7 @@ class WallpaperDroppedResult(TypedDict):
     shortcuts: WallpaperDroppedResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: WallpaperDroppedResultDashboardFilter
     onboardingAnswers: WallpaperDroppedResultOnboardingAnswers
 
 
@@ -4070,6 +4459,17 @@ class WallpaperRemoveResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class WallpaperRemoveResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class WallpaperRemoveResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: WallpaperRemoveResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class WallpaperRemoveResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -4094,6 +4494,7 @@ class WallpaperRemoveResult(TypedDict):
     shortcuts: WallpaperRemoveResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: WallpaperRemoveResultDashboardFilter
     onboardingAnswers: WallpaperRemoveResultOnboardingAnswers
 
 
@@ -4177,6 +4578,17 @@ class WallpaperUseResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class WallpaperUseResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class WallpaperUseResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: WallpaperUseResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class WallpaperUseResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -4201,6 +4613,7 @@ class WallpaperUseResult(TypedDict):
     shortcuts: WallpaperUseResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: WallpaperUseResultDashboardFilter
     onboardingAnswers: WallpaperUseResultOnboardingAnswers
 
 
@@ -4284,6 +4697,17 @@ class WallpaperForgetResultShortcuts(TypedDict):
     fullscreen: str
 
 
+class WallpaperForgetResultDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class WallpaperForgetResultDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: WallpaperForgetResultDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class WallpaperForgetResultOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -4308,6 +4732,7 @@ class WallpaperForgetResult(TypedDict):
     shortcuts: WallpaperForgetResultShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: WallpaperForgetResultDashboardFilter
     onboardingAnswers: WallpaperForgetResultOnboardingAnswers
 
 
@@ -4400,6 +4825,17 @@ class ShortcutsSetResultSettingsShortcuts(TypedDict):
     fullscreen: str
 
 
+class ShortcutsSetResultSettingsDashboardFilterCustomOption0(TypedDict):
+    start: str
+    end: str
+
+
+class ShortcutsSetResultSettingsDashboardFilter(TypedDict):
+    preset: Literal["today", "yesterday", "last7", "last30", "lastYear", "all", "custom"]
+    custom: ShortcutsSetResultSettingsDashboardFilterCustomOption0 | None
+    deck: str
+
+
 class ShortcutsSetResultSettingsOnboardingAnswers(TypedDict):
     role: Literal["student", "educator", "medical_student", "law_student", "programmer", "language_learner", "other"] | None
     discovery: Literal["ankiweb", "recommendation", "social_media", "web_search", "website", "other"] | None
@@ -4424,6 +4860,7 @@ class ShortcutsSetResultSettings(TypedDict):
     shortcuts: ShortcutsSetResultSettingsShortcuts
     onboardingDone: bool
     mobileSync: bool
+    dashboardFilter: ShortcutsSetResultSettingsDashboardFilter
     onboardingAnswers: ShortcutsSetResultSettingsOnboardingAnswers
 
 

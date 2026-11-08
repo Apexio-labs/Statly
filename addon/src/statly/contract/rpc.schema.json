@@ -372,6 +372,11 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
+          },
+          "newCards": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
           }
         },
         "required": [
@@ -380,7 +385,8 @@
           "studyTimeMs",
           "successRate",
           "retention",
-          "activeDays"
+          "activeDays",
+          "newCards"
         ],
         "additionalProperties": false
       }
@@ -948,6 +954,11 @@
                 "type": "null"
               }
             ]
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
           }
         },
         "required": [
@@ -1032,6 +1043,11 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
+          },
+          "mature": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
           }
         },
         "required": [
@@ -1040,7 +1056,8 @@
           "review",
           "suspended",
           "buried",
-          "other"
+          "other",
+          "mature"
         ],
         "additionalProperties": false
       }
@@ -1188,6 +1205,7 @@
                 "type": "string",
                 "enum": [
                   "reviews",
+                  "ratings",
                   "cards",
                   "minutes"
                 ]
@@ -1242,6 +1260,7 @@
                       "type": "string",
                       "enum": [
                         "reviews",
+                        "ratings",
                         "cards",
                         "notes",
                         "minutes",
@@ -1340,6 +1359,7 @@
                       "type": "string",
                       "enum": [
                         "reviews",
+                        "ratings",
                         "cards",
                         "notes",
                         "minutes",
@@ -1620,6 +1640,1210 @@
             "additionalProperties": false
           }
         ]
+      }
+    },
+    "statistics.forgotten": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cardId": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "text": {
+                  "type": "string"
+                },
+                "deck": {
+                  "type": "string"
+                },
+                "forgot": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "seen": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "intervalDays": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "cardId",
+                "text",
+                "deck",
+                "forgot",
+                "seen",
+                "intervalDays"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "cards",
+          "total"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statistics.deckTable": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "measure": {
+            "type": "string",
+            "enum": [
+              "reviews",
+              "ratings"
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "buckets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          "stabilityKind": {
+            "type": "string",
+            "enum": [
+              "stability",
+              "interval"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "deckId": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "parentId": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "depth": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "timeMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "retention": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cards": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "matureShare": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "stability": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "stabilityDays": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "children": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "deckId",
+                "parentId",
+                "depth",
+                "name",
+                "path",
+                "count",
+                "series",
+                "timeMs",
+                "retention",
+                "cards",
+                "matureShare",
+                "stability",
+                "stabilityDays",
+                "children"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "buckets",
+          "stabilityKind",
+          "rows"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statistics.daily": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "reviews": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "ratings": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "timeMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "newCards": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "checked": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "passed": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "date",
+                "reviews",
+                "ratings",
+                "timeMs",
+                "newCards",
+                "checked",
+                "passed"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "days"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statistics.answerMix": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "again": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "hard": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "good": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "easy": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "new": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "learning": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "review": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "relearning": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "again",
+          "hard",
+          "good",
+          "easy",
+          "new",
+          "learning",
+          "review",
+          "relearning"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statistics.topics": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "retention": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "weakest": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "deckId": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "checked": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "passed": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "deckId",
+                "name",
+                "path",
+                "checked",
+                "passed"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "newFrom": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "deckId": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "cards": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "deckId",
+                "name",
+                "path",
+                "cards"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "newCards": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "retention",
+          "weakest",
+          "newFrom",
+          "newCards"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statistics.speed": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "zLow": {
+            "type": "number"
+          },
+          "zStep": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "slowAt": {
+            "type": "number"
+          },
+          "usualMs": {
+            "type": "object",
+            "properties": {
+              "new": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "review": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "new",
+              "review"
+            ],
+            "additionalProperties": false
+          },
+          "current": {
+            "type": "object",
+            "properties": {
+              "answers": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "focus": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "medianMs": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "quantiles": {
+                "anyOf": [
+                  {
+                    "minItems": 5,
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "histogram": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              }
+            },
+            "required": [
+              "answers",
+              "focus",
+              "medianMs",
+              "quantiles",
+              "histogram"
+            ],
+            "additionalProperties": false
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "answers": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "focus": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "medianMs": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "quantiles": {
+                    "anyOf": [
+                      {
+                        "minItems": 5,
+                        "maxItems": 5,
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "histogram": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                },
+                "required": [
+                  "answers",
+                  "focus",
+                  "medianMs",
+                  "quantiles",
+                  "histogram"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "zLow",
+          "zStep",
+          "slowAt",
+          "usualMs",
+          "current",
+          "previous"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statistics.sessions": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "dayStartHour": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "sessions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "end": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "ratings": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "timeMs": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "focus": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "retention": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end",
+                      "ratings",
+                      "timeMs",
+                      "focus",
+                      "retention"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "date",
+                "sessions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "hours": {
+            "minItems": 24,
+            "maxItems": 24,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ratings": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "focus": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "ratings",
+                "focus"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "dayStartHour",
+          "days",
+          "hours"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statistics.creation": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "deckId": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "deckId"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "granularity": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ]
+          },
+          "items": {
+            "maxItems": 400,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "seconds": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cards": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "notes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "date",
+                "seconds",
+                "cards",
+                "notes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "object",
+            "properties": {
+              "seconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "cards": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "notes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "seconds",
+              "cards",
+              "notes"
+            ],
+            "additionalProperties": false
+          },
+          "usualSecondsPerCard": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "measuredSince": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "granularity",
+          "items",
+          "total",
+          "usualSecondsPerCard",
+          "measuredSince"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "system.openBrowser": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "cardIds": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "required": [
+          "cardIds"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "null"
+      }
+    },
+    "notes.list": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "date",
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "notes.save": {
+      "params": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "date",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "null"
       }
     },
     "dashboard.get": {
@@ -2931,6 +4155,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -2998,6 +4274,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -3443,6 +4720,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -3510,6 +4839,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -4006,6 +5336,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -4073,6 +5455,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -4501,6 +5884,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -4973,6 +6408,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -5040,6 +6527,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -5106,6 +6594,41 @@
         "required": [
           "choice"
         ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "null"
+      }
+    },
+    "releaseNotes.pending": {
+      "params": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "current": {
+            "type": "string",
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "since",
+          "current"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "releaseNotes.seen": {
+      "params": {
+        "type": "object",
+        "properties": {},
         "additionalProperties": false
       },
       "result": {
@@ -5680,7 +7203,15 @@
                           "dueCards",
                           "currentStreak",
                           "longestStreak",
-                          "dailyAverage"
+                          "dailyAverage",
+                          "newCards",
+                          "secondsPerRating",
+                          "focus",
+                          "matureShare",
+                          "creationTime",
+                          "cardsCreated",
+                          "secondsPerCreatedCard",
+                          "forgottenCards"
                         ]
                       },
                       "range": {
@@ -5831,14 +7362,27 @@
                           "forecast",
                           "cardStates",
                           "weekdays",
-                          "hours"
+                          "hours",
+                          "retentionTimeline",
+                          "speedTimeline",
+                          "timeTimeline",
+                          "newTimeline",
+                          "forgottenCards",
+                          "weakestDecks",
+                          "newCardsFrom",
+                          "deckStability",
+                          "sessionHours",
+                          "creationTimeline",
+                          "focusHours"
                         ]
                       },
                       "chart": {
                         "type": "string",
                         "enum": [
                           "bar",
-                          "line"
+                          "line",
+                          "pie",
+                          "combined"
                         ]
                       },
                       "range": {
@@ -5867,6 +7411,86 @@
                             "pattern": "^#[0-9a-fA-F]{6}$"
                           }
                         ]
+                      },
+                      "layers": {
+                        "minItems": 1,
+                        "maxItems": 6,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 40
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "bar",
+                                "line"
+                              ]
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "timeline",
+                                "ratingTimeline",
+                                "answerButtons",
+                                "deckActivity",
+                                "forecast",
+                                "cardStates",
+                                "weekdays",
+                                "hours",
+                                "retentionTimeline",
+                                "speedTimeline",
+                                "timeTimeline",
+                                "newTimeline",
+                                "forgottenCards",
+                                "weakestDecks",
+                                "newCardsFrom",
+                                "deckStability",
+                                "sessionHours",
+                                "creationTimeline",
+                                "focusHours"
+                              ]
+                            },
+                            "color": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "text",
+                                    "muted",
+                                    "accent",
+                                    "card"
+                                  ]
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^#[0-9a-fA-F]{6}$"
+                                }
+                              ]
+                            },
+                            "axis": {
+                              "type": "string",
+                              "enum": [
+                                "auto",
+                                "left",
+                                "right",
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "source",
+                            "color",
+                            "axis"
+                          ],
+                          "additionalProperties": false
+                        }
                       }
                     },
                     "required": [
@@ -6006,7 +7630,15 @@
                           "dueCards",
                           "currentStreak",
                           "longestStreak",
-                          "dailyAverage"
+                          "dailyAverage",
+                          "newCards",
+                          "secondsPerRating",
+                          "focus",
+                          "matureShare",
+                          "creationTime",
+                          "cardsCreated",
+                          "secondsPerCreatedCard",
+                          "forgottenCards"
                         ]
                       },
                       "range": {
@@ -6174,6 +7806,17 @@
                       "kind": {
                         "type": "string",
                         "const": "heatmap"
+                      },
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "reviews",
+                          "ratings",
+                          "retention",
+                          "speed",
+                          "time",
+                          "new"
+                        ]
                       }
                     },
                     "required": [
@@ -7024,7 +8667,15 @@
                             "dueCards",
                             "currentStreak",
                             "longestStreak",
-                            "dailyAverage"
+                            "dailyAverage",
+                            "newCards",
+                            "secondsPerRating",
+                            "focus",
+                            "matureShare",
+                            "creationTime",
+                            "cardsCreated",
+                            "secondsPerCreatedCard",
+                            "forgottenCards"
                           ]
                         },
                         "range": {
@@ -7175,14 +8826,27 @@
                             "forecast",
                             "cardStates",
                             "weekdays",
-                            "hours"
+                            "hours",
+                            "retentionTimeline",
+                            "speedTimeline",
+                            "timeTimeline",
+                            "newTimeline",
+                            "forgottenCards",
+                            "weakestDecks",
+                            "newCardsFrom",
+                            "deckStability",
+                            "sessionHours",
+                            "creationTimeline",
+                            "focusHours"
                           ]
                         },
                         "chart": {
                           "type": "string",
                           "enum": [
                             "bar",
-                            "line"
+                            "line",
+                            "pie",
+                            "combined"
                           ]
                         },
                         "range": {
@@ -7211,6 +8875,86 @@
                               "pattern": "^#[0-9a-fA-F]{6}$"
                             }
                           ]
+                        },
+                        "layers": {
+                          "minItems": 1,
+                          "maxItems": 6,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 40
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "bar",
+                                  "line"
+                                ]
+                              },
+                              "source": {
+                                "type": "string",
+                                "enum": [
+                                  "timeline",
+                                  "ratingTimeline",
+                                  "answerButtons",
+                                  "deckActivity",
+                                  "forecast",
+                                  "cardStates",
+                                  "weekdays",
+                                  "hours",
+                                  "retentionTimeline",
+                                  "speedTimeline",
+                                  "timeTimeline",
+                                  "newTimeline",
+                                  "forgottenCards",
+                                  "weakestDecks",
+                                  "newCardsFrom",
+                                  "deckStability",
+                                  "sessionHours",
+                                  "creationTimeline",
+                                  "focusHours"
+                                ]
+                              },
+                              "color": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "text",
+                                      "muted",
+                                      "accent",
+                                      "card"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^#[0-9a-fA-F]{6}$"
+                                  }
+                                ]
+                              },
+                              "axis": {
+                                "type": "string",
+                                "enum": [
+                                  "auto",
+                                  "left",
+                                  "right",
+                                  "none"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "source",
+                              "color",
+                              "axis"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -7350,7 +9094,15 @@
                             "dueCards",
                             "currentStreak",
                             "longestStreak",
-                            "dailyAverage"
+                            "dailyAverage",
+                            "newCards",
+                            "secondsPerRating",
+                            "focus",
+                            "matureShare",
+                            "creationTime",
+                            "cardsCreated",
+                            "secondsPerCreatedCard",
+                            "forgottenCards"
                           ]
                         },
                         "range": {
@@ -7518,6 +9270,17 @@
                         "kind": {
                           "type": "string",
                           "const": "heatmap"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "reviews",
+                            "ratings",
+                            "retention",
+                            "speed",
+                            "time",
+                            "new"
+                          ]
                         }
                       },
                       "required": [
@@ -8368,7 +10131,15 @@
                         "dueCards",
                         "currentStreak",
                         "longestStreak",
-                        "dailyAverage"
+                        "dailyAverage",
+                        "newCards",
+                        "secondsPerRating",
+                        "focus",
+                        "matureShare",
+                        "creationTime",
+                        "cardsCreated",
+                        "secondsPerCreatedCard",
+                        "forgottenCards"
                       ]
                     },
                     "range": {
@@ -8519,14 +10290,27 @@
                         "forecast",
                         "cardStates",
                         "weekdays",
-                        "hours"
+                        "hours",
+                        "retentionTimeline",
+                        "speedTimeline",
+                        "timeTimeline",
+                        "newTimeline",
+                        "forgottenCards",
+                        "weakestDecks",
+                        "newCardsFrom",
+                        "deckStability",
+                        "sessionHours",
+                        "creationTimeline",
+                        "focusHours"
                       ]
                     },
                     "chart": {
                       "type": "string",
                       "enum": [
                         "bar",
-                        "line"
+                        "line",
+                        "pie",
+                        "combined"
                       ]
                     },
                     "range": {
@@ -8555,6 +10339,86 @@
                           "pattern": "^#[0-9a-fA-F]{6}$"
                         }
                       ]
+                    },
+                    "layers": {
+                      "minItems": 1,
+                      "maxItems": 6,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "bar",
+                              "line"
+                            ]
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "timeline",
+                              "ratingTimeline",
+                              "answerButtons",
+                              "deckActivity",
+                              "forecast",
+                              "cardStates",
+                              "weekdays",
+                              "hours",
+                              "retentionTimeline",
+                              "speedTimeline",
+                              "timeTimeline",
+                              "newTimeline",
+                              "forgottenCards",
+                              "weakestDecks",
+                              "newCardsFrom",
+                              "deckStability",
+                              "sessionHours",
+                              "creationTimeline",
+                              "focusHours"
+                            ]
+                          },
+                          "color": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "text",
+                                  "muted",
+                                  "accent",
+                                  "card"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "pattern": "^#[0-9a-fA-F]{6}$"
+                              }
+                            ]
+                          },
+                          "axis": {
+                            "type": "string",
+                            "enum": [
+                              "auto",
+                              "left",
+                              "right",
+                              "none"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind",
+                          "source",
+                          "color",
+                          "axis"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
@@ -8694,7 +10558,15 @@
                         "dueCards",
                         "currentStreak",
                         "longestStreak",
-                        "dailyAverage"
+                        "dailyAverage",
+                        "newCards",
+                        "secondsPerRating",
+                        "focus",
+                        "matureShare",
+                        "creationTime",
+                        "cardsCreated",
+                        "secondsPerCreatedCard",
+                        "forgottenCards"
                       ]
                     },
                     "range": {
@@ -8862,6 +10734,17 @@
                     "kind": {
                       "type": "string",
                       "const": "heatmap"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "reviews",
+                        "ratings",
+                        "retention",
+                        "speed",
+                        "time",
+                        "new"
+                      ]
                     }
                   },
                   "required": [
@@ -9881,7 +11764,15 @@
                                 "dueCards",
                                 "currentStreak",
                                 "longestStreak",
-                                "dailyAverage"
+                                "dailyAverage",
+                                "newCards",
+                                "secondsPerRating",
+                                "focus",
+                                "matureShare",
+                                "creationTime",
+                                "cardsCreated",
+                                "secondsPerCreatedCard",
+                                "forgottenCards"
                               ]
                             },
                             "range": {
@@ -10032,14 +11923,27 @@
                                 "forecast",
                                 "cardStates",
                                 "weekdays",
-                                "hours"
+                                "hours",
+                                "retentionTimeline",
+                                "speedTimeline",
+                                "timeTimeline",
+                                "newTimeline",
+                                "forgottenCards",
+                                "weakestDecks",
+                                "newCardsFrom",
+                                "deckStability",
+                                "sessionHours",
+                                "creationTimeline",
+                                "focusHours"
                               ]
                             },
                             "chart": {
                               "type": "string",
                               "enum": [
                                 "bar",
-                                "line"
+                                "line",
+                                "pie",
+                                "combined"
                               ]
                             },
                             "range": {
@@ -10068,6 +11972,86 @@
                                   "pattern": "^#[0-9a-fA-F]{6}$"
                                 }
                               ]
+                            },
+                            "layers": {
+                              "minItems": 1,
+                              "maxItems": 6,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 40
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "bar",
+                                      "line"
+                                    ]
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "timeline",
+                                      "ratingTimeline",
+                                      "answerButtons",
+                                      "deckActivity",
+                                      "forecast",
+                                      "cardStates",
+                                      "weekdays",
+                                      "hours",
+                                      "retentionTimeline",
+                                      "speedTimeline",
+                                      "timeTimeline",
+                                      "newTimeline",
+                                      "forgottenCards",
+                                      "weakestDecks",
+                                      "newCardsFrom",
+                                      "deckStability",
+                                      "sessionHours",
+                                      "creationTimeline",
+                                      "focusHours"
+                                    ]
+                                  },
+                                  "color": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "text",
+                                          "muted",
+                                          "accent",
+                                          "card"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^#[0-9a-fA-F]{6}$"
+                                      }
+                                    ]
+                                  },
+                                  "axis": {
+                                    "type": "string",
+                                    "enum": [
+                                      "auto",
+                                      "left",
+                                      "right",
+                                      "none"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "kind",
+                                  "source",
+                                  "color",
+                                  "axis"
+                                ],
+                                "additionalProperties": false
+                              }
                             }
                           },
                           "required": [
@@ -10207,7 +12191,15 @@
                                 "dueCards",
                                 "currentStreak",
                                 "longestStreak",
-                                "dailyAverage"
+                                "dailyAverage",
+                                "newCards",
+                                "secondsPerRating",
+                                "focus",
+                                "matureShare",
+                                "creationTime",
+                                "cardsCreated",
+                                "secondsPerCreatedCard",
+                                "forgottenCards"
                               ]
                             },
                             "range": {
@@ -10375,6 +12367,17 @@
                             "kind": {
                               "type": "string",
                               "const": "heatmap"
+                            },
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "reviews",
+                                "ratings",
+                                "retention",
+                                "speed",
+                                "time",
+                                "new"
+                              ]
                             }
                           },
                           "required": [
@@ -11317,6 +13320,99 @@
                   "properties": {
                     "kind": {
                       "type": "string",
+                      "const": "table"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "columns": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "rows": {
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "sub": {
+                            "type": "string"
+                          },
+                          "cells": {
+                            "maxItems": 4,
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "tone": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "good",
+                                  "bad"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "sub",
+                          "cells",
+                          "tone"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "facts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "label",
+                    "note",
+                    "columns",
+                    "rows",
+                    "facts"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
                       "const": "custom"
                     },
                     "label": {
@@ -11821,7 +13917,15 @@
                                       "dueCards",
                                       "currentStreak",
                                       "longestStreak",
-                                      "dailyAverage"
+                                      "dailyAverage",
+                                      "newCards",
+                                      "secondsPerRating",
+                                      "focus",
+                                      "matureShare",
+                                      "creationTime",
+                                      "cardsCreated",
+                                      "secondsPerCreatedCard",
+                                      "forgottenCards"
                                     ]
                                   },
                                   "range": {
@@ -11972,14 +14076,27 @@
                                       "forecast",
                                       "cardStates",
                                       "weekdays",
-                                      "hours"
+                                      "hours",
+                                      "retentionTimeline",
+                                      "speedTimeline",
+                                      "timeTimeline",
+                                      "newTimeline",
+                                      "forgottenCards",
+                                      "weakestDecks",
+                                      "newCardsFrom",
+                                      "deckStability",
+                                      "sessionHours",
+                                      "creationTimeline",
+                                      "focusHours"
                                     ]
                                   },
                                   "chart": {
                                     "type": "string",
                                     "enum": [
                                       "bar",
-                                      "line"
+                                      "line",
+                                      "pie",
+                                      "combined"
                                     ]
                                   },
                                   "range": {
@@ -12008,6 +14125,86 @@
                                         "pattern": "^#[0-9a-fA-F]{6}$"
                                       }
                                     ]
+                                  },
+                                  "layers": {
+                                    "minItems": 1,
+                                    "maxItems": 6,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 40
+                                        },
+                                        "kind": {
+                                          "type": "string",
+                                          "enum": [
+                                            "bar",
+                                            "line"
+                                          ]
+                                        },
+                                        "source": {
+                                          "type": "string",
+                                          "enum": [
+                                            "timeline",
+                                            "ratingTimeline",
+                                            "answerButtons",
+                                            "deckActivity",
+                                            "forecast",
+                                            "cardStates",
+                                            "weekdays",
+                                            "hours",
+                                            "retentionTimeline",
+                                            "speedTimeline",
+                                            "timeTimeline",
+                                            "newTimeline",
+                                            "forgottenCards",
+                                            "weakestDecks",
+                                            "newCardsFrom",
+                                            "deckStability",
+                                            "sessionHours",
+                                            "creationTimeline",
+                                            "focusHours"
+                                          ]
+                                        },
+                                        "color": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "enum": [
+                                                "text",
+                                                "muted",
+                                                "accent",
+                                                "card"
+                                              ]
+                                            },
+                                            {
+                                              "type": "string",
+                                              "pattern": "^#[0-9a-fA-F]{6}$"
+                                            }
+                                          ]
+                                        },
+                                        "axis": {
+                                          "type": "string",
+                                          "enum": [
+                                            "auto",
+                                            "left",
+                                            "right",
+                                            "none"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "kind",
+                                        "source",
+                                        "color",
+                                        "axis"
+                                      ],
+                                      "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
@@ -12147,7 +14344,15 @@
                                       "dueCards",
                                       "currentStreak",
                                       "longestStreak",
-                                      "dailyAverage"
+                                      "dailyAverage",
+                                      "newCards",
+                                      "secondsPerRating",
+                                      "focus",
+                                      "matureShare",
+                                      "creationTime",
+                                      "cardsCreated",
+                                      "secondsPerCreatedCard",
+                                      "forgottenCards"
                                     ]
                                   },
                                   "range": {
@@ -12315,6 +14520,17 @@
                                   "kind": {
                                     "type": "string",
                                     "const": "heatmap"
+                                  },
+                                  "mode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "reviews",
+                                      "ratings",
+                                      "retention",
+                                      "speed",
+                                      "time",
+                                      "new"
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -12693,6 +14909,30 @@
                                 "value"
                               ],
                               "additionalProperties": false
+                            }
+                          },
+                          "layers": {
+                            "maxItems": 6,
+                            "type": "array",
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "label",
+                                  "value"
+                                ],
+                                "additionalProperties": false
+                              }
                             }
                           },
                           "levels": {
@@ -15163,7 +17403,15 @@
                                   "dueCards",
                                   "currentStreak",
                                   "longestStreak",
-                                  "dailyAverage"
+                                  "dailyAverage",
+                                  "newCards",
+                                  "secondsPerRating",
+                                  "focus",
+                                  "matureShare",
+                                  "creationTime",
+                                  "cardsCreated",
+                                  "secondsPerCreatedCard",
+                                  "forgottenCards"
                                 ]
                               },
                               "range": {
@@ -15314,14 +17562,27 @@
                                   "forecast",
                                   "cardStates",
                                   "weekdays",
-                                  "hours"
+                                  "hours",
+                                  "retentionTimeline",
+                                  "speedTimeline",
+                                  "timeTimeline",
+                                  "newTimeline",
+                                  "forgottenCards",
+                                  "weakestDecks",
+                                  "newCardsFrom",
+                                  "deckStability",
+                                  "sessionHours",
+                                  "creationTimeline",
+                                  "focusHours"
                                 ]
                               },
                               "chart": {
                                 "type": "string",
                                 "enum": [
                                   "bar",
-                                  "line"
+                                  "line",
+                                  "pie",
+                                  "combined"
                                 ]
                               },
                               "range": {
@@ -15350,6 +17611,86 @@
                                     "pattern": "^#[0-9a-fA-F]{6}$"
                                   }
                                 ]
+                              },
+                              "layers": {
+                                "minItems": 1,
+                                "maxItems": 6,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 40
+                                    },
+                                    "kind": {
+                                      "type": "string",
+                                      "enum": [
+                                        "bar",
+                                        "line"
+                                      ]
+                                    },
+                                    "source": {
+                                      "type": "string",
+                                      "enum": [
+                                        "timeline",
+                                        "ratingTimeline",
+                                        "answerButtons",
+                                        "deckActivity",
+                                        "forecast",
+                                        "cardStates",
+                                        "weekdays",
+                                        "hours",
+                                        "retentionTimeline",
+                                        "speedTimeline",
+                                        "timeTimeline",
+                                        "newTimeline",
+                                        "forgottenCards",
+                                        "weakestDecks",
+                                        "newCardsFrom",
+                                        "deckStability",
+                                        "sessionHours",
+                                        "creationTimeline",
+                                        "focusHours"
+                                      ]
+                                    },
+                                    "color": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "text",
+                                            "muted",
+                                            "accent",
+                                            "card"
+                                          ]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "pattern": "^#[0-9a-fA-F]{6}$"
+                                        }
+                                      ]
+                                    },
+                                    "axis": {
+                                      "type": "string",
+                                      "enum": [
+                                        "auto",
+                                        "left",
+                                        "right",
+                                        "none"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "kind",
+                                    "source",
+                                    "color",
+                                    "axis"
+                                  ],
+                                  "additionalProperties": false
+                                }
                               }
                             },
                             "required": [
@@ -15489,7 +17830,15 @@
                                   "dueCards",
                                   "currentStreak",
                                   "longestStreak",
-                                  "dailyAverage"
+                                  "dailyAverage",
+                                  "newCards",
+                                  "secondsPerRating",
+                                  "focus",
+                                  "matureShare",
+                                  "creationTime",
+                                  "cardsCreated",
+                                  "secondsPerCreatedCard",
+                                  "forgottenCards"
                                 ]
                               },
                               "range": {
@@ -15657,6 +18006,17 @@
                               "kind": {
                                 "type": "string",
                                 "const": "heatmap"
+                              },
+                              "mode": {
+                                "type": "string",
+                                "enum": [
+                                  "reviews",
+                                  "ratings",
+                                  "retention",
+                                  "speed",
+                                  "time",
+                                  "new"
+                                ]
                               }
                             },
                             "required": [
@@ -17004,7 +19364,15 @@
                             "dueCards",
                             "currentStreak",
                             "longestStreak",
-                            "dailyAverage"
+                            "dailyAverage",
+                            "newCards",
+                            "secondsPerRating",
+                            "focus",
+                            "matureShare",
+                            "creationTime",
+                            "cardsCreated",
+                            "secondsPerCreatedCard",
+                            "forgottenCards"
                           ]
                         },
                         "range": {
@@ -17155,14 +19523,27 @@
                             "forecast",
                             "cardStates",
                             "weekdays",
-                            "hours"
+                            "hours",
+                            "retentionTimeline",
+                            "speedTimeline",
+                            "timeTimeline",
+                            "newTimeline",
+                            "forgottenCards",
+                            "weakestDecks",
+                            "newCardsFrom",
+                            "deckStability",
+                            "sessionHours",
+                            "creationTimeline",
+                            "focusHours"
                           ]
                         },
                         "chart": {
                           "type": "string",
                           "enum": [
                             "bar",
-                            "line"
+                            "line",
+                            "pie",
+                            "combined"
                           ]
                         },
                         "range": {
@@ -17191,6 +19572,86 @@
                               "pattern": "^#[0-9a-fA-F]{6}$"
                             }
                           ]
+                        },
+                        "layers": {
+                          "minItems": 1,
+                          "maxItems": 6,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 40
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "bar",
+                                  "line"
+                                ]
+                              },
+                              "source": {
+                                "type": "string",
+                                "enum": [
+                                  "timeline",
+                                  "ratingTimeline",
+                                  "answerButtons",
+                                  "deckActivity",
+                                  "forecast",
+                                  "cardStates",
+                                  "weekdays",
+                                  "hours",
+                                  "retentionTimeline",
+                                  "speedTimeline",
+                                  "timeTimeline",
+                                  "newTimeline",
+                                  "forgottenCards",
+                                  "weakestDecks",
+                                  "newCardsFrom",
+                                  "deckStability",
+                                  "sessionHours",
+                                  "creationTimeline",
+                                  "focusHours"
+                                ]
+                              },
+                              "color": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "text",
+                                      "muted",
+                                      "accent",
+                                      "card"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^#[0-9a-fA-F]{6}$"
+                                  }
+                                ]
+                              },
+                              "axis": {
+                                "type": "string",
+                                "enum": [
+                                  "auto",
+                                  "left",
+                                  "right",
+                                  "none"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "source",
+                              "color",
+                              "axis"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -17330,7 +19791,15 @@
                             "dueCards",
                             "currentStreak",
                             "longestStreak",
-                            "dailyAverage"
+                            "dailyAverage",
+                            "newCards",
+                            "secondsPerRating",
+                            "focus",
+                            "matureShare",
+                            "creationTime",
+                            "cardsCreated",
+                            "secondsPerCreatedCard",
+                            "forgottenCards"
                           ]
                         },
                         "range": {
@@ -17498,6 +19967,17 @@
                         "kind": {
                           "type": "string",
                           "const": "heatmap"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "reviews",
+                            "ratings",
+                            "retention",
+                            "speed",
+                            "time",
+                            "new"
+                          ]
                         }
                       },
                       "required": [
@@ -19528,6 +22008,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -19595,6 +22127,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -19603,7 +22136,12 @@
     "wallpaper.dropped": {
       "params": {
         "type": "object",
-        "properties": {},
+        "properties": {
+          "image": {
+            "type": "string",
+            "maxLength": 28000000
+          }
+        },
         "additionalProperties": false
       },
       "result": {
@@ -20028,6 +22566,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -20095,6 +22685,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -20528,6 +23119,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -20595,6 +23238,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -21036,6 +23680,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -21103,6 +23799,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -21544,6 +24241,58 @@
           "mobileSync": {
             "type": "boolean"
           },
+          "dashboardFilter": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string",
+                "enum": [
+                  "today",
+                  "yesterday",
+                  "last7",
+                  "last30",
+                  "lastYear",
+                  "all",
+                  "custom"
+                ]
+              },
+              "custom": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      "end": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deck": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "preset",
+              "custom",
+              "deck"
+            ],
+            "additionalProperties": false
+          },
           "onboardingAnswers": {
             "type": "object",
             "properties": {
@@ -21611,6 +24360,7 @@
           "shortcuts",
           "onboardingDone",
           "mobileSync",
+          "dashboardFilter",
           "onboardingAnswers"
         ],
         "additionalProperties": false
@@ -22099,6 +24849,58 @@
               "mobileSync": {
                 "type": "boolean"
               },
+              "dashboardFilter": {
+                "type": "object",
+                "properties": {
+                  "preset": {
+                    "type": "string",
+                    "enum": [
+                      "today",
+                      "yesterday",
+                      "last7",
+                      "last30",
+                      "lastYear",
+                      "all",
+                      "custom"
+                    ]
+                  },
+                  "custom": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "start": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                          },
+                          "end": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                          }
+                        },
+                        "required": [
+                          "start",
+                          "end"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "deck": {
+                    "type": "string",
+                    "maxLength": 40
+                  }
+                },
+                "required": [
+                  "preset",
+                  "custom",
+                  "deck"
+                ],
+                "additionalProperties": false
+              },
               "onboardingAnswers": {
                 "type": "object",
                 "properties": {
@@ -22166,6 +24968,7 @@
               "shortcuts",
               "onboardingDone",
               "mobileSync",
+              "dashboardFilter",
               "onboardingAnswers"
             ],
             "additionalProperties": false
@@ -25147,6 +27950,94 @@
         "w": 12,
         "h": 8
       },
+      "study-overview": {
+        "minW": 6,
+        "maxW": 12,
+        "minH": 7,
+        "maxH": 16,
+        "w": 12,
+        "h": 10
+      },
+      "period-summary": {
+        "minW": 4,
+        "maxW": 12,
+        "minH": 3,
+        "maxH": 6,
+        "w": 12,
+        "h": 3
+      },
+      "answer-mix": {
+        "minW": 3,
+        "maxW": 8,
+        "minH": 5,
+        "maxH": 10,
+        "w": 4,
+        "h": 6
+      },
+      "answer-speed": {
+        "minW": 4,
+        "maxW": 12,
+        "minH": 5,
+        "maxH": 10,
+        "w": 8,
+        "h": 6
+      },
+      "study-sessions": {
+        "minW": 6,
+        "maxW": 12,
+        "minH": 4,
+        "maxH": 12,
+        "w": 12,
+        "h": 5
+      },
+      "deck-table": {
+        "minW": 6,
+        "maxW": 12,
+        "minH": 5,
+        "maxH": 16,
+        "w": 12,
+        "h": 8
+      },
+      "forgotten-cards": {
+        "minW": 4,
+        "maxW": 12,
+        "minH": 5,
+        "maxH": 16,
+        "w": 8,
+        "h": 8
+      },
+      "weakest-decks": {
+        "minW": 4,
+        "maxW": 12,
+        "minH": 5,
+        "maxH": 12,
+        "w": 8,
+        "h": 7
+      },
+      "new-cards-from": {
+        "minW": 3,
+        "maxW": 12,
+        "minH": 3,
+        "maxH": 8,
+        "w": 6,
+        "h": 3
+      },
+      "day-notes": {
+        "minW": 3,
+        "maxW": 12,
+        "minH": 3,
+        "maxH": 10,
+        "w": 6,
+        "h": 4
+      },
+      "creation-time": {
+        "minW": 4,
+        "maxW": 12,
+        "minH": 7,
+        "maxH": 16,
+        "w": 8,
+        "h": 8
+      },
       "anki-today": {
         "minW": 3,
         "maxW": 8,
@@ -25369,6 +28260,11 @@
     },
     "onboardingDone": false,
     "mobileSync": false,
+    "dashboardFilter": {
+      "preset": "today",
+      "custom": null,
+      "deck": "all"
+    },
     "onboardingAnswers": {
       "role": null,
       "discovery": null
@@ -25582,7 +28478,7 @@
         "about": "Anki's statistics page by view: today, future-due, calendar, reviews, card-counts, intervals, stability, difficulty, retrievability, hours, buttons, added, true-retention"
       }
     },
-    "widgetGuide": "A widget is data, never code: {id (a-z, 0-9, hyphen), name, description, size, background, elements}.\nsize: {w, h} in grid cells, w 2-12, h 2-16.\nbackground: {kind:\"card\"}, {kind:\"color\",color} or {kind:\"gradient\",start,end,angle}.\nEvery element has id, kind, x, y, w, h in percent of the widget, and opacity from 0 to 1.\nPaint is text, muted, accent, card or #rrggbb.\ntext: text, size (percent of the widget's height), bold, align (left, center, right), color (paint).\nmetric: source, range, size, bold, align, color.\nchart: source (series), chart (bar, line), range, color.\nprogress: source, range, goal (number), style (ring, bar), color.\nheatmap: nothing else.\nshape: shape (rectangle, ellipse), fill (paint), radius.\nsource: reviews, ratings, studyTime, successRate, retention, activeDays, dueCards, currentStreak, longestStreak, dailyAverage.\nseries: timeline, ratingTimeline, answerButtons, deckActivity, forecast, cardStates, weekdays, hours.\nrange: dashboard, today, last7, last30, lastYear. Use dashboard to follow the dashboard's filter.\nExample: {\"id\":\"study-today\",\"name\":\"Study time today\",\"description\":\"\",\"size\":{\"w\":4,\"h\":4},\"background\":{\"kind\":\"card\"},\"elements\":[{\"id\":\"e1\",\"kind\":\"text\",\"text\":\"Today\",\"x\":8,\"y\":10,\"w\":84,\"h\":24,\"opacity\":1,\"size\":16,\"bold\":true,\"align\":\"left\",\"color\":\"muted\"},{\"id\":\"e2\",\"kind\":\"metric\",\"source\":\"studyTime\",\"range\":\"today\",\"x\":8,\"y\":40,\"w\":84,\"h\":50,\"opacity\":1,\"size\":34,\"bold\":true,\"align\":\"left\",\"color\":\"text\"}]}",
+    "widgetGuide": "A widget is data, never code: {id (a-z, 0-9, hyphen), name, description, size, background, elements}.\nsize: {w, h} in grid cells, w 2-12, h 2-16.\nbackground: {kind:\"card\"}, {kind:\"color\",color} or {kind:\"gradient\",start,end,angle}.\nEvery element has id, kind, x, y, w, h in percent of the widget, and opacity from 0 to 1.\nPaint is text, muted, accent, card or #rrggbb.\ntext: text, size (percent of the widget's height), bold, align (left, center, right), color (paint).\nmetric: source, range, size, bold, align, color.\nchart: source (series), chart (bar, line, pie, combined), range, color. combined adds layers: [{id, kind (bar, line), source, color, axis (auto, left, right, none)}], up to 6, all series along the same axis.\nprogress: source, range, goal (number), style (ring, bar), color.\nheatmap: mode (reviews, ratings, retention, speed, time, new).\nshape: shape (rectangle, ellipse), fill (paint), radius.\nsource: reviews, ratings, studyTime, successRate, retention, activeDays, dueCards, currentStreak, longestStreak, dailyAverage, newCards, secondsPerRating, focus, matureShare, creationTime, cardsCreated, secondsPerCreatedCard, forgottenCards.\nseries: timeline, ratingTimeline, answerButtons, deckActivity, forecast, cardStates, weekdays, hours, retentionTimeline, speedTimeline, timeTimeline, newTimeline, forgottenCards, weakestDecks, newCardsFrom, deckStability, sessionHours, creationTimeline, focusHours.\nrange: dashboard, today, last7, last30, lastYear. Use dashboard to follow the dashboard's filter.\nExample: {\"id\":\"study-today\",\"name\":\"Study time today\",\"description\":\"\",\"size\":{\"w\":4,\"h\":4},\"background\":{\"kind\":\"card\"},\"elements\":[{\"id\":\"e1\",\"kind\":\"text\",\"text\":\"Today\",\"x\":8,\"y\":10,\"w\":84,\"h\":24,\"opacity\":1,\"size\":16,\"bold\":true,\"align\":\"left\",\"color\":\"muted\"},{\"id\":\"e2\",\"kind\":\"metric\",\"source\":\"studyTime\",\"range\":\"today\",\"x\":8,\"y\":40,\"w\":84,\"h\":50,\"opacity\":1,\"size\":34,\"bold\":true,\"align\":\"left\",\"color\":\"text\"}]}\nDashboard types for propose_dashboard: review-summary, rating-summary, learned-cards, review-breakdown, study-time, success-rate, due-cards, deck-activity, deck-ratings, review-timeline, rating-timeline, answer-buttons, due-forecast, card-states, study-rhythm, rating-rhythm, review-heatmap, rating-heatmap, study-overview, period-summary, answer-mix, answer-speed, study-sessions, deck-table, forgotten-cards, weakest-decks, new-cards-from, day-notes, creation-time, anki-today, anki-future-due, anki-calendar, anki-reviews, anki-card-counts, anki-intervals, anki-stability, anki-difficulty, anki-retrievability, anki-hours, anki-buttons, anki-added, anki-true-retention, or custom:<id>.",
     "pages": {
       "dashboard": "/",
       "library": "/library",
@@ -25932,7 +28828,7 @@
       },
       "get_widget_format": {
         "access": "read",
-        "description": "How a widget is built. Call this before propose_widget.",
+        "description": "How a widget is built and which types a dashboard takes. Call before proposing either.",
         "method": null,
         "permission": null,
         "input": {
@@ -26611,7 +29507,15 @@
                               "dueCards",
                               "currentStreak",
                               "longestStreak",
-                              "dailyAverage"
+                              "dailyAverage",
+                              "newCards",
+                              "secondsPerRating",
+                              "focus",
+                              "matureShare",
+                              "creationTime",
+                              "cardsCreated",
+                              "secondsPerCreatedCard",
+                              "forgottenCards"
                             ]
                           },
                           "range": {
@@ -26762,14 +29666,27 @@
                               "forecast",
                               "cardStates",
                               "weekdays",
-                              "hours"
+                              "hours",
+                              "retentionTimeline",
+                              "speedTimeline",
+                              "timeTimeline",
+                              "newTimeline",
+                              "forgottenCards",
+                              "weakestDecks",
+                              "newCardsFrom",
+                              "deckStability",
+                              "sessionHours",
+                              "creationTimeline",
+                              "focusHours"
                             ]
                           },
                           "chart": {
                             "type": "string",
                             "enum": [
                               "bar",
-                              "line"
+                              "line",
+                              "pie",
+                              "combined"
                             ]
                           },
                           "range": {
@@ -26798,6 +29715,86 @@
                                 "pattern": "^#[0-9a-fA-F]{6}$"
                               }
                             ]
+                          },
+                          "layers": {
+                            "minItems": 1,
+                            "maxItems": 6,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 40
+                                },
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bar",
+                                    "line"
+                                  ]
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "timeline",
+                                    "ratingTimeline",
+                                    "answerButtons",
+                                    "deckActivity",
+                                    "forecast",
+                                    "cardStates",
+                                    "weekdays",
+                                    "hours",
+                                    "retentionTimeline",
+                                    "speedTimeline",
+                                    "timeTimeline",
+                                    "newTimeline",
+                                    "forgottenCards",
+                                    "weakestDecks",
+                                    "newCardsFrom",
+                                    "deckStability",
+                                    "sessionHours",
+                                    "creationTimeline",
+                                    "focusHours"
+                                  ]
+                                },
+                                "color": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "text",
+                                        "muted",
+                                        "accent",
+                                        "card"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "pattern": "^#[0-9a-fA-F]{6}$"
+                                    }
+                                  ]
+                                },
+                                "axis": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auto",
+                                    "left",
+                                    "right",
+                                    "none"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "kind",
+                                "source",
+                                "color",
+                                "axis"
+                              ],
+                              "additionalProperties": false
+                            }
                           }
                         },
                         "required": [
@@ -26937,7 +29934,15 @@
                               "dueCards",
                               "currentStreak",
                               "longestStreak",
-                              "dailyAverage"
+                              "dailyAverage",
+                              "newCards",
+                              "secondsPerRating",
+                              "focus",
+                              "matureShare",
+                              "creationTime",
+                              "cardsCreated",
+                              "secondsPerCreatedCard",
+                              "forgottenCards"
                             ]
                           },
                           "range": {
@@ -27105,6 +30110,17 @@
                           "kind": {
                             "type": "string",
                             "const": "heatmap"
+                          },
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "reviews",
+                              "ratings",
+                              "retention",
+                              "speed",
+                              "time",
+                              "new"
+                            ]
                           }
                         },
                         "required": [
@@ -27493,7 +30509,7 @@
       },
       "propose_dashboard": {
         "access": "propose",
-        "description": "Suggest a new dashboard: layout {widgets:[{id,type,x,y,w,h}]}, 12 columns. Types: review-summary, rating-summary, learned-cards, review-breakdown, study-time, success-rate, due-cards, deck-activity, deck-ratings, review-timeline, rating-timeline, answer-buttons, due-forecast, card-states, study-rhythm, rating-rhythm, review-heatmap, rating-heatmap, anki-today, anki-future-due, anki-calendar, anki-reviews, anki-card-counts, anki-intervals, anki-stability, anki-difficulty, anki-retrievability, anki-hours, anki-buttons, anki-added, anki-true-retention, or custom:<id>.",
+        "description": "Suggest a new dashboard: layout {widgets:[{id,type,x,y,w,h}]}, 12 columns. Types from get_widget_format.",
         "method": null,
         "permission": null,
         "input": {

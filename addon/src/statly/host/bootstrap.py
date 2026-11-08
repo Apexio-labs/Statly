@@ -128,6 +128,18 @@ def _start(main_window: AnkiQt) -> None:
         window.emit_event("host.toggleAssistant", {})
 
     menu.add("assistant", runtime.shortcuts.add("assistant", toggle_assistant))
+
+    def set_auto_update_from_menu(enabled: bool) -> None:
+        runtime.set_auto_update(enabled)
+        window = _open_window()
+        if window is not None:
+            # The switch in Settings reads Anki's value again.
+            window.emit_event("settings.changed", {})
+
+    refresh_versions = menu.add_versions(
+        lambda: runtime.info()["statlyVersion"], runtime.auto_update, set_auto_update_from_menu
+    )
+    runtime.on_auto_update_changed(guarded(refresh_versions))
     for name, path in _SETTINGS_PAGES.items():
         menu.name(name, runtime.shortcuts.add(name, lambda path=path: open_page(path)))
 

@@ -1,8 +1,17 @@
 import {
   type Cells,
+  type ChartAxis,
+  type ChartLayer,
+  type CombinableChartKind,
   type CustomWidget,
+  chartAxes,
+  chartKinds,
+  combinableChartKinds,
+  combinesWith,
   type DeviceKind,
+  heatmapModes,
   type MediaAsset,
+  maxChartLayers,
   metricSources,
   type Paint,
   seriesSources,
@@ -13,9 +22,10 @@ import {
 } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
 import { deviceCells, sizeLimits } from "@statly/widget-runtime";
-import { ArrowDown, ArrowUp, Copy, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Plus, Trash2, X } from "lucide-react";
 import { Button } from "../../../components/Button.tsx";
 import { Toggle } from "../../settings/parts.tsx";
+import { addLayer, startLayers, withLayers } from "../chartLayers.ts";
 import { hasLayoutFor, isDesignSize } from "./editorState.ts";
 import {
   ChoiceField,
@@ -119,6 +129,147 @@ function LoopField({ checked, onChange }: { checked: boolean; onChange: (loop: b
   );
 }
 
+/**
+ * The parts of a combined chart: every chart kind that can share a plot, each with a checkbox.
+ * A ticked kind lists its layers, each with its own series, color and scale.
+ */
+function CombinedFields({
+  layers,
+  onChange,
+}: {
+  layers: ChartLayer[];
+  onChange: (layers: ChartLayer[]) => void;
+}) {
+  const { t } = useTranslation();
+  const full = layers.length >= maxChartLayers;
+  const toggle = (kind: CombinableChartKind, on: boolean) => {
+    if (on) {
+      onChange(addLayer(layers, kind));
+      return;
+    }
+    const rest = layers.filter((layer) => layer.kind !== kind);
+    if (rest.length > 0) {
+      onChange(rest);
+    }
+  };
+  const update = (id: string, patch: Partial<ChartLayer>) =>
+    onChange(layers.map((layer) => (layer.id === id ? { ...layer, ...patch } : layer)));
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="m-0 text-[11px] text-muted">{t("editor.combined.hint")}</p>
+      {combinableChartKinds.map((kind) => {
+        const own = layers.filter((layer) => layer.kind === kind);
+        const ticked = own.length > 0;
+        const onlyOnes = ticked && own.length === layers.length;
+        return (
+          <section
+            key={kind}
+            data-combined-kind={kind}
+            className="flex flex-col gap-2 rounded-control border border-line p-2"
+          >
+            <label className="flex cursor-pointer items-center justify-between gap-2 text-xs font-semibold">
+              {t(`editor.chartKinds.${kind}`)}
+              <input
+                type="checkbox"
+                checked={ticked}
+                disabled={onlyOnes || (!ticked && full)}
+                title={onlyOnes ? t("editor.combined.keepOne") : undefined}
+                onChange={(event) => toggle(kind, event.target.checked)}
+                className="size-4 cursor-pointer accent-[var(--statly-accent)] disabled:cursor-not-allowed"
+              />
+            </label>
+            {own.map((layer) => (
+              <LayerFields
+                key={layer.id}
+                layer={layer}
+                others={layers.filter((other) => other.id !== layer.id)}
+                onChange={(patch) => update(layer.id, patch)}
+                onRemove={
+                  layers.length > 1
+                    ? () => onChange(layers.filter((other) => other.id !== layer.id))
+                    : undefined
+                }
+              />
+            ))}
+            {ticked && !full ? (
+              <button
+                type="button"
+                onClick={() => onChange(addLayer(layers, kind))}
+                className="flex cursor-pointer items-center gap-1 self-start border-0 bg-transparent p-0 text-xs font-semibold text-accent-strong"
+              >
+                <Plus size={13} aria-hidden="true" />
+                {t(`editor.combined.add.${kind}`)}
+              </button>
+            ) : null}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function LayerFields({
+  layer,
+  others,
+  onChange,
+  onRemove,
+}: {
+  layer: ChartLayer;
+  others: ChartLayer[];
+  onChange: (patch: Partial<ChartLayer>) => void;
+  onRemove: (() => void) | undefined;
+}) {
+  const { t } = useTranslation();
+  const reference = others[0]?.source;
+  return (
+    <div className="flex flex-col gap-2 border-l-2 border-line pl-2" data-layer={layer.id}>
+      <div className="flex items-end gap-1">
+        <div className="min-w-0 flex-1">
+          <ChoiceField
+            label={t("editor.value")}
+            value={layer.source}
+            options={seriesSources.map((source) => {
+              const fits = reference === undefined || combinesWith(reference, source);
+              return {
+                value: source,
+                label: t(`editor.series.${source}`),
+                disabled: !fits,
+                hint: fits ? undefined : t("editor.combined.otherAxis"),
+              };
+            })}
+            onChange={(source) => onChange({ source })}
+          />
+        </div>
+        {onRemove ? (
+          <button
+            type="button"
+            aria-label={t("editor.combined.remove")}
+            title={t("editor.combined.remove")}
+            onClick={onRemove}
+            className="mb-2 grid size-7 shrink-0 cursor-pointer place-items-center rounded-control border-0 bg-transparent text-muted hover:bg-hover hover:text-text"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+      <PaintField
+        label={t("editor.color")}
+        value={layer.color}
+        onChange={(color) => onChange({ color })}
+      />
+      <ChoiceField
+        label={t("editor.combined.axis")}
+        value={layer.axis}
+        options={chartAxes.map((axis: ChartAxis) => ({
+          value: axis,
+          label: t(`editor.combined.axes.${axis}`),
+        }))}
+        onChange={(axis) => onChange({ axis })}
+      />
+    </div>
+  );
+}
+
 function ElementFields({
   element,
   onChange,
@@ -168,42 +319,57 @@ function ElementFields({
           <TextStyleFields element={element} onChange={onChange} reset={reset} />
         </>
       );
-    case "chart":
+    case "chart": {
+      const combined = element.chart === "combined";
       return (
         <>
           <ChoiceField
-            label={t("editor.value")}
-            value={element.source}
-            options={seriesSources.map((source) => ({
-              value: source,
-              label: t(`editor.series.${source}`),
-            }))}
-            onChange={(source) => onChange({ source })}
-            onReset={reset("source")}
-          />
-          <ChoiceField
             label={t("editor.chartKind")}
             value={element.chart}
-            options={(["bar", "line"] as const).map((chart) => ({
+            options={[...chartKinds, "combined" as const].map((chart) => ({
               value: chart,
               label: t(`editor.chartKinds.${chart}`),
             }))}
-            onChange={(chart) => onChange({ chart })}
+            onChange={(chart) =>
+              onChange(
+                chart === "combined" ? { chart, ...withLayers(startLayers(element)) } : { chart },
+              )
+            }
             onReset={reset("chart")}
           />
+          {combined ? (
+            <CombinedFields
+              layers={startLayers(element)}
+              onChange={(layers) => onChange(withLayers(layers))}
+            />
+          ) : (
+            <ChoiceField
+              label={t("editor.value")}
+              value={element.source}
+              options={seriesSources.map((source) => ({
+                value: source,
+                label: t(`editor.series.${source}`),
+              }))}
+              onChange={(source) => onChange({ source })}
+              onReset={reset("source")}
+            />
+          )}
           <RangeChoice
             value={element.range}
             onChange={(range) => onChange({ range })}
             onReset={reset("range")}
           />
-          <PaintField
-            label={t("editor.color")}
-            value={element.color}
-            onChange={(color) => onChange({ color })}
-            onReset={reset("color")}
-          />
+          {combined ? null : (
+            <PaintField
+              label={t("editor.color")}
+              value={element.color}
+              onChange={(color) => onChange({ color })}
+              onReset={reset("color")}
+            />
+          )}
         </>
       );
+    }
     case "progress":
       return (
         <>
@@ -244,6 +410,19 @@ function ElementFields({
             onReset={reset("color")}
           />
         </>
+      );
+    case "heatmap":
+      return (
+        <ChoiceField
+          label={t("editor.heatmapMode")}
+          value={element.mode ?? "reviews"}
+          options={heatmapModes.map((mode) => ({
+            value: mode,
+            label: t(`widgets.study-overview.modes.${mode}`),
+          }))}
+          onChange={(mode) => onChange({ mode })}
+          onReset={reset("mode")}
+        />
       );
     case "media":
       return (

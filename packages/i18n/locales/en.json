@@ -84,7 +84,10 @@
         "description": "Learn every card of your decks by the exam, spread evenly over the days left."
       }
     },
+    "copyName": "{{name}} (copy)",
     "actions": {
+      "duplicate": "Duplicate",
+      "more": "More actions for {{name}}",
       "edit": "Edit",
       "archive": "Archive",
       "restore": "Restore",
@@ -440,13 +443,13 @@
     },
     "anki-calendar": {
       "title": "Calendar",
-      "note": "Reviews per day",
+      "note": "Ratings per day",
       "description": "Anki's calendar of every day you studied, year by year."
     },
     "anki-reviews": {
-      "title": "Reviews",
-      "note": "Reviews you did in the past",
-      "description": "Past reviews by card type, as a count or as time spent."
+      "title": "Ratings",
+      "note": "Ratings you gave in the past, as Anki counts them",
+      "description": "Past ratings by card type, as a count or as time spent. As in Anki, every press of an answer button counts."
     },
     "anki-card-counts": {
       "title": "Card counts",
@@ -477,7 +480,7 @@
     },
     "anki-hours": {
       "title": "Hourly breakdown",
-      "note": "Reviews and success by time of day",
+      "note": "Ratings and success by time of day",
       "description": "When you study and when you remember best."
     },
     "anki-buttons": {
@@ -494,6 +497,183 @@
       "title": "True retention",
       "note": "Pass rate of cards with an interval of a day or more",
       "description": "How well you really remember, from today to all time."
+    },
+    "study-overview": {
+      "title": "Study overview",
+      "description": "Your key numbers, a calendar in six views and the coming weeks in one widget.",
+      "due": "Due",
+      "done": "Reviews",
+      "speed": "Pace",
+      "time": "Time",
+      "retention": "Retention",
+      "average": "Avg / day",
+      "streak": "Streak",
+      "secondsUnit": "s",
+      "minutesUnit": "m",
+      "hoursUnit": "h",
+      "modes": {
+        "reviews": "Reviews",
+        "ratings": "Ratings",
+        "retention": "Retention",
+        "speed": "Pace",
+        "time": "Time",
+        "new": "New"
+      },
+      "mode": "Calendar view",
+      "legend": {
+        "reviews": "Reviews",
+        "forecast": "Forecast",
+        "speed": "Time per card",
+        "retention": "Retention"
+      },
+      "past": "{{count}} days ago",
+      "today": "Today",
+      "ahead": "In {{count}} days",
+      "forecastDay": "Due: {{count}}",
+      "noAnswers": "No answers",
+      "tip": {
+        "reviews": "Reviews",
+        "ratings": "Ratings",
+        "time": "Time",
+        "speed": "Pace",
+        "retention": "Retention",
+        "new": "New cards",
+        "due": "Due",
+        "ahead": "Forecast",
+        "pick": "Click to show this day"
+      },
+      "secondsPerCard": "{{seconds}} s a card",
+      "dueNote": "Due now",
+      "doneNote": "Cards moved on in the range"
+    },
+    "period-summary": {
+      "title": "Range at a glance",
+      "description": "Reviews, time, retention, focus and new cards, compared with the range before.",
+      "cards": "Reviews",
+      "time": "Time",
+      "retention": "Retention",
+      "focus": "Focus",
+      "new": "New",
+      "before": "before {{value}}",
+      "noBefore": "nothing before",
+      "focusNote": "Share of answers not slower than your usual pace"
+    },
+    "answer-mix": {
+      "title": "Answers",
+      "description": "Which buttons you pressed, and on which kind of card.",
+      "kinds": {
+        "review": "Due cards",
+        "learning": "Learning steps",
+        "new": "New cards",
+        "relearning": "Relearning"
+      },
+      "share": "{{share}} of ratings"
+    },
+    "answer-speed": {
+      "title": "Answer pace",
+      "description": "How fast you answered compared with your usual pace for each kind of card.",
+      "usual": "usual",
+      "faint": "Faint: the range before",
+      "slow": "Past the dashed line: slow",
+      "median": "Median {{seconds}} s",
+      "focus": "Focus {{share}}",
+      "spread": "{{value}} spread",
+      "box": "Middle half of your answers",
+      "whiskers": "90 % of your answers",
+      "answers": "{{count}} answers",
+      "slowShare": "{{share}} slower than usual"
+    },
+    "creation-time": {
+      "title": "Time making cards",
+      "note": "Measured while Anki's Add window is open, research in other programs included",
+      "description": "How much time you put into making new cards, how many come of it and whether each card takes you more or less time than the average over all decks.",
+      "time": "Time",
+      "cards": "Cards made",
+      "perCard": "Per card",
+      "versusUsual": "Per card vs. average",
+      "minutesSeconds": "{{minutes}} min {{seconds}} s",
+      "more": "{{share}} more time per card than the average over all decks",
+      "less": "{{share}} less time per card than the average over all decks",
+      "same": "As much time per card as the average over all decks",
+      "legendLess": "Less time per card",
+      "legendSame": "About average",
+      "legendMore": "More time per card",
+      "usual": "Average over all decks: {{time}} per card",
+      "empty": "From now on, Statly measures how long you work on new cards in Anki's Add window. Once you add a card, it shows here.",
+      "emptyRange": "You made no cards in the Add window in this range."
+    },
+    "study-sessions": {
+      "title": "Study times",
+      "description": "When you studied, as sessions on a timeline, colored by your focus.",
+      "focus": "Focus",
+      "low": "Low",
+      "high": "High",
+      "notEnough": "Not enough data",
+      "session": "{{start}} – {{end}}",
+      "cards": "{{count}} ratings in {{time}}",
+      "focusShare": "Focus {{share}}",
+      "retentionShare": "Retention {{share}}",
+      "hours": "By hour of day, over the whole range",
+      "hour": "{{hour}}:00 – {{next}}:00"
+    },
+    "deck-table": {
+      "title": "Decks",
+      "description": "Every deck with its activity, time, stability against cards of the same age and mature share.",
+      "deck": "Deck",
+      "history": "Over time",
+      "count": "Reviews",
+      "time": "Time",
+      "stability": "Stability",
+      "interval": "Interval",
+      "mature": "Mature",
+      "showAll": "Show all {{count}}",
+      "showLess": "Show fewer",
+      "open": "Show subdecks",
+      "close": "Hide subdecks",
+      "tipRetention": "Retention {{share}}",
+      "tipStability": "Stability {{change}} vs cards you started around the same time",
+      "tipMedian": "Median stability {{days}} d",
+      "tipMedianInterval": "Median interval {{days}} d",
+      "tipCards": "{{count}} cards, {{mature}} mature",
+      "tipNoStability": "Too few cards to compare stability",
+      "sortBy": "Sort by {{column}}"
+    },
+    "forgotten-cards": {
+      "title": "Forgotten most",
+      "description": "The cards you pressed Again on most often, never counting the first time you saw a card.",
+      "card": "Card",
+      "forgot": "Forgot",
+      "interval": "Interval",
+      "of": "of {{count}}",
+      "open": "Open in Browser",
+      "openOne": "Click to open the card in Anki's browser",
+      "days": "{{count}} d",
+      "tipForgot": "Again {{forgot}} of {{seen}} times",
+      "more": "{{count}} cards forgotten at least once"
+    },
+    "weakest-decks": {
+      "title": "Weakest decks",
+      "description": "The decks with the lowest retention in the range, against your overall value.",
+      "checked_one": "{{count}} review answer",
+      "checked_other": "{{count}} review answers",
+      "overall": "Dashed line: your overall {{share}}"
+    },
+    "new-cards-from": {
+      "title": "New cards from",
+      "description": "Which decks the new cards in the range came from.",
+      "more": "+{{count}} more",
+      "none": "No new cards in this range."
+    },
+    "day-notes": {
+      "title": "Day notes",
+      "description": "A short note per study day, kept only on this computer.",
+      "placeholder": "What was today like? An exam, a late night, a new deck …",
+      "save": "Save",
+      "saved": "Saved",
+      "editing": "Note for {{date}}",
+      "earlier": "Earlier notes",
+      "empty": "No notes in this range yet.",
+      "private": "Stays on this computer and never syncs."
     }
   },
   "answers": {
@@ -541,8 +721,8 @@
     "languageNote": "Choose the language for all of Statly.",
     "themeNote": "Choose how Statly looks.",
     "updates": "Statly updates",
-    "autoUpdate": "Update Statly automatically",
-    "autoUpdateNote": "Lets Anki's built-in updater include Statly in its automatic checks.",
+    "autoUpdate": "Automatic updates",
+    "autoUpdateNote": "Anki's built-in updater includes Statly in its automatic checks. The same switch is in Statly's menu in Anki under “Versions and Updates”.",
     "uninstall": "Uninstall Statly",
     "uninstallNote": "Removes Statly through Anki's add-on manager. Your cards, notes and decks stay unchanged.",
     "newsTitle": "The new Statly",
@@ -608,7 +788,7 @@
     "shortcutSaved": "Shortcut saved.",
     "shortcutConflict": "These keys already belong to “{{name}}”. Please choose another combination.",
     "supportTitle": "Statly works locally",
-    "supportBody": "Links to the project and feedback page follow with the public release. Your cards, notes and review history are never transferred.",
+    "supportBody": "Your cards, notes and review history are never transferred. The links below only open pages in your browser.",
     "sponsorTitle": "Simple in design. With a story that fits you.",
     "sponsorBody": "Oldschool Timeless combines minimal, timeless designs with small stories. The clothing is made for everyday life.",
     "sponsorVisit": "Visit Oldschool Timeless",
@@ -704,7 +884,16 @@
     },
     "shortcutConflictTitle": "{{keys}} is already taken",
     "goalToast": "Note when a goal is met",
-    "goalToastNote": "Anki's study screen shows a short note the moment you meet the day's goal of a study goal."
+    "goalToastNote": "Anki's study screen shows a short note the moment you meet the day's goal of a study goal.",
+    "supportReportTitle": "Found a bug or have an idea?",
+    "supportReportBody": "Tell us on GitHub. We answer there, and a report helps more than a bad review because we can fix it.",
+    "supportReport": "Report a bug or idea",
+    "supportIssues": "See open reports",
+    "supportCode": "Code on GitHub",
+    "supportLikeTitle": "Like Statly",
+    "supportLikeBody": "A thumbs up on AnkiWeb helps others find Statly. And hearing feedback like that is our biggest motivation. The button opens AnkiWeb's rating page for Statly.",
+    "supportLike": "Like on AnkiWeb",
+    "wallpaperDeleteHint": "Point here and press Delete to remove the wallpaper"
   },
   "privacy": {
     "principlesTitle": "How Statly handles this",
@@ -791,7 +980,8 @@
       "chart": "Chart",
       "forecast": "Forecast",
       "collection": "Collection",
-      "heatmap": "Heatmap"
+      "heatmap": "Heatmap",
+      "note": "Note"
     },
     "importWidget": "Import widget",
     "createWidget": "Create widget",
@@ -804,10 +994,32 @@
     "filter": "Filter the library",
     "noResults": "Nothing matches this search.",
     "showAll": "Show all {{count}}",
+    "previous": "Previous widget",
+    "next": "Next widget",
+    "position": "{{index}} of {{total}}",
     "close": "Close",
     "useTemplate": "Use template",
     "templateKind": "Template",
     "standardSize": "{{w}} × {{h}} cells",
+    "onDashboard": "On the dashboard",
+    "onDashboardCount": "{{count}}× on the dashboard",
+    "sizeTip": {
+      "title": "Size on the dashboard",
+      "standard": "Standard",
+      "smallest": "Smallest",
+      "largest": "Largest",
+      "widths": "{{from}} to {{to}}"
+    },
+    "width": {
+      "full": "Full width",
+      "threeQuarters": "¾ width",
+      "twoThirds": "⅔ width",
+      "half": "Half width",
+      "third": "⅓ width",
+      "quarter": "¼ width",
+      "sixth": "⅙ width",
+      "columns": "{{count}} of 12 columns"
+    },
     "filters": {
       "all": "All",
       "progress": "Progress",
@@ -860,10 +1072,26 @@
   },
   "rating": {
     "title": "Enjoying Statly?",
-    "body": "A rating on AnkiWeb helps other Anki users discover the add-on. It takes less than a minute.",
+    "body": "A thumbs up on AnkiWeb helps other Anki users find Statly. And hearing feedback like that is our biggest motivation. It takes less than a minute.",
     "rate": "Rate Statly on AnkiWeb",
     "later": "Maybe later",
     "never": "No, thanks"
+  },
+  "whatsNew": {
+    "title": "New in Statly {{version}}",
+    "version": "Statly {{version}}",
+    "close": "Let's go",
+    "releases": {
+      "2.2": [
+        "New widgets for a closer look: the cards you forget most, every deck in one table, your answer pace, your study sessions, day notes and the time spent making cards. You find them in the Widget Library.",
+        "The widget editor has a new chart type, “Combined”: bars and lines in one chart, each with its own value, color and scale.",
+        "Anki's statistics widgets now show their second measure as a line in the same chart, with its scale on the right.",
+        "A new calendar shows your study days over the whole year.",
+        "Point at a chart and a box sorts its numbers clearly.",
+        "The dashboard remembers the range and deck you chose.",
+        "The Statly menu now has “Versions and updates” with the installed version and the switch for automatic updates."
+      ]
+    }
   },
   "share": {
     "title": "Know someone Statly would help?",
@@ -873,7 +1101,9 @@
     "never": "No, thanks",
     "message": "I use Statly for my Anki statistics. Have a look:",
     "copied": "The link is on your clipboard. Just paste it into a chat or a message.",
-    "done": "Done"
+    "done": "Done",
+    "likeBody": "A like on AnkiWeb makes our day just as much, because hearing feedback like that is our biggest motivation.",
+    "like": "Like Statly on AnkiWeb"
   },
   "calendar": {
     "selectRange": "Select range",
@@ -973,7 +1203,15 @@
       "dueCards": "Due cards",
       "currentStreak": "Current streak",
       "longestStreak": "Longest streak",
-      "dailyAverage": "Daily average"
+      "dailyAverage": "Daily average",
+      "newCards": "New cards",
+      "secondsPerRating": "Seconds per card",
+      "focus": "Focus",
+      "matureShare": "Mature share",
+      "forgottenCards": "Cards forgotten",
+      "creationTime": "Time making cards",
+      "cardsCreated": "Cards made",
+      "secondsPerCreatedCard": "Seconds per card made"
     },
     "series": {
       "timeline": "Reviews over time",
@@ -983,11 +1221,24 @@
       "forecast": "Due forecast",
       "cardStates": "Cards by state",
       "weekdays": "Reviews by weekday",
-      "hours": "Reviews by hour"
+      "hours": "Reviews by hour",
+      "retentionTimeline": "Retention over time",
+      "speedTimeline": "Pace over time",
+      "timeTimeline": "Study time over time",
+      "newTimeline": "New cards over time",
+      "forgottenCards": "Forgotten most",
+      "weakestDecks": "Weakest decks",
+      "newCardsFrom": "New cards by deck",
+      "deckStability": "Stability by deck",
+      "sessionHours": "Ratings by hour",
+      "creationTimeline": "Time making cards over time (min)",
+      "focusHours": "Focus by hour"
     },
     "chartKinds": {
       "bar": "Bars",
-      "line": "Line"
+      "line": "Line",
+      "pie": "Pie",
+      "combined": "Combined"
     },
     "progressKinds": {
       "ring": "Ring",
@@ -1073,6 +1324,30 @@
         "title": "That's it!",
         "body": "Change anything you like, then press Save at the top. Your widget lands in the Widget Library."
       }
+    },
+    "heatmapMode": "Calendar view",
+    "combined": {
+      "hint": "Lay several charts over each other. Values along the same axis combine, such as everything by hour. Up to 6 layers.",
+      "add": {
+        "bar": "Another bar",
+        "line": "Another line"
+      },
+      "remove": "Remove layer",
+      "keepOne": "At least one layer stays",
+      "axis": "Axis",
+      "axes": {
+        "auto": "Automatic",
+        "left": "Left",
+        "right": "Right",
+        "none": "No scale"
+      },
+      "otherAxis": "Other axis"
+    },
+    "axisUnits": {
+      "percent": "{{value}} %",
+      "seconds": "{{value}} s",
+      "minutes": "{{value}} min",
+      "days": "{{value}} d"
     }
   },
   "mobile": {
@@ -1405,7 +1680,9 @@
       "months": "{{value}} months",
       "years": "{{value}} years",
       "seconds": "{{value}} s",
-      "cardsPerMinute": "{{value}} cards/min"
+      "cardsPerMinute": "{{value}} cards/min",
+      "ratings_one": "{{value}} rating",
+      "ratings_other": "{{value}} ratings"
     },
     "facts": {
       "daysStudied": "Days studied",
@@ -1444,7 +1721,8 @@
       "due": "Due",
       "cards": "Cards",
       "reviews": "Reviews",
-      "total": "Total"
+      "total": "Total",
+      "ratings": "Ratings"
     },
     "today": {
       "time": "Time",

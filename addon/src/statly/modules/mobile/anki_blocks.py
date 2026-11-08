@@ -102,7 +102,7 @@ class AnkiBlocks:
             ("anki.filtered", self._number(data["filtered"])),
         )
         facts = [{"label": text[key], "value": value} for key, value in rows]
-        return self._tile(label, self._number(answers), text["reviews"], facts)
+        return self._tile(label, self._number(answers), text["ratings"], facts)
 
     def _retention(self, label: str, data: Any) -> Block:
         text = self._text
@@ -150,7 +150,7 @@ class AnkiBlocks:
         text = self._text
         days = data["days"]
         facts = [
-            {"label": text["reviews"], "value": self._number(sum(d["reviews"] for d in days))},
+            {"label": text["ratings"], "value": self._number(sum(d["reviews"] for d in days))},
             {"label": text["anki.daysStudied"], "value": self._number(len(days))},
         ]
         levels = heat_levels(self._today.isoformat(), days)

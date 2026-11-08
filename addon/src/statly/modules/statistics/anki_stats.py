@@ -153,7 +153,8 @@ def _reviews(graphs: Any, params: Any, day: date) -> dict[str, Any]:
     answers, millis = in_range(counts), in_range(times)
     studied = sum(1 for offset in counts if first <= offset <= 0)
     total = millis / _MS_PER_MINUTE if showing_time else answers
-    unit = "minutes" if showing_time else "reviews"
+    # Anki counts every answer here, which Statly calls ratings.
+    unit = "minutes" if showing_time else "ratings"
     seconds_per_answer = _share(millis / _MS_PER_SECOND, answers)
     return {
         "kind": "timeline",

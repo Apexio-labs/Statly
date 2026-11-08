@@ -8,6 +8,8 @@ export type WidgetScope = {
   deckId: number | null;
   /** Changes with the theme, so charts redraw in the new colors. */
   themeKey: string;
+  /** Sets the dashboard's range, for widgets that let someone pick a day. */
+  pickRange?: ((range: { start: string; end: string }) => void) | undefined;
 };
 
 export type WidgetProps = { scope: WidgetScope };

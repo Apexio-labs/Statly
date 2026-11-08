@@ -3,6 +3,33 @@ import { type KeyboardEvent, type ReactNode, useEffect, useState } from "react";
 
 const RESET_KEYS = new Set(["Delete", "Backspace"]);
 
+/**
+ * Statly's convention: pointing at something and pressing Delete or Backspace resets or removes
+ * it. Typing in a field never counts.
+ */
+export function useDeleteWhilePointed(action: (() => void) | null) {
+  const [pointed, setPointed] = useState(false);
+  useEffect(() => {
+    if (!pointed || !action) {
+      return;
+    }
+    function remove(event: globalThis.KeyboardEvent) {
+      const target = event.target;
+      const typing =
+        (target instanceof HTMLInputElement && target.type !== "color") ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable);
+      if (RESET_KEYS.has(event.key) && !typing) {
+        event.preventDefault();
+        action?.();
+      }
+    }
+    addEventListener("keydown", remove);
+    return () => removeEventListener("keydown", remove);
+  }, [pointed, action]);
+  return { onMouseEnter: () => setPointed(true), onMouseLeave: () => setPointed(false) };
+}
+
 export function Panel({
   title,
   note,

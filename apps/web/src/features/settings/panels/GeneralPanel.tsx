@@ -1,6 +1,8 @@
 import { languages } from "@statly/contract";
 import { useTranslation } from "@statly/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 import { bridge } from "../../../bridge/index.ts";
 import { Button } from "../../../components/Button.tsx";
 import { Select } from "../../../components/Select.tsx";
@@ -25,6 +27,14 @@ export function GeneralPanel() {
     mutationFn: (enabled: boolean) => bridge.call("system.setAutoUpdate", { enabled }),
     onSuccess: () => client.invalidateQueries({ queryKey: ADDON_KEY }),
   });
+  // The same switch sits in Statly's menu in Anki, which says so when it was used there.
+  useEffect(
+    () =>
+      bridge.on("settings.changed", () => {
+        void client.invalidateQueries({ queryKey: ADDON_KEY });
+      }),
+    [client],
+  );
 
   return (
     <Panel title={t("settings.sections.general.title")} note={t("settings.sections.general.note")}>
@@ -59,24 +69,33 @@ export function GeneralPanel() {
           />
         </Row>
       </Card>
-      <Card>
-        <Row
-          title={t("settings.updates")}
-          note={t("settings.version", {
-            statly: info.data?.statlyVersion ?? "–",
-            anki: info.data?.ankiVersion ?? "–",
-          })}
-        />
-      </Card>
       <Card highlight="autoUpdate">
-        <Row title={t("settings.autoUpdate")} note={t("settings.autoUpdateNote")}>
-          <Toggle
-            label={t("settings.autoUpdate")}
-            checked={addon.data?.autoUpdate ?? false}
-            disabled={!addon.data}
-            onChange={(enabled) => setAutoUpdate.mutate(enabled)}
-          />
-        </Row>
+        <div className="statly-updates flex flex-col">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-selected text-accent-strong">
+              <RefreshCw size={17} aria-hidden="true" />
+            </span>
+            <h3 className="m-0 mr-auto text-[13px] font-bold">{t("settings.updates")}</h3>
+            <span className="flex flex-wrap gap-1.5">
+              <span className="statly-chip rounded-full border border-line bg-page px-2.5 py-0.5 text-xs font-semibold tabular-nums">
+                Statly {info.data?.statlyVersion ?? "–"}
+              </span>
+              <span className="statly-chip rounded-full border border-line bg-page px-2.5 py-0.5 text-xs text-muted tabular-nums">
+                Anki {info.data?.ankiVersion ?? "–"}
+              </span>
+            </span>
+          </div>
+          <div className="mt-4 border-t border-line pt-4 pl-12">
+            <Row title={t("settings.autoUpdate")} note={t("settings.autoUpdateNote")}>
+              <Toggle
+                label={t("settings.autoUpdate")}
+                checked={addon.data?.autoUpdate ?? false}
+                disabled={!addon.data}
+                onChange={(enabled) => setAutoUpdate.mutate(enabled)}
+              />
+            </Row>
+          </div>
+        </div>
       </Card>
       <Card>
         <Row title={t("settings.uninstall")} note={t("settings.uninstallNote")}>

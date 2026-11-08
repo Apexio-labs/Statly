@@ -7,7 +7,7 @@ import { useNavigate } from "react-router";
 import { bridge } from "../../bridge/index.ts";
 import { Button } from "../../components/Button.tsx";
 import { spotlight } from "../../lib/spotlight.ts";
-import { ANKIWEB_URL } from "../onboarding/RatingDialog.tsx";
+import { ANKIWEB_RATE_URL } from "../onboarding/RatingDialog.tsx";
 import { type Choice, trailingChoices } from "./choices.ts";
 import { Markdown } from "./Markdown.tsx";
 import { ProposalCard } from "./ProposalCard.tsx";
@@ -214,7 +214,7 @@ function ReviewRequest() {
           primary
           className="h-8"
           onClick={() => {
-            void bridge.call("system.openExternal", { url: ANKIWEB_URL });
+            void bridge.call("system.openExternal", { url: ANKIWEB_RATE_URL });
             answered.mutate();
           }}
         >

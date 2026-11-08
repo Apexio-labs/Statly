@@ -22,7 +22,9 @@ from ...core.module import Context
 from .sharing import MAX_PACKAGE_BYTES, PACKAGE_EXTENSION, export_package, read_package
 from .storage import WidgetStore, media_references
 
-_MEDIA_FILTER = "Images and videos (*.png *.jpg *.jpeg *.gif *.webp *.mp4 *.m4v *.mov *.webm)"
+_MEDIA_FILTER = (
+    "Images and videos (*.png *.jpg *.jpeg *.jfif *.gif *.webp *.mp4 *.m4v *.mov *.webm)"
+)
 _PACKAGE_FILTER = f"Statly widget (*.{PACKAGE_EXTENSION})"
 
 

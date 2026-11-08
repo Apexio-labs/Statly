@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import base64
 import json
 import time
 import zlib
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any, cast
@@ -13,7 +14,7 @@ from anki.collection import Collection
 from anki.scheduler.v3 import CardAnswer
 
 from statly.core.contract import Contract
-from statly.core.module import Context, PermissionPrompt, ShownCard
+from statly.core.module import AddingEvent, Context, PermissionPrompt, ShownCard
 from statly.core.reader import STATLY_NOTE_GUID, CollectionReader, ReadableCollection
 from statly.core.rpc import Router, is_same_page
 from statly.core.settings import SettingsService
@@ -65,6 +66,7 @@ class FakeRuntime:
         self._answers: list[Callable[[int, int], None]] = []
         self._undos: list[Callable[[], None]] = []
         self._activity: list[Callable[[bool], None]] = []
+        self._adding: list[Callable[[AddingEvent], None]] = []
 
     def collection_is_open(self) -> bool:
         return self.collection is not None
@@ -102,6 +104,9 @@ class FakeRuntime:
 
     def open_anki_statistics(self) -> None:
         self.statistics_opened = True
+
+    def open_browser(self, card_ids: Sequence[int]) -> None:
+        self.browsed = list(card_ids)
 
     def save_file(self, name: str, content: str) -> bool:
         self.saved = (name, content)
@@ -243,6 +248,14 @@ class FakeRuntime:
     def set_active(self, active: bool) -> None:
         for callback in self._activity:
             callback(active)
+
+    def on_adding(self, callback: Callable[[AddingEvent], None]) -> None:
+        self._adding.append(callback)
+
+    def adding(self, kind: str, **values: Any) -> None:
+        """What Anki's Add window would report, for the creation stopwatch."""
+        for callback in self._adding:
+            callback(AddingEvent(kind, **values))
 
     def later(self, work: Callable[[], None]) -> None:
         self.waiting_later.append(work)
@@ -643,6 +656,58 @@ def test_a_dropped_file_is_used_once() -> None:
 def test_nothing_dropped_changes_nothing() -> None:
     router = make_router(FakeRuntime())
     assert call(router, "wallpaper.dropped", {})[0]["result"]["wallpaper"]["source"] == "none"
+
+
+def test_a_dropped_picture_arrives_as_data_when_the_window_saw_no_drop() -> None:
+    """Windows hands the drop to an inner widget of the web view, so no path may arrive."""
+    runtime = FakeRuntime()
+    router = make_router(runtime)
+    image = base64.b64encode(tiny_png(runtime.folder).read_bytes()).decode("ascii")
+    result = call(router, "wallpaper.dropped", {"image": image})[0]["result"]["wallpaper"]
+    assert (result["source"], result["enabled"]) == ("image", True)
+    assert result["asset"]["type"] == "image/png"
+
+
+def test_a_dropped_path_wins_over_the_data() -> None:
+    runtime = FakeRuntime()
+    first, second = tiny_pngs(runtime.folder, 2)
+    runtime.dropped = first
+    router = make_router(runtime)
+    image = base64.b64encode(second.read_bytes()).decode("ascii")
+    by_path = call(router, "wallpaper.dropped", {"image": image})[0]["result"]["wallpaper"]
+    runtime.dropped = first
+    again = call(router, "wallpaper.dropped", {})[0]["result"]["wallpaper"]
+    assert by_path["asset"] == again["asset"]
+
+
+def test_dropped_data_that_is_no_picture_is_refused() -> None:
+    router = make_router(FakeRuntime())
+    text = base64.b64encode(b"<html>not a picture</html>").decode("ascii")
+    response = call(router, "wallpaper.dropped", {"image": text})[0]
+    assert response["ok"] is False
+    assert response["error"]["code"] == "invalid_params"
+    assert call(router, "wallpaper.dropped", {"image": "%%%"})[0]["ok"] is False
+
+
+def test_cleaning_up_skips_a_file_windows_still_holds(monkeypatch: pytest.MonkeyPatch) -> None:
+    runtime = FakeRuntime()
+    router = make_router(runtime)
+    first, second = tiny_pngs(runtime.folder, 2)
+    runtime.picked = first
+    old = call(router, "wallpaper.choose", {})[0]["result"]["wallpaper"]["asset"]
+    real_unlink = Path.unlink
+
+    def locked(path: Path, missing_ok: bool = False) -> None:
+        if path.stem == old["id"]:
+            raise PermissionError("The file is being used by another process.")
+        real_unlink(path, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", locked)
+    runtime.picked = second
+    call(router, "wallpaper.choose", {})
+    result = call(router, "wallpaper.forget", {"id": old["id"]})[0]
+    assert result["ok"] is True
+    assert result["result"]["wallpaper"]["history"][0]["id"] != old["id"]
 
 
 def test_an_image_from_an_older_version_moves_over_once() -> None:

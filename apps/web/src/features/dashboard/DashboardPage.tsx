@@ -36,7 +36,7 @@ import {
 import { DashboardGrid } from "./grid/DashboardGrid.tsx";
 import { addWidget, newWidget, removeWidget, rulesOfWidgets } from "./grid/engine.ts";
 import { RangeFilter } from "./RangeFilter.tsx";
-import { deckIdOf, rangeOf, useDashboardFilters } from "./useDashboardFilters.ts";
+import { ALL_DECKS, deckIdOf, rangeOf, useDashboardFilters } from "./useDashboardFilters.ts";
 import { useLayout } from "./useLayout.ts";
 import { WidgetRail } from "./WidgetRail.tsx";
 
@@ -201,16 +201,24 @@ export function DashboardPage() {
     setDraft(withDeviceWidgets(draft, device, [...widgets, deviceWidgetFrom(added)]));
   }
 
-  const scope = today.data && {
-    ...rangeOf({
-      preset: filters.preset,
-      custom: filters.custom,
-      today: today.data.date,
-      firstReview: today.data.firstReview,
-    }),
-    deckId: deckIdOf(filters.deck),
-    themeKey: paletteKey,
-  };
+  // A remembered deck may have been deleted since. Then all decks show, without saving that.
+  const savedDeck = filters.deck;
+  const deckKnown =
+    savedDeck === ALL_DECKS || decks.data?.some((deck) => String(deck.id) === savedDeck);
+  const shownDeck = decks.data && !deckKnown ? ALL_DECKS : savedDeck;
+  const ready = savedDeck === ALL_DECKS || decks.data !== undefined;
+  const scope = today.data &&
+    ready && {
+      ...rangeOf({
+        preset: filters.preset,
+        custom: filters.custom,
+        today: today.data.date,
+        firstReview: today.data.firstReview,
+      }),
+      deckId: deckIdOf(shownDeck),
+      themeKey: paletteKey,
+      pickRange: filters.setCustom,
+    };
   const other = (name: DeviceKind): DeviceKind => (name === "phone" ? "tablet" : "phone");
 
   return (
@@ -259,11 +267,7 @@ export function DashboardPage() {
                   firstReview={today.data.firstReview}
                 />
               ) : null}
-              <DeckPicker
-                decks={decks.data ?? []}
-                value={filters.deck}
-                onChange={filters.setDeck}
-              />
+              <DeckPicker decks={decks.data ?? []} value={shownDeck} onChange={filters.setDeck} />
             </div>
             <p className="mt-4 mb-6 text-[13px] text-muted">{t("dashboard.intro")}</p>
           </>

@@ -30,6 +30,7 @@ const ankiFact = z
     value: z.number(),
     unit: z.enum([
       "reviews",
+      "ratings",
       "cards",
       "notes",
       "minutes",
@@ -62,7 +63,7 @@ const timeline = z
   .object({
     kind: z.literal("timeline"),
     series: z.array(z.string()),
-    unit: z.enum(["reviews", "cards", "minutes"]),
+    unit: z.enum(["reviews", "ratings", "cards", "minutes"]),
     hasBacklog: z.boolean().optional(),
     points: z.array(
       z

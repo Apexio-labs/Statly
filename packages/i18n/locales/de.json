@@ -84,7 +84,10 @@
         "description": "Lerne alle Karten deiner Decks bis zur Klausur, gleichmäßig verteilt auf die Tage bis dahin."
       }
     },
+    "copyName": "{{name}} (Kopie)",
     "actions": {
+      "duplicate": "Duplizieren",
+      "more": "Weitere Aktionen für {{name}}",
       "edit": "Bearbeiten",
       "archive": "Archivieren",
       "restore": "Wiederherstellen",
@@ -440,13 +443,13 @@
     },
     "anki-calendar": {
       "title": "Kalender",
-      "note": "Wiederholungen pro Tag",
+      "note": "Bewertungen pro Tag",
       "description": "Ankis Kalender mit jedem Lerntag, Jahr für Jahr."
     },
     "anki-reviews": {
-      "title": "Wiederholungen",
-      "note": "Wiederholungen aus der Vergangenheit",
-      "description": "Vergangene Wiederholungen nach Kartenart, als Anzahl oder als Zeitaufwand."
+      "title": "Bewertungen",
+      "note": "Bewertungen aus der Vergangenheit, wie Anki sie zählt",
+      "description": "Vergangene Bewertungen nach Kartenart, als Anzahl oder als Zeitaufwand. Wie in Anki zählt jeder Klick auf einen Antwortknopf."
     },
     "anki-card-counts": {
       "title": "Kartenverteilung",
@@ -477,7 +480,7 @@
     },
     "anki-hours": {
       "title": "Nach Uhrzeit",
-      "note": "Wiederholungen und Erfolg nach Tageszeit",
+      "note": "Bewertungen und Erfolg nach Tageszeit",
       "description": "Wann du lernst und wann du dich am besten erinnerst."
     },
     "anki-buttons": {
@@ -494,6 +497,183 @@
       "title": "Echte Erinnerungsquote",
       "note": "Erfolgsquote bei Karten mit mindestens einem Tag Abstand",
       "description": "Wie gut du dich wirklich erinnerst, von heute bis zum Gesamtverlauf."
+    },
+    "study-overview": {
+      "title": "Lernüberblick",
+      "description": "Deine wichtigsten Zahlen, ein Kalender in sechs Ansichten und die kommenden Wochen in einem Widget.",
+      "due": "Fällig",
+      "done": "Wdh.",
+      "speed": "Tempo",
+      "time": "Zeit",
+      "retention": "Behalten",
+      "average": "Ø / Tag",
+      "streak": "Serie",
+      "secondsUnit": "s",
+      "minutesUnit": "m",
+      "hoursUnit": "h",
+      "modes": {
+        "reviews": "Wiederholungen",
+        "ratings": "Bewertungen",
+        "retention": "Behalten",
+        "speed": "Tempo",
+        "time": "Zeit",
+        "new": "Neu"
+      },
+      "mode": "Kalenderansicht",
+      "legend": {
+        "reviews": "Wiederholungen",
+        "forecast": "Prognose",
+        "speed": "Zeit pro Karte",
+        "retention": "Behalten"
+      },
+      "past": "vor {{count}} Tagen",
+      "today": "Heute",
+      "ahead": "in {{count}} Tagen",
+      "forecastDay": "Fällig: {{count}}",
+      "noAnswers": "Keine Antworten",
+      "tip": {
+        "reviews": "Wiederholungen",
+        "ratings": "Bewertungen",
+        "time": "Zeit",
+        "speed": "Tempo",
+        "retention": "Behalten",
+        "new": "Neue Karten",
+        "due": "Fällig",
+        "ahead": "Prognose",
+        "pick": "Klicken zeigt diesen Tag"
+      },
+      "secondsPerCard": "{{seconds}} s pro Karte",
+      "dueNote": "Jetzt fällig",
+      "doneNote": "Im Zeitraum weitergeschobene Karten"
+    },
+    "period-summary": {
+      "title": "Zeitraum im Überblick",
+      "description": "Wiederholungen, Zeit, Behalten, Fokus und neue Karten, verglichen mit dem Zeitraum davor.",
+      "cards": "Wiederholungen",
+      "time": "Zeit",
+      "retention": "Behalten",
+      "focus": "Fokus",
+      "new": "Neu",
+      "before": "davor {{value}}",
+      "noBefore": "davor nichts",
+      "focusNote": "Anteil der Antworten, die nicht langsamer als üblich waren"
+    },
+    "answer-mix": {
+      "title": "Antworten",
+      "description": "Welche Knöpfe du gedrückt hast, und bei welcher Art von Karte.",
+      "kinds": {
+        "review": "Fällige Karten",
+        "learning": "Lernschritte",
+        "new": "Neue Karten",
+        "relearning": "Wiedererlernen"
+      },
+      "share": "{{share}} der Bewertungen"
+    },
+    "answer-speed": {
+      "title": "Antworttempo",
+      "description": "Wie schnell du geantwortet hast, verglichen mit deinem üblichen Tempo je Kartenart.",
+      "usual": "üblich",
+      "faint": "Blass: der Zeitraum davor",
+      "slow": "Rechts der gestrichelten Linie: langsam",
+      "median": "Median {{seconds}} s",
+      "focus": "Fokus {{share}}",
+      "spread": "{{value}} Streuung",
+      "box": "Mittlere Hälfte deiner Antworten",
+      "whiskers": "90 % deiner Antworten",
+      "answers": "{{count}} Antworten",
+      "slowShare": "{{share}} langsamer als üblich"
+    },
+    "creation-time": {
+      "title": "Zeit fürs Karten-Erstellen",
+      "note": "Gemessen, solange Ankis Hinzufügen-Fenster offen ist, mit Recherche in anderen Programmen",
+      "description": "Wie viel Zeit du ins Erstellen neuer Karten steckst, wie viele dabei entstehen und ob du pro Karte mehr oder weniger Zeit brauchst als im Durchschnitt aller Stapel.",
+      "time": "Zeit",
+      "cards": "Erstellte Karten",
+      "perCard": "Pro Karte",
+      "versusUsual": "Pro Karte zum Durchschnitt",
+      "minutesSeconds": "{{minutes}} Min. {{seconds}} Sek.",
+      "more": "{{share}} mehr Zeit pro Karte als im Durchschnitt aller Stapel",
+      "less": "{{share}} weniger Zeit pro Karte als im Durchschnitt aller Stapel",
+      "same": "So viel Zeit pro Karte wie im Durchschnitt aller Stapel",
+      "legendLess": "Weniger Zeit pro Karte",
+      "legendSame": "Etwa wie im Durchschnitt",
+      "legendMore": "Mehr Zeit pro Karte",
+      "usual": "Durchschnitt aller Stapel: {{time}} pro Karte",
+      "empty": "Statly misst ab jetzt, wie lange du in Ankis Hinzufügen-Fenster an neuen Karten arbeitest. Sobald du eine Karte erstellst, erscheint sie hier.",
+      "emptyRange": "In diesem Zeitraum hast du keine Karten im Hinzufügen-Fenster erstellt."
+    },
+    "study-sessions": {
+      "title": "Lernzeiten",
+      "description": "Wann du gelernt hast, als Sitzungen auf einer Zeitleiste, gefärbt nach deinem Fokus.",
+      "focus": "Fokus",
+      "low": "Niedrig",
+      "high": "Hoch",
+      "notEnough": "Zu wenig Daten",
+      "session": "{{start}} – {{end}}",
+      "cards": "{{count}} Bewertungen in {{time}}",
+      "focusShare": "Fokus {{share}}",
+      "retentionShare": "Behalten {{share}}",
+      "hours": "Nach Uhrzeit, über den ganzen Zeitraum",
+      "hour": "{{hour}}:00 – {{next}}:00"
+    },
+    "deck-table": {
+      "title": "Stapel",
+      "description": "Jeder Stapel mit Aktivität, Zeit, Stabilität im Vergleich zu gleich alten Karten und Anteil reifer Karten.",
+      "deck": "Stapel",
+      "history": "Verlauf",
+      "count": "Wdh.",
+      "time": "Zeit",
+      "stability": "Stabilität",
+      "interval": "Intervall",
+      "mature": "Reif",
+      "showAll": "Alle {{count}} zeigen",
+      "showLess": "Weniger zeigen",
+      "open": "Unterstapel zeigen",
+      "close": "Unterstapel ausblenden",
+      "tipRetention": "Behalten {{share}}",
+      "tipStability": "Stabilität {{change}} ggü. Karten, die du etwa gleichzeitig begonnen hast",
+      "tipMedian": "Median-Stabilität {{days}} T",
+      "tipMedianInterval": "Median-Intervall {{days}} T",
+      "tipCards": "{{count}} Karten, davon {{mature}} reif",
+      "tipNoStability": "Zu wenige Karten für einen Stabilitätsvergleich",
+      "sortBy": "Nach {{column}} sortieren"
+    },
+    "forgotten-cards": {
+      "title": "Am häufigsten vergessen",
+      "description": "Die Karten, bei denen du am öftesten Nochmal gedrückt hast. Das erste Sehen einer Karte zählt nie.",
+      "card": "Karte",
+      "forgot": "Vergessen",
+      "interval": "Intervall",
+      "of": "von {{count}}",
+      "open": "Im Browser öffnen",
+      "openOne": "Klicken öffnet die Karte in Ankis Browser",
+      "days": "{{count}} T",
+      "tipForgot": "{{forgot}}-mal Nochmal bei {{seen}} Antworten",
+      "more": "{{count}} Karten mindestens einmal vergessen"
+    },
+    "weakest-decks": {
+      "title": "Schwächste Stapel",
+      "description": "Die Stapel mit dem niedrigsten Behalten im Zeitraum, verglichen mit deinem Gesamtwert.",
+      "checked_one": "{{count}} Abfrage",
+      "checked_other": "{{count}} Abfragen",
+      "overall": "Gestrichelt: dein Gesamtwert {{share}}"
+    },
+    "new-cards-from": {
+      "title": "Neue Karten aus",
+      "description": "Aus welchen Stapeln die neuen Karten im Zeitraum kamen.",
+      "more": "+{{count}} weitere",
+      "none": "Keine neuen Karten in diesem Zeitraum."
+    },
+    "day-notes": {
+      "title": "Tagesnotizen",
+      "description": "Eine kurze Notiz pro Lerntag, nur auf diesem Computer gespeichert.",
+      "placeholder": "Wie war der Tag? Eine Klausur, eine lange Nacht, ein neuer Stapel …",
+      "save": "Speichern",
+      "saved": "Gespeichert",
+      "editing": "Notiz für {{date}}",
+      "earlier": "Frühere Notizen",
+      "empty": "In diesem Zeitraum gibt es noch keine Notizen.",
+      "private": "Bleibt auf diesem Computer und wird nie synchronisiert."
     }
   },
   "answers": {
@@ -541,8 +721,8 @@
     "languageNote": "Wähle die Sprache für das gesamte Statly-Interface.",
     "themeNote": "Wähle, wie Statly dargestellt werden soll.",
     "updates": "Statly-Updates",
-    "autoUpdate": "Statly automatisch aktualisieren",
-    "autoUpdateNote": "Erlaubt Ankis eingebautem Updater, Statly bei automatischen Prüfungen einzubeziehen.",
+    "autoUpdate": "Automatische Updates",
+    "autoUpdateNote": "Ankis eingebauter Updater bezieht Statly in seine automatischen Prüfungen ein. Derselbe Schalter steht in Ankis Statly-Menü unter „Versionen und Updates“.",
     "uninstall": "Statly deinstallieren",
     "uninstallNote": "Entfernt Statly über Ankis Add-on-Verwaltung. Karten, Notizen und Stapel bleiben unverändert.",
     "newsTitle": "Das neue Statly",
@@ -608,7 +788,7 @@
     "shortcutSaved": "Shortcut gespeichert.",
     "shortcutConflict": "Diese Tasten gehören schon zu „{{name}}“. Bitte wähle eine andere Kombination.",
     "supportTitle": "Statly arbeitet lokal",
-    "supportBody": "Links zum Projekt und zur Feedback-Seite folgen mit der öffentlichen Version. Karten, Notizen und Lernverläufe werden nie übertragen.",
+    "supportBody": "Karten, Notizen und Lernverläufe werden nie übertragen. Die Links unten öffnen nur Seiten in deinem Browser.",
     "sponsorTitle": "Schlicht im Design. Mit einer Story, die zu dir passt.",
     "sponsorBody": "Oldschool Timeless verbindet minimalistische, zeitlose Designs mit kleinen Geschichten. Die Kleidung ist für den Alltag gemacht.",
     "sponsorVisit": "Oldschool Timeless besuchen",
@@ -704,7 +884,16 @@
     },
     "shortcutConflictTitle": "{{keys}} ist schon vergeben",
     "goalToast": "Meldung bei geschafftem Ziel",
-    "goalToastNote": "Ankis Lernfenster zeigt kurz an, sobald du das Tagesziel eines Lernziels geschafft hast."
+    "goalToastNote": "Ankis Lernfenster zeigt kurz an, sobald du das Tagesziel eines Lernziels geschafft hast.",
+    "supportReportTitle": "Fehler gefunden oder eine Idee?",
+    "supportReportBody": "Schreib uns auf GitHub. Dort antworten wir, und eine Meldung hilft mehr als eine schlechte Bewertung, weil wir den Fehler beheben können.",
+    "supportReport": "Fehler oder Idee melden",
+    "supportIssues": "Offene Meldungen ansehen",
+    "supportCode": "Code auf GitHub",
+    "supportLikeTitle": "Statly liken",
+    "supportLikeBody": "Ein Daumen hoch auf AnkiWeb hilft anderen, Statly zu finden. Und solches Feedback zu hören ist unsere größte Motivation. Der Knopf öffnet AnkiWebs Bewertungsseite für Statly.",
+    "supportLike": "Auf AnkiWeb liken",
+    "wallpaperDeleteHint": "Hierher zeigen und Entf drücken entfernt das Hintergrundbild"
   },
   "privacy": {
     "principlesTitle": "So geht Statly damit um",
@@ -791,7 +980,8 @@
       "chart": "Diagramm",
       "forecast": "Prognose",
       "collection": "Bestand",
-      "heatmap": "Heatmap"
+      "heatmap": "Heatmap",
+      "note": "Notiz"
     },
     "importWidget": "Widget importieren",
     "createWidget": "Widget erstellen",
@@ -804,10 +994,32 @@
     "filter": "Bibliothek filtern",
     "noResults": "Dazu gibt es keinen Treffer.",
     "showAll": "Alle {{count}} anzeigen",
+    "previous": "Vorheriges Widget",
+    "next": "Nächstes Widget",
+    "position": "{{index}} von {{total}}",
     "close": "Schließen",
     "useTemplate": "Vorlage verwenden",
     "templateKind": "Vorlage",
     "standardSize": "{{w}} × {{h}} Kästchen",
+    "onDashboard": "Auf dem Dashboard",
+    "onDashboardCount": "{{count}}× auf dem Dashboard",
+    "sizeTip": {
+      "title": "Größe auf dem Dashboard",
+      "standard": "Standard",
+      "smallest": "Kleinste",
+      "largest": "Größte",
+      "widths": "{{from}} bis {{to}}"
+    },
+    "width": {
+      "full": "Volle Breite",
+      "threeQuarters": "¾ Breite",
+      "twoThirds": "⅔ Breite",
+      "half": "Halbe Breite",
+      "third": "⅓ Breite",
+      "quarter": "¼ Breite",
+      "sixth": "⅙ Breite",
+      "columns": "{{count}} von 12 Spalten"
+    },
     "filters": {
       "all": "Alle",
       "progress": "Fortschritt",
@@ -860,10 +1072,26 @@
   },
   "rating": {
     "title": "Gefällt dir Statly?",
-    "body": "Eine Bewertung auf AnkiWeb hilft anderen Anki-Nutzern, das Add-on zu finden. Das dauert keine Minute.",
+    "body": "Ein Daumen hoch auf AnkiWeb hilft anderen Anki-Nutzern, Statly zu finden. Und solches Feedback zu hören ist unsere größte Motivation. Das dauert keine Minute.",
     "rate": "Statly auf AnkiWeb bewerten",
     "later": "Vielleicht später",
     "never": "Nein, danke"
+  },
+  "whatsNew": {
+    "title": "Neu in Statly {{version}}",
+    "version": "Statly {{version}}",
+    "close": "Los geht's",
+    "releases": {
+      "2.2": [
+        "Neue Widgets für einen genaueren Blick: die am häufigsten vergessenen Karten, alle Stapel in einer Tabelle, dein Antworttempo, deine Lernzeiten, Tagesnotizen und die Zeit fürs Karten-Erstellen. Du findest sie in der Widget Library.",
+        "Im Widget-Editor gibt es den Diagrammtyp „Kombiniert“: Balken und Linien liegen in einem Diagramm, jede mit eigenem Wert, eigener Farbe und eigener Achse.",
+        "Ankis Statistik-Widgets zeigen die zweite Größe jetzt als Linie im selben Diagramm, mit der Skala rechts.",
+        "Ein neuer Kalender zeigt deine Lerntage über das ganze Jahr.",
+        "Zeigst du auf ein Diagramm, ordnet eine Box die Zahlen übersichtlich.",
+        "Das Dashboard merkt sich den gewählten Zeitraum und Stapel.",
+        "Im Statly-Menü findest du jetzt „Versionen und Updates“ mit der installierten Version und dem Schalter für automatische Updates."
+      ]
+    }
   },
   "share": {
     "title": "Kennst du jemanden, dem Statly helfen würde?",
@@ -873,7 +1101,9 @@
     "never": "Nein, danke",
     "message": "Ich nutze Statly für meine Anki-Statistiken. Schau es dir mal an:",
     "copied": "Der Link ist in deiner Zwischenablage. Füge ihn einfach in einen Chat oder eine Nachricht ein.",
-    "done": "Fertig"
+    "done": "Fertig",
+    "likeBody": "Ein Like auf AnkiWeb freut uns genauso, denn solches Feedback zu hören ist unsere größte Motivation.",
+    "like": "Statly auf AnkiWeb liken"
   },
   "calendar": {
     "selectRange": "Zeitraum auswählen",
@@ -973,7 +1203,15 @@
       "dueCards": "Fällige Karten",
       "currentStreak": "Aktuelle Serie",
       "longestStreak": "Längste Serie",
-      "dailyAverage": "Tagesdurchschnitt"
+      "dailyAverage": "Tagesdurchschnitt",
+      "newCards": "Neue Karten",
+      "secondsPerRating": "Sekunden pro Karte",
+      "focus": "Fokus",
+      "matureShare": "Anteil reifer Karten",
+      "forgottenCards": "Vergessene Karten",
+      "creationTime": "Zeit fürs Karten-Erstellen",
+      "cardsCreated": "Erstellte Karten",
+      "secondsPerCreatedCard": "Sekunden pro erstellter Karte"
     },
     "series": {
       "timeline": "Wiederholungen im Zeitverlauf",
@@ -983,11 +1221,24 @@
       "forecast": "Fälligkeitsprognose",
       "cardStates": "Karten nach Status",
       "weekdays": "Wiederholungen nach Wochentag",
-      "hours": "Wiederholungen nach Uhrzeit"
+      "hours": "Wiederholungen nach Uhrzeit",
+      "retentionTimeline": "Behalten im Zeitverlauf",
+      "speedTimeline": "Tempo im Zeitverlauf",
+      "timeTimeline": "Lernzeit im Zeitverlauf",
+      "newTimeline": "Neue Karten im Zeitverlauf",
+      "forgottenCards": "Am häufigsten vergessen",
+      "weakestDecks": "Schwächste Stapel",
+      "newCardsFrom": "Neue Karten nach Stapel",
+      "deckStability": "Stabilität nach Stapel",
+      "sessionHours": "Bewertungen nach Uhrzeit",
+      "creationTimeline": "Erstellzeit im Zeitverlauf (Min.)",
+      "focusHours": "Fokus nach Uhrzeit"
     },
     "chartKinds": {
       "bar": "Balken",
-      "line": "Linie"
+      "line": "Linie",
+      "pie": "Kreis",
+      "combined": "Kombiniert"
     },
     "progressKinds": {
       "ring": "Ring",
@@ -1073,6 +1324,30 @@
         "title": "Fertig!",
         "body": "Ändere, was du möchtest, und drücke oben auf Speichern. Dein Widget landet dann in der Widget Library."
       }
+    },
+    "heatmapMode": "Kalenderansicht",
+    "combined": {
+      "hint": "Lege mehrere Diagramme übereinander. Kombinieren lassen sich Werte mit derselben Achse, zum Beispiel alles nach Uhrzeit. Bis zu 6 Ebenen.",
+      "add": {
+        "bar": "Weiterer Balken",
+        "line": "Weitere Linie"
+      },
+      "remove": "Ebene entfernen",
+      "keepOne": "Mindestens eine Ebene bleibt",
+      "axis": "Achse",
+      "axes": {
+        "auto": "Automatisch",
+        "left": "Links",
+        "right": "Rechts",
+        "none": "Ohne Skala"
+      },
+      "otherAxis": "Andere Achse"
+    },
+    "axisUnits": {
+      "percent": "{{value}} %",
+      "seconds": "{{value}} s",
+      "minutes": "{{value}} Min.",
+      "days": "{{value}} T."
     }
   },
   "mobile": {
@@ -1405,7 +1680,9 @@
       "months": "{{value}} Monate",
       "years": "{{value}} Jahre",
       "seconds": "{{value}} Sek.",
-      "cardsPerMinute": "{{value}} Karten/Min."
+      "cardsPerMinute": "{{value}} Karten/Min.",
+      "ratings_one": "{{value}} Bewertung",
+      "ratings_other": "{{value}} Bewertungen"
     },
     "facts": {
       "daysStudied": "Lerntage",
@@ -1444,7 +1721,8 @@
       "due": "Fällig",
       "cards": "Karten",
       "reviews": "Wiederholungen",
-      "total": "Gesamt"
+      "total": "Gesamt",
+      "ratings": "Bewertungen"
     },
     "today": {
       "time": "Zeit",

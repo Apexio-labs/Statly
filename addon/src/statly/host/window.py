@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import aqt
-from aqt.qt import QCloseEvent, QDropEvent, QMainWindow, QMessageBox, QUrl
+from aqt.qt import (
+    QChildEvent,
+    QCloseEvent,
+    QDropEvent,
+    QEvent,
+    QMainWindow,
+    QMessageBox,
+    QMimeData,
+    QObject,
+    QUrl,
+    QWidget,
+)
 from aqt.utils import restoreGeom, saveGeom
 from aqt.webview import AnkiWebView
 
@@ -22,25 +34,67 @@ _GEOMETRY_KEY = "statlyWindow"
 _COMMAND_PREFIX = "statly:"
 
 
+class _DropWatcher(QObject):
+    """Notes a dropped file wherever inside the web view it lands. On Windows the drop reaches the
+    engine's inner widget and never the view's own ``dropEvent``, so a dropped wallpaper did
+    nothing there. The watcher only looks: the page still gets the drop as before."""
+
+    def __init__(self, view: StatlyWebView) -> None:
+        super().__init__(view)
+        self._view = view
+
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
+        if a1 is not None and a1.type() == QEvent.Type.Drop and isinstance(a1, QDropEvent):
+            self._view.remember_drop(a1.mimeData())
+        return False
+
+
+_DROP_VALID_SECONDS = 15.0
+"""A drop counts only for the page's next question, never for one much later."""
+
+
 class StatlyWebView(AnkiWebView):
     _dropped_file: Path | None = None
+    _dropped_at = 0.0
+    _watcher: _DropWatcher | None = None
 
     def onEsc(self) -> None:
         # Anki closes the window on Esc, but Esc belongs to the app's own menus and dialogs.
         pass
 
-    def dropEvent(self, evt: QDropEvent | None) -> None:
+    def remember_drop(self, data: QMimeData | None) -> None:
         # A page sees a dropped file's content but not its path, and a video can be too large to
         # pass through the bridge. So the path waits here until the page asks for it.
-        data = evt.mimeData() if evt is not None else None
         urls = data.urls() if data is not None else []
         local = [url for url in urls if url.isLocalFile()]
-        self._dropped_file = Path(local[0].toLocalFile()) if local else None
+        if local:
+            self._dropped_file = Path(local[0].toLocalFile())
+            self._dropped_at = time.monotonic()
+
+    def watch_drops(self) -> None:
+        self._watcher = _DropWatcher(self)
+        for child in self.findChildren(QWidget):
+            child.installEventFilter(self._watcher)
+
+    def childEvent(self, a0: QChildEvent | None) -> None:
+        super().childEvent(a0)
+        # The engine adds its inner widget after the page starts loading. When it is added, it is
+        # not yet a full widget, so it is watched once it is polished, ready to be shown.
+        watched = (QEvent.Type.ChildAdded, QEvent.Type.ChildPolished)
+        if self._watcher is not None and a0 is not None and a0.type() in watched:
+            child = a0.child()
+            if isinstance(child, QWidget):
+                child.removeEventFilter(self._watcher)
+                child.installEventFilter(self._watcher)
+
+    def dropEvent(self, evt: QDropEvent | None) -> None:
+        self.remember_drop(evt.mimeData() if evt is not None else None)
         super().dropEvent(evt)
 
     def take_dropped_file(self) -> Path | None:
         dropped, self._dropped_file = self._dropped_file, None
-        return dropped
+        fresh = time.monotonic() - self._dropped_at <= _DROP_VALID_SECONDS
+        return dropped if fresh else None
 
 
 class StatlyWindow(QMainWindow):
@@ -73,6 +127,7 @@ class StatlyWindow(QMainWindow):
         self.web.load_url(QUrl(url))
         # load_url switches this off, and it must stay on for files dropped onto the page.
         self.web.allow_drops = True
+        self.web.watch_drops()
         self.setCentralWidget(self.web)
         self.prompts = PromptLayer(self, self.web, prompt_url, appearance)
 
@@ -145,6 +200,7 @@ class StatlyWindow(QMainWindow):
                 a0.ignore()
             return
         self._on_close()
+        self.prompts.detach()
         saveGeom(self, _GEOMETRY_KEY)
         self.web.cleanup()
         aqt.dialogs.markClosed(DIALOG_NAME)

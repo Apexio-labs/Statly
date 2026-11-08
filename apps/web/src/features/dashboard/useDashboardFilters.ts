@@ -1,15 +1,8 @@
-import { useState } from "react";
+import { dashboardRangePresets } from "@statly/contract";
+import { useAppearance } from "../../lib/appearance.tsx";
 import { addDays } from "../../lib/format.ts";
 
-export const rangePresets = [
-  "today",
-  "yesterday",
-  "last7",
-  "last30",
-  "lastYear",
-  "all",
-  "custom",
-] as const;
+export const rangePresets = dashboardRangePresets;
 export type RangePreset = (typeof rangePresets)[number];
 
 export type CustomRange = { start: string; end: string };
@@ -25,20 +18,23 @@ export type DashboardFilters = {
   setDeck: (deck: string) => void;
 };
 
+/**
+ * The range and deck above the dashboard. They are kept in the settings, so the dashboard opens
+ * the way it was left, also after closing Statly. A named range such as "Last 7 days" keeps
+ * moving with the days, only a custom range stays on its dates.
+ */
 export function useDashboardFilters(): DashboardFilters {
-  const [preset, setPreset] = useState<RangePreset>("today");
-  const [custom, setCustomRange] = useState<CustomRange | null>(null);
-  const [deck, setDeck] = useState(ALL_DECKS);
+  const { settings, update } = useAppearance();
+  const filter = settings.dashboardFilter;
+  const save = (patch: Partial<typeof filter>) =>
+    update({ dashboardFilter: { ...filter, ...patch } });
   return {
-    preset,
-    custom,
-    deck,
-    setPreset,
-    setDeck,
-    setCustom: (range) => {
-      setCustomRange(range);
-      setPreset("custom");
-    },
+    preset: filter.preset,
+    custom: filter.custom,
+    deck: filter.deck,
+    setPreset: (preset) => save({ preset }),
+    setDeck: (deck) => save({ deck }),
+    setCustom: (range) => save({ custom: range, preset: "custom" }),
   };
 }
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.2.0
+
+- New widgets for a closer look: the cards you forget most, every deck in one table, your answer
+  pace, your study sessions, day notes and the time spent making new cards. A new calendar shows
+  your study days over the whole year
+- Charts can be combined in the widget editor: the new chart type "Combined" lays bars and lines
+  over one another, each with its own value, color and scale. Values along the same axis combine,
+  such as everything by hour, up to six layers, and up to two scales on each side
+- Anki's statistics widgets with a second measure, such as Future due, Reviews, Intervals,
+  Stability, Difficulty, Retrievability, Hourly breakdown and Added, now draw it as a line in the
+  same chart, with its scale on the right
+- Anki's widgets that count every answer button press now say "Ratings", as Statly does
+  everywhere else. They still count exactly as Anki does
+- The time spent making cards now includes research in other programs while Anki's Add window is
+  open. Time in Anki's other windows, such as studying in the main window, does not count. A
+  pause counts at most 5 minutes, a note at most 20
+- Hover boxes over charts sort their numbers in one clear layout
+- The dashboard remembers its time range and deck
+- After a big update, a window says once what is new. The Statly menu shows the version and the
+  switch for automatic updates, and installing from GitHub replaces the AnkiWeb copy
+- The widget library has calmer tiles, previews at real size, and Space opens and closes a
+  preview. Goals can be duplicated from a menu, and a goal's widget opens its page
+- Pie charts in custom widgets and on the phone card
+- Day notes stay quiet: the save button only shows in the field's corner once the note changed,
+  and the hint that notes stay on this computer moved into the hover box
+- The library's pictures match their widgets: Anki's widgets with a second measure show bars with
+  a line, Cards by learning state shows its bars, and Success rate no longer shows the goals icon
+- Fixed: Anki's error dialog could appear now and then while studying on Windows, after Statly's
+  window had been closed
+- Fixed: dropped wallpapers on Windows, and Anki's statistics window opening behind Statly
+- The rating reminder, the share reminder and the support page link to Statly's rating page on
+  AnkiWeb
+
 ## 2.1.1
 
 - Statly starts again when Anki opens normally. In 2.1.0 it stopped while loading, because it
