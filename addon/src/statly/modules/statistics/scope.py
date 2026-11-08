@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, Literal
 
 from ...core.errors import InvalidParams
 from ...core.reader import CollectionReader
@@ -50,7 +50,10 @@ def period_from_params(params: Any, calendar: AnkiCalendar) -> Period:
     return make_period(calendar, first_day, min(last_day, calendar.today))
 
 
-def granularity_of(period: Period) -> str:
+type Granularity = Literal["day", "week", "month"]
+
+
+def granularity_of(period: Period) -> Granularity:
     """How a chart over time groups the days of a range: by day, week or month."""
     if period.days <= 31:
         return "day"
